@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Unbounded:wght@200..900&display=swap');
+
+@import './computer-modern/serif.css';
+
+:root {
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'Fira Mono', monospace;
+
+    --font-serif: "Computer Modern Serif", serif;
+}

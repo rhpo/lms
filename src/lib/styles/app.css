@@ -1,0 +1,76 @@
+@import "./tokens/primitives.css";
+@import "./tokens/semantic.css";
+@import "./tokens/settings.css";
+@import "./reset.css";
+@import "./typography.css";
+
+/* fonts */
+@import './fonts/fonts.css';
+
+/* =============
+   Base
+   Only element-level defaults. No classes here.
+   ============= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+
+  transition: background-color var(--transition-normal);
+
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+}
+
+img,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

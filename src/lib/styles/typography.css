@@ -1,0 +1,188 @@
+/* =============
+   typography.css
+   Typescale, weights, leading, and prose defaults.
+   All values reference primitives — no hardcoded numbers.
+   ============= */
+
+/* =============
+   Typescale tokens
+   ============= */
+
+:root {
+    /* Size */
+    --text-xs: 0.75rem;
+    /*  12px */
+    --text-sm: 0.875rem;
+    /*  14px */
+    --text-md: 1rem;
+    /*  16px */
+    --text-lg: 1.125rem;
+    /*  18px */
+    --text-xl: 1.25rem;
+    /*  20px */
+    --text-2xl: 1.5rem;
+    /*  24px */
+    --text-3xl: 1.875rem;
+    /*  30px */
+    --text-4xl: 2.25rem;
+    /*  36px */
+
+    /* Weight */
+    --font-regular: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+
+    /* Leading (line-height) */
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+    --leading-loose: 2;
+
+    /* Tracking (letter-spacing) */
+    --tracking-tight: -0.02em;
+    --tracking-normal: 0em;
+    --tracking-wide: 0.05em;
+    --tracking-widest: 0.1em;
+}
+
+/* =============
+   Heading defaults
+   Sizes only — color and weight come from components.
+   ============= */
+
+h1 {
+    font-size: var(--text-4xl);
+    line-height: var(--leading-tight);
+    font-weight: var(--font-bold);
+}
+
+h2 {
+    font-size: var(--text-3xl);
+    line-height: var(--leading-tight);
+    font-weight: var(--font-bold);
+}
+
+h3 {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-snug);
+    font-weight: var(--font-semibold);
+}
+
+h4 {
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+    font-weight: var(--font-semibold);
+}
+
+h5 {
+    font-size: var(--text-lg);
+    line-height: var(--leading-normal);
+    font-weight: var(--font-medium);
+}
+
+h6 {
+    font-size: var(--text-md);
+    line-height: var(--leading-normal);
+    font-weight: var(--font-medium);
+}
+
+/* =============
+   Prose defaults
+   Applied to long-form content via a .prose wrapper class.
+   ============= */
+
+.prose {
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-primary);
+    max-width: 68ch;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+    margin-top: 2em;
+    margin-bottom: 0.75em;
+    color: var(--color-text-primary);
+}
+
+.prose p {
+    margin-bottom: 1.25em;
+}
+
+.prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.prose strong {
+    font-weight: var(--font-semibold);
+}
+
+.prose em {
+    font-style: italic;
+}
+
+.prose ul,
+.prose ol {
+    margin-bottom: 1.25em;
+    padding-left: 1.5em;
+}
+
+.prose ul {
+    list-style: disc;
+}
+
+.prose ol {
+    list-style: decimal;
+}
+
+.prose li {
+    margin-bottom: 0.375em;
+}
+
+.prose blockquote {
+    border-left: 3px solid var(--color-border-strong);
+    padding-left: 1em;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin: 1.5em 0;
+}
+
+.prose code {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    background: var(--color-bg-subtle);
+    padding: 0.15em 0.35em;
+    border-radius: var(--radius-sm);
+}
+
+.prose pre {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1.25em;
+}
+
+.prose pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+}
+
+.prose hr {
+    margin: 2em 0;
+}
+
+.prose img {
+    border-radius: var(--radius-md);
+    margin: 1.5em 0;
+}

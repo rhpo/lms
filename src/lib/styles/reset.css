@@ -1,0 +1,117 @@
+/* =============
+   reset.css
+   Removes browser defaults. No design decisions here —
+   those live in semantic.css and component files.
+   ============= */
+
+/* == Margins & padding == */
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+}
+
+/* == Typography == */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+/* == Lists == */
+
+ul,
+ol {
+    list-style: none;
+}
+
+/* == Media == */
+
+img,
+video,
+canvas,
+svg,
+picture {
+    display: block;
+    max-width: 100%;
+}
+
+/* == Forms == */
+
+input,
+button,
+textarea,
+select,
+optgroup {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    outline: none;
+    appearance: none;
+
+    &:hover {
+        cursor: pointer;
+    }
+
+    &:focus {
+        cursor: text;
+    }
+}
+
+/* in your app.css or global.css */
+input[type="checkbox"] {
+    appearance: auto;
+    -webkit-appearance: auto;
+}
+
+button {
+    cursor: pointer;
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* == Tables == */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/* == Misc == */
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+p,
+a,
+label {
+    font-size: 1.2rem;
+}
+
+blockquote,
+q {
+    quotes: none;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+}

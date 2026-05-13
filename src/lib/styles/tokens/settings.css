@@ -1,0 +1,22 @@
+:root {
+
+    /* View */
+    --max-view: 1600px;
+    --max-view-large: 1700px;
+
+    /* Sidebar */
+    --sidebar-width: 300px;
+
+    /* Navigation Bar */
+    --nav-height: 4.5rem;
+    --nav-height-editor: 5rem;
+
+    /* global vars */
+    --screen-height: calc(100vh - var(--nav-height));
+    --screen-height-editor: calc(100vh - var(--nav-height-editor));
+
+    /* Transitions */
+
+    --transition-normal: 0.2s ease-in-out;
+
+}

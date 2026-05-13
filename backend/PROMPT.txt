@@ -1,0 +1,363 @@
+# BACKEND PFE — GO
+
+## CONTEXTE
+
+Tu construis un backend REST complet pour une application de gestion des Projets de Fin d'Études
+dans les universités algériennes.
+
+Avant de commencer, lis ce document en entier, puis propose :
+1. La structure exacte du projet Go (dossiers, fichiers, packages)
+2. Les librairies que tu vas utiliser (router, ORM, validation, etc.) avec justification
+3. L'ordre d'implémentation
+
+Attends ma validation avant de coder quoi que ce soit.
+
+---
+
+## STACK IMPOSÉE
+
+- Langage : Go
+- Base de données : PostgreSQL via Supabase
+- Storage : Supabase Storage (buckets : `avatars`, `company-logos`, `memoires`)
+- Emails : Resend API
+- Tout le reste (router, ORM, validation, auth, structure) : tu décides et tu justifies
+
+---
+
+## RÈGLES ABSOLUES
+
+- Zéro redondance. Si une logique se répète, elle est extraite dans une fonction ou un package partagé.
+- Chaque endpoint valide ses inputs. Jamais de données non validées qui atteignent la base.
+- Gestion d'erreur explicite partout. Jamais d'erreur silencieuse.
+- Toutes les variables d'environnement passent par un fichier de config centralisé chargé au démarrage.
+  Jamais d'accès direct à `os.Getenv` dispersé dans le code.
+- Les réponses JSON sont toujours structurées :
+  Succès : `{ "success": true, "data": { ... } }`
+  Erreur  : `{ "success": false, "error": "message en français" }`
+- Les codes HTTP doivent être sémantiquement corrects :
+  200 succès, 201 création, 400 données invalides, 401 non authentifié,
+  403 non autorisé, 404 introuvable, 409 conflit, 500 erreur serveur
+- Zéro logique métier dans les handlers. Les handlers appellent des services.
+  Les services appellent des repositories. Les repositories parlent à la base.
+- Tests automatisés inclus (voir section dédiée).
+
+---
+
+## DOMAINE MÉTIER
+
+### Rôles
+
+4 rôles : `admin`, `teacher`, `student`, `company`.
+L'admin hérite de toutes les fonctionnalités du teacher.
+Il est unique et peut transférer son rôle à un enseignant.
+
+### Entités principales
+
+**Profile** : id, role, full_name, email, avatar_url, is_active
+
+**Teacher** : lié à Profile — grade (assistant/mab/maa/mcb/mca/professeur),
+department, availability_status (disponible/indisponible/indisponible_jusqu_au),
+unavailable_until (date), domaines (N-N)
+
+**Student** : lié à Profile — student_number, specialty_id, level, promotion_id
+
+**Company** : lié à Profile — company_name, sector, description, logo_url,
+contact_email, contact_phone, website, is_verified
+
+**Speciality** : id, name, code (ISIL/CHIM/ELEC), year_type (licence/master)
+
+**Domain** : id, name
+Relations N-N : teacher_domains, subject_domains
+
+**Promotion** : id, label, academic_year
+
+**AcademicYear** : id, label, status (active/cloturee), submission_open_at,
+submission_close_at, max_wishes
+
+**PfeSubject** : id, title, description, group_type (monome/binome/trinome),
+proposer_id, proposer_role, company_id, academic_year_id,
+validator1_id, validator2_id, validator1_decision, validator2_decision,
+validator1_comment, validator2_comment,
+status (en_attente/valide/accepte_sous_reserve/refuse/expire),
+co_supervisor_id, domaines (N-N), pre_assigned_student_ids
+
+**Wish** : id, student_id, subject_id, academic_year_id,
+status (en_attente/accepte/refuse)
+
+**PfeAssignment** : id, pfe_code, subject_id, academic_year_id,
+student_id, student2_id, student3_id,
+supervisor_id, co_supervisor_id,
+memoire_url, status (en_cours/memoire_soumis/soutenance_planifiee/valide/refuse)
+
+**PfeProgressReport** (meeting) : id, assignment_id, meeting_date, duration,
+meeting_type (presentiel/visio), topics, status (en_cours/termine), observation
+
+**DefenseJury** : id, assignment_id, president_id, member_id,
+president_confirmed, member_confirmed,
+president_wants_printed, member_wants_printed
+
+**Defense** : id, assignment_id, jury_id, scheduled_at, room,
+defense_deadline, status (scheduled/done/postponed),
+result (admitted/corrections_required/not_admitted), final_grade
+
+**JuryGrade** : id, defense_id, jury_member_id,
+criterion1..4 (float, /4 chacun, total /16)
+
+**SupervisorEvaluation** : id, pfe_assignment_id (unique), evaluator_id,
+criterion5 (float, /4)
+
+Note finale = criterion1+2+3+4 (jury) + criterion5 (encadrant) = /20
+
+**CompanyReport** : id, company_id, submitted_by, correction_type,
+description, requested_value, status (en_attente/resolu/rejete), resolved_at
+
+**Notification** : id, recipient_id, type, payload (JSON), read_at
+
+**AuditLog** : id, actor_id, action, entity, entity_id, metadata (JSON)
+
+### Génération du code PFE
+
+Au moment de l'assignation des étudiants :
+format : `PFE-[CODE_SPECIALITE]-[ANNEE]-[N paddé 3 chiffres]`
+exemple : `PFE-ISIL-2025-001`
+
+### Système de notation
+
+5 critères × 4 points = 20 points total.
+Critères 1-4 : soumis par chaque membre du jury indépendamment.
+Critère 5 : soumis par l'encadrant du PFE.
+
+Workflow :
+1. Chaque jury soumet ses criterion1..4
+2. Le président vérifie que le membre a soumis
+3. Si oui, le président choisit : sa note | note du membre | nouvelle évaluation
+4. Note finale = 4 critères jury choisis + criterion5 encadrant
+
+---
+
+## ENDPOINTS À IMPLÉMENTER
+
+### Auth
+POST   /api/auth/dev-login        — login dev (NODE_ENV=development uniquement)
+GET    /api/auth/me               — profil connecté avec avatar_url
+POST   /api/auth/logout
+
+### Profil (tous rôles)
+PATCH  /api/profile/avatar        — upload photo de profil (image, max 2MB)
+
+### Admin
+GET    /api/admin/dashboard
+GET    /api/admin/accounts/users
+POST   /api/admin/accounts/users
+GET    /api/admin/accounts/users/:id
+PATCH  /api/admin/accounts/users/:id
+POST   /api/admin/accounts/users/:id/action   — deactivate | reactivate | transfer-admin
+POST   /api/admin/accounts/users/import-csv   — import bulk CSV
+GET    /api/admin/accounts/companies
+POST   /api/admin/accounts/companies/:id/action   — validate | reject | update
+GET    /api/admin/reports
+POST   /api/admin/reports/:id/action   — resolve | reject
+GET    /api/admin/subjects
+GET    /api/admin/subjects/:id
+POST   /api/admin/subjects/:id/action  — assign-validators | assign-co-supervisor | unblock
+GET    /api/admin/pfe
+GET    /api/admin/pfe/:id
+GET    /api/admin/defenses
+POST   /api/admin/defenses
+GET    /api/admin/defenses/:id
+GET    /api/admin/defenses/recommend-jury   — query param: pfe_id
+POST   /api/admin/defenses/:id/submit-grade
+POST   /api/admin/defenses/:id/resolve-grade
+POST   /api/admin/defenses/:id/confirm-jury
+POST   /api/admin/defenses/:id/decline-jury
+GET    /api/admin/settings/deadlines
+POST   /api/admin/settings/deadlines
+GET    /api/admin/settings/specialities
+POST   /api/admin/settings/specialities
+DELETE /api/admin/settings/specialities/:id
+GET    /api/admin/settings/domains
+POST   /api/admin/settings/domains
+DELETE /api/admin/settings/domains/:id
+GET    /api/admin/settings/promotions
+POST   /api/admin/settings/promotions
+DELETE /api/admin/settings/promotions/:id
+GET    /api/admin/settings/academic-years
+POST   /api/admin/settings/academic-years
+POST   /api/admin/settings/academic-years/:id/close
+GET    /api/admin/statistics
+GET    /api/admin/audit-log
+GET    /api/admin/exports/affectations
+GET    /api/admin/exports/plannings
+GET    /api/admin/exports/statistiques
+
+### Enseignant (admin aussi)
+GET    /api/teacher/dashboard
+GET    /api/teacher/proposed-subjects
+POST   /api/teacher/proposed-subjects
+GET    /api/teacher/proposed-subjects/:id
+PATCH  /api/teacher/proposed-subjects/:id
+GET    /api/teacher/proposed-subjects/:id/candidats
+POST   /api/teacher/proposed-subjects/:id/candidats
+GET    /api/teacher/subjects-to-validate
+GET    /api/teacher/subjects-to-validate/:id
+POST   /api/teacher/subjects-to-validate/:id
+GET    /api/teacher/supervised-pfes
+GET    /api/teacher/supervised-pfes/:id
+POST   /api/teacher/supervised-pfes/:id/meetings
+POST   /api/teacher/supervised-pfes/:id/evaluation
+GET    /api/teacher/jury-duties
+GET    /api/teacher/jury-duties/:id
+POST   /api/teacher/availability
+GET    /api/teacher/notifications
+
+### Étudiant
+GET    /api/student/dashboard
+GET    /api/student/catalogue
+GET    /api/student/catalogue/:id
+GET    /api/student/wishes
+POST   /api/student/wishes
+DELETE /api/student/wishes/:id
+GET    /api/student/my-pfe
+GET    /api/student/my-pfe/meetings
+POST   /api/student/my-pfe/meetings
+POST   /api/student/my-pfe/memoire
+GET    /api/student/soutenance
+GET    /api/student/notifications
+
+### Entreprise
+GET    /api/company/dashboard
+GET    /api/company/subjects
+POST   /api/company/subjects
+GET    /api/company/subjects/:id
+PATCH  /api/company/subjects/:id
+GET    /api/company/subjects/:id/candidats
+POST   /api/company/subjects/:id/candidats
+GET    /api/company/supervised-pfes
+GET    /api/company/supervised-pfes/:id
+POST   /api/company/supervised-pfes/:id/meetings
+POST   /api/company/supervised-pfes/:id/evaluation
+GET    /api/company/reports
+POST   /api/company/reports
+GET    /api/company/notifications
+
+### Notifications (tous rôles)
+GET    /api/notifications
+POST   /api/notifications/:id/read
+POST   /api/notifications/read-all
+
+### Upload
+POST   /api/upload/company-logo   — image JPEG/PNG/WebP, max 5MB, auth: company
+POST   /api/upload/memoire        — PDF, max 50MB, auth: student
+POST   /api/upload/avatar         — image JPEG/PNG/WebP, max 2MB, tous rôles
+
+---
+
+## NOTIFICATIONS
+
+Chaque action significative déclenche une notification in-app + email Resend.
+
+| Action | Destinataire |
+|---|---|
+| Nouvelle demande entreprise | Admin |
+| Entreprise validée/refusée | Employé |
+| Report soumis | Admin |
+| Correction effectuée | Employé |
+| Nouveau sujet soumis | Admin |
+| Co-encadrant assigné | Enseignant |
+| Validateurs assignés | Chaque validateur |
+| Sujet validé | Auteur |
+| Sujet sous réserve | Auteur + co-encadrant |
+| Sujet refusé | Admin |
+| Étudiant accepté | Étudiant |
+| Étudiant non retenu | Étudiant |
+| Code PFE généré | Étudiants du groupe |
+| Mémoire soumis | Encadrant + Admin |
+| Évaluation encadrant soumise | Admin |
+| Soutenance planifiée | Étudiants + Jury |
+| Jury confirme version papier | Étudiant (email) |
+| Note finale disponible | Étudiant |
+| Jury décline | Admin |
+
+---
+
+## SEED
+
+Le seed doit être réexécutable sans erreur (ON CONFLICT DO NOTHING).
+Il insère dans l'ordre exact (FK respectées) :
+
+1. Domaines (8 prédéfinis)
+2. Spécialités (ISIL master, CHIM licence, ELEC master)
+3. Années universitaires (2023-2024 clôturée, 2024-2025 active)
+4. Promotions (ISIL 2024-2025, CHIM 2024-2025)
+5. Profiles (1 admin, 9 enseignants, 5 étudiants, 1 entreprise)
+6. Teachers avec teacher_domains
+7. Students
+8. Company (TechCorp Algeria, is_verified=true)
+9. 6 sujets PFE (en_attente x2, valide x3, refuse x1)
+10. Voeux (quelques-uns sur les sujets validés)
+11. 2 affectations PFE avec codes générés
+12. 5 meetings pour l'affectation 1
+13. 1 évaluation encadrant
+14. 1 soutenance planifiée avec jury
+
+IDs : UUID fixes et lisibles (seed-admin-001, seed-teacher-isil-001, etc.)
+
+---
+
+## TESTS
+
+Créer un dossier `tests/` avec des tests d'intégration HTTP.
+Les tests tournent contre le serveur local.
+Chaque test affiche PASS ou FAIL avec la raison.
+
+Suites à couvrir :
+- auth.go : login dev, me, logout, accès non autorisé
+- admin.go : dashboard, users CRUD, companies, reports, subjects, pfe, defenses, settings
+- teacher.go : dashboard, sujets, validation, encadrements, jury, disponibilité
+- student.go : dashboard, catalogue, voeux, mon-pfe, meetings, mémoire, soutenance
+- company.go : dashboard, sujets, encadrements, reports
+- upload.go : logo, mémoire, avatar — types invalides, taille dépassée, auth manquante
+- notation.go : workflow complet de notation (submit, resolve, note finale)
+
+Commandes dans Makefile :
+```
+make test
+make test-auth
+make test-admin
+make test-teacher
+make test-student
+make test-company
+make test-upload
+make test-notation
+make seed
+make reset-db
+```
+
+---
+
+## VARIABLES D'ENVIRONNEMENT
+
+Chargées au démarrage depuis `.env` via un package `config` centralisé.
+Jamais de `os.Getenv` dispersé dans le code.
+
+```
+DATABASE_URL=postgresql://...
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+RESEND_API_KEY=re_...
+PORT=8080
+ENV=development
+JWT_SECRET=...
+```
+
+---
+
+## CE QUE TU DOIS FAIRE MAINTENANT
+
+1. Proposer la structure complète du projet (arborescence de fichiers et packages)
+2. Lister les librairies Go choisies avec justification pour chacune
+3. Proposer l'ordre d'implémentation par phases
+4. Attendre ma validation avant de commencer à coder
+
+
+I want a use-case like architecture, and use go fiber library

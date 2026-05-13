@@ -1,0 +1,94 @@
+:root {
+    /* == Background == */
+    --color-background: var(--color-gray-50);
+    --color-background-100: var(--color-gray-100);
+    --color-background-200: var(--color-gray-200);
+    --color-background-300: var(--color-gray-300);
+    --color-background-400: var(--color-gray-400);
+    --color-background-500: var(--color-gray-500);
+
+    /* == Text == */
+    --color-text: var(--color-gray-900);
+    --color-text-link: var(--color-gray-900);
+    --color-text-muted: var(--color-gray-500);
+    --color-text-disabled: var(--color-gray-300);
+
+    /* == Border == */
+    --color-border: var(--color-gray-200);
+    --color-border-strong: var(--color-gray-400);
+
+    /* == Surface == */
+    --color-surface: #ffffff;
+
+    /* == Accent == */
+    --color-accent: var(--color-blue-700);
+    --color-accent-fixed: var(--color-blue-700);
+    --color-accent-hover: var(--color-blue-600);
+    --color-accent-active: var(--color-blue-500);
+
+    /* == Semantic colors == */
+    --color-success: var(--color-green-600);
+    --color-warning: var(--color-amber-500);
+    --color-danger: var(--color-red-500);
+    --color-error: var(--color-red-500);
+    --color-info: var(--color-blue-600);
+
+    /* == Misc == */
+    --color-foreground: var(--color-gray-900);
+    --color-dark-10: var(--color-gray-100);
+
+    /* == Shadows == */
+    --shadow-mini: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-mini-inset: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-popover:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+html.dark {
+    /* == Background == */
+    --color-background: var(--color-gray-900);
+    --color-background-100: var(--color-gray-800);
+    --color-background-200: var(--color-gray-700);
+    --color-background-300: var(--color-gray-600);
+    --color-background-400: var(--color-gray-500);
+    --color-background-500: var(--color-gray-400);
+
+    /* == Surface == */
+    --color-surface: var(--color-gray-800);
+
+    /* == Accent == */
+    --color-accent: var(--color-blue-400);
+    --color-accent-hover: var(--color-blue-300);
+    --color-accent-active: var(--color-blue-200);
+
+    /* == Text == */
+    --color-text: var(--color-gray-50);
+    --color-text-link: var(--color-blue-300);
+    --color-text-muted: var(--color-gray-300);
+    --color-text-disabled: var(--color-gray-500);
+
+    /* == Border == */
+    --color-border: var(--color-gray-700);
+    --color-border-strong: var(--color-gray-500);
+
+    /* == Semantic colors == */
+    --color-success: var(--color-green-400);
+    --color-warning: var(--color-amber-400);
+    --color-danger: var(--color-red-400);
+    --color-error: var(--color-red-400);
+    --color-info: var(--color-blue-400);
+
+    /* == Misc == */
+    --color-foreground: var(--color-gray-50);
+    --color-dark-10: var(--color-gray-800);
+
+    /* == Shadows == */
+    --shadow-mini: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-mini-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-popover:
+        0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
