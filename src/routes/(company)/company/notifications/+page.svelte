@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
     import { Bell, CheckCheck, Mail, MailOpen } from "lucide-svelte";
+    import { shared } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -29,19 +30,14 @@
     });
 
     const unreadCount = $derived(
-        notifications.filter((n: { read_at: string | null }) => !n.read_at).length,
+        notifications.filter((n: { read_at: string | null }) => !n.read_at)
+            .length,
     );
 
     async function markReadAction(id: string) {
         try {
-            const res = await fetch("/api/subjects", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ notification_id: id }),
-            });
-            if (res.ok) {
-                await invalidateAll();
-            }
+            await shared.markNotificationRead(id);
+            await invalidateAll();
         } catch {
             // silent
         }
@@ -49,29 +45,22 @@
 
     async function markAllReadAction() {
         try {
-            const res = await fetch("/api/subjects", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ all: true }),
-            });
-            if (res.ok) {
-                await invalidateAll();
-            }
+            await shared.markAllNotificationsRead();
+            await invalidateAll();
         } catch {
             // silent
         }
     }
 </script>
 
-<Page
-    title="Notifications"
-    subtitle="Consultez toutes vos notifications."
->
+<Page title="Notifications" subtitle="Consultez toutes vos notifications.">
     <div class="notif-header">
         <div class="notif-count">
             <Bell size={16} />
             <span>
-                {notifications.length} notification{notifications.length !== 1 ? "s" : ""}
+                {notifications.length} notification{notifications.length !== 1
+                    ? "s"
+                    : ""}
                 {#if unreadCount > 0}
                     ({unreadCount} non lue{unreadCount !== 1 ? "s" : ""})
                 {/if}
@@ -87,9 +76,7 @@
     </div>
 
     {#if notifications.length === 0}
-        <p class="empty">
-            Aucune notification pour le moment.
-        </p>
+        <p class="empty">Aucune notification pour le moment.</p>
     {:else}
         <div class="notif-list">
             {#each notifications as notif}
@@ -113,18 +100,21 @@
                     <div class="notif-content">
                         <div class="notif-top">
                             <Badge
-                                variant={notificationTypeVariant[notif.type] ?? "info"}
-                                label={notificationTypeLabel[notif.type] ?? notif.type}
+                                variant={notificationTypeVariant[notif.type] ??
+                                    "info"}
+                                label={notificationTypeLabel[notif.type] ??
+                                    notif.type}
                             />
                             <span class="notif-date">
-                                {new Date(
-                                    notif.created_at,
-                                ).toLocaleDateString("fr-FR", {
-                                    day: "numeric",
-                                    month: "short",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                })}
+                                {new Date(notif.created_at).toLocaleDateString(
+                                    "fr-FR",
+                                    {
+                                        day: "numeric",
+                                        month: "short",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    },
+                                )}
                             </span>
                         </div>
                         <p class="notif-message">

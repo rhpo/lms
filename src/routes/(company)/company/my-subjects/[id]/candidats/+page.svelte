@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
     import { Users, Check, ArrowLeft } from "lucide-svelte";
+    import { company } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -43,25 +44,14 @@
         }
 
         try {
-            const res = await fetch("/api/subjects", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    subject_id: subject.id,
-                    student_ids: selectedIds,
-                    action: "assign",
-                }),
+            await company.acceptCandidat(subject.id, {
+                student_ids: selectedIds,
             });
-            if (res.ok) {
-                assignSuccess = true;
-                selectedIds = [];
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                assignError = err.message ?? "Erreur lors de l'affectation";
-            }
-        } catch {
-            assignError = "Erreur reseau";
+            assignSuccess = true;
+            selectedIds = [];
+            await invalidateAll();
+        } catch (err: unknown) {
+            assignError = err instanceof Error ? err.message : "Erreur reseau";
         }
     }
 </script>
@@ -82,15 +72,15 @@
         <div class="subject-meta">
             <Badge label={subject.group_type} variant="info" />
             <span class="max-info">
-                Ce sujet accepte {maxStudents} etudiant{maxStudents !== 1 ? "s" : ""}
+                Ce sujet accepte {maxStudents} etudiant{maxStudents !== 1
+                    ? "s"
+                    : ""}
             </span>
         </div>
     </div>
 
     {#if assignSuccess}
-        <div class="success-banner">
-            Affectation confirmee avec succes.
-        </div>
+        <div class="success-banner">Affectation confirmee avec succes.</div>
     {/if}
 
     {#if assignError}
@@ -105,7 +95,9 @@
         <div class="selection-info">
             <Users size={16} />
             <span>
-                {selectedIds.length} selectionne{selectedIds.length !== 1 ? "s" : ""} sur {maxStudents} maximum
+                {selectedIds.length} selectionne{selectedIds.length !== 1
+                    ? "s"
+                    : ""} sur {maxStudents} maximum
             </span>
         </div>
 
@@ -128,7 +120,8 @@
                             {wish.student_name ?? "Etudiant"}
                         </span>
                         <span class="student-detail">
-                            {wish.student_specialty ?? "Specialite non renseignee"}
+                            {wish.student_specialty ??
+                                "Specialite non renseignee"}
                         </span>
                     </div>
                 </div>
@@ -202,11 +195,8 @@
             var(--color-success) 10%,
             var(--color-surface)
         );
-        border: 1px solid color-mix(
-            in srgb,
-            var(--color-success) 20%,
-            transparent
-        );
+        border: 1px solid
+            color-mix(in srgb, var(--color-success) 20%, transparent);
         border-radius: 8px;
         font-size: var(--text-sm);
         font-family: var(--font-sans);
@@ -221,11 +211,8 @@
             var(--color-error) 10%,
             var(--color-surface)
         );
-        border: 1px solid color-mix(
-            in srgb,
-            var(--color-error) 20%,
-            transparent
-        );
+        border: 1px solid
+            color-mix(in srgb, var(--color-error) 20%, transparent);
         border-radius: 8px;
         font-size: var(--text-sm);
         font-family: var(--font-sans);

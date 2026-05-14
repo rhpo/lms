@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { invalidateAll } from "$app/navigation";
   import { ArrowLeft } from "lucide-svelte";
+  import { teacher } from "$lib/api";
 
   import Button from "$lib/components/ui/Button.svelte";
   import Page from "$lib/components/ui/Page.svelte";
@@ -66,22 +67,13 @@
     }
 
     try {
-      const res = await fetch("/api/subjects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          specialty: selectedSpecialtyId,
-          level: selectedNiveau,
-          group_type: groupType,
-        }),
+      await teacher.createProposedSubject({
+        title,
+        description,
+        specialty: selectedSpecialtyId,
+        level: selectedNiveau,
+        group_type: groupType,
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error?.message || "Erreur lors de la soumission");
-      }
 
       await invalidateAll();
       goto("/teacher/proposed-subjects");

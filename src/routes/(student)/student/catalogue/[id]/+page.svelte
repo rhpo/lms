@@ -2,6 +2,7 @@
     import { invalidateAll } from "$app/navigation";
     import { goto } from "$app/navigation";
     import { Users, Building2, GraduationCap, Heart } from "lucide-svelte";
+    import { student } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -9,7 +10,8 @@
 
     let { data } = $props();
 
-    const { subject, alreadyWished, alreadyAssigned, wishesCount } = $derived(data);
+    const { subject, alreadyWished, alreadyAssigned, wishesCount } =
+        $derived(data);
 
     let addError = $state("");
 
@@ -25,27 +27,15 @@
     async function addWishAction() {
         addError = "";
         try {
-            const res = await fetch("/api/subjects", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subject_id: subject.id }),
-            });
-            if (res.ok) {
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                addError = err.message ?? "Erreur lors de l'ajout aux voeux";
-            }
-        } catch {
-            addError = "Erreur reseau";
+            await student.createWish({ subject_id: subject.id });
+            await invalidateAll();
+        } catch (err: unknown) {
+            addError = err instanceof Error ? err.message : "Erreur reseau";
         }
     }
 </script>
 
-<Page
-    title={subject.title}
-    subtitle="Detail complet du sujet PFE"
->
+<Page title={subject.title} subtitle="Detail complet du sujet PFE">
     <div class="detail-layout">
         <div class="detail-main">
             <section>

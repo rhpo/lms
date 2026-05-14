@@ -7,6 +7,7 @@
         Building2,
         MessageSquare,
     } from "lucide-svelte";
+    import { student } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -58,60 +59,25 @@
             return;
         }
         try {
-            const res = await fetch("/api/subjects", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    assignment_id: pfe?.id,
-                    meeting_date: newMeetingDate,
-                    notes: newMeetingNotes,
-                }),
+            await student.addMyMeeting({
+                meeting_date: newMeetingDate,
+                student_notes: newMeetingNotes,
             });
-            if (res.ok) {
-                newMeetingDate = "";
-                newMeetingNotes = "";
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                meetingError =
-                    err.message ?? "Erreur lors de l'ajout de la reunion";
-            }
-        } catch {
-            meetingError = "Erreur reseau";
+            newMeetingDate = "";
+            newMeetingNotes = "";
+            await invalidateAll();
+        } catch (err: unknown) {
+            meetingError = err instanceof Error ? err.message : "Erreur reseau";
         }
     }
 
     async function submitClaimAction() {
-        claimError = "";
+        claimError =
+            "Erreur: Fonctionnalité non disponible. Contactez l'administration.";
         claimSuccess = false;
         if (!claimMessage) {
             claimError = "Veuillez saisir un message.";
             return;
-        }
-        try {
-            const res = await fetch("/api/subjects", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    type: "claim",
-                    assignment_id: pfe?.id,
-                    message: claimMessage,
-                }),
-            });
-            if (res.ok) {
-                claimSuccess = true;
-                claimMessage = "";
-                setTimeout(() => {
-                    showClaimModal = false;
-                    claimSuccess = false;
-                }, 2000);
-            } else {
-                const err = await res.json();
-                claimError =
-                    err.message ?? "Erreur lors de l'envoi de la reclamation";
-            }
-        } catch {
-            claimError = "Erreur reseau";
         }
     }
 </script>

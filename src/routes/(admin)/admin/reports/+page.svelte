@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
     import { FileWarning, CheckCircle, XCircle } from "lucide-svelte";
+    import { admin } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -11,12 +12,8 @@
 
     async function resolveReport(reportId: string) {
         try {
-            const res = await fetch(`/api/reports/${reportId}/resolve`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "resolved" }),
-            });
-            if (res.ok) await invalidateAll();
+            await admin.reportAction(reportId, "resolve");
+            await invalidateAll();
         } catch {
             // ignore
         }
@@ -24,12 +21,8 @@
 
     async function rejectReport(reportId: string) {
         try {
-            const res = await fetch(`/api/reports/${reportId}/resolve`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "rejected" }),
-            });
-            if (res.ok) await invalidateAll();
+            await admin.reportAction(reportId, "reject");
+            await invalidateAll();
         } catch {
             // ignore
         }

@@ -5,6 +5,7 @@
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Page from "$lib/components/ui/Page.svelte";
+  import { admin } from "$lib/api";
 
   let { data } = $props();
 
@@ -107,21 +108,12 @@
     loading = true;
 
     try {
-      const res = await fetch(`/api/defenses/${defense.id}/submit-grade`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          criterion1: c1,
-          criterion2: c2,
-          criterion3: c3,
-          criterion4: c4,
-        }),
+      await admin.submitGrade(defense.id, {
+        criterion1: c1,
+        criterion2: c2,
+        criterion3: c3,
+        criterion4: c4,
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Erreur lors de la soumission");
-      }
 
       await invalidateAll();
     } catch (err: unknown) {
@@ -159,16 +151,7 @@
         };
       }
 
-      const res = await fetch(`/api/defenses/${defense.id}/resolve-grade`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Erreur lors de la resolution");
-      }
+      await admin.resolveGrade(defense.id, payload);
 
       await invalidateAll();
     } catch (err: unknown) {

@@ -1,5 +1,5 @@
-<script lang="ts">
   import { invalidateAll } from "$app/navigation";
+  import { teacher } from "$lib/api";
 
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -71,21 +71,12 @@
     f.loading = true;
 
     try {
-      const res = await fetch(`/api/defenses/${defenseId}/submit-grade`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          criterion1: f.c1,
-          criterion2: f.c2,
-          criterion3: f.c3,
-          criterion4: f.c4,
-        }),
+      await teacher.submitGrade(defenseId, {
+        criterion1: f.c1,
+        criterion2: f.c2,
+        criterion3: f.c3,
+        criterion4: f.c4,
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error?.message || "Erreur lors de l'envoi");
-      }
 
       await invalidateAll();
     } catch (err: unknown) {

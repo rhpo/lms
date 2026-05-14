@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
     import { Plus, Info } from "lucide-svelte";
+    import { company } from "$lib/api";
 
     import Button from "$lib/components/ui/Button.svelte";
     import FormField from "$lib/components/ui/FormField.svelte";
@@ -65,32 +66,23 @@
         }
 
         try {
-            const res = await fetch("/api/subjects", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title,
-                    description,
-                    specialty: selectedSpecialtyId,
-                    level: selectedNiveau,
-                    group_type: groupType,
-                    proposer_role: "company",
-                }),
+            await company.createSubject({
+                title,
+                description,
+                specialty: selectedSpecialtyId,
+                level: selectedNiveau,
+                group_type: groupType,
+                proposer_role: "company",
             });
-            if (res.ok) {
-                success = true;
-                title = "";
-                description = "";
-                selectedSpecialtyId = "";
-                selectedNiveau = "";
-                groupType = "monome";
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                error = err.message ?? "Erreur lors de la soumission";
-            }
-        } catch {
-            error = "Erreur reseau";
+            success = true;
+            title = "";
+            description = "";
+            selectedSpecialtyId = "";
+            selectedNiveau = "";
+            groupType = "monome";
+            await invalidateAll();
+        } catch (err: unknown) {
+            error = err instanceof Error ? err.message : "Erreur reseau";
         }
     }
 </script>

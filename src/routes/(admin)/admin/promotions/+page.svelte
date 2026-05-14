@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import { Plus } from "lucide-svelte";
+  import { admin } from "$lib/api";
 
   import Button from "$lib/components/ui/Button.svelte";
   import Modal from "$lib/components/ui/Modal.svelte";
@@ -80,28 +81,19 @@
   async function createPromotion() {
     createError = "";
     try {
-      const res = await fetch("/api/promotions/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          label,
-          specialty: selectedSpecialtyId,
-          academic_year_id: academicYearId,
-        }),
+      await admin.createPromotion({
+        label,
+        specialty: selectedSpecialtyId,
+        academic_year_id: academicYearId,
       });
-      if (res.ok) {
-        showCreateModal = false;
-        label = "";
-        selectedSpecialtyId = "";
-        selectedNiveau = "";
-        academicYearId = "";
-        await invalidateAll();
-      } else {
-        const err = await res.json();
-        createError = err.message ?? "Erreur lors de la creation";
-      }
-    } catch {
-      createError = "Erreur reseau";
+      showCreateModal = false;
+      label = "";
+      selectedSpecialtyId = "";
+      selectedNiveau = "";
+      academicYearId = "";
+      await invalidateAll();
+    } catch (err) {
+      createError = err instanceof Error ? err.message : "Erreur reseau";
     }
   }
 </script>

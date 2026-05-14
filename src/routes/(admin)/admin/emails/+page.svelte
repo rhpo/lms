@@ -3,6 +3,7 @@
     import Button from "$lib/components/ui/Button.svelte";
     import Input from "$lib/components/ui/Input/Input.svelte";
     import Page from "$lib/components/ui/Page.svelte";
+    import { admin } from "$lib/api";
     import { showToast } from "$lib/utils/toast";
 
     let recipientType = $state<
@@ -35,13 +36,7 @@
                 };
             }
 
-            const res = await fetch("/api/admin/send-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            await admin.sendEmail(payload);
             showToast.success("Email envoyé avec succès !");
             emailTo = "";
             emailSubject = "";
@@ -64,7 +59,6 @@
                 <Mail size={20} />
                 <h2>Nouvel email</h2>
             </div>
-
 
             <form
                 class="email-form"
@@ -264,6 +258,4 @@
         gap: 0.5rem;
         margin-top: 0.5rem;
     }
-
-
 </style>

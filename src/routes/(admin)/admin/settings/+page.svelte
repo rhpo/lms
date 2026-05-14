@@ -12,6 +12,7 @@
     CheckCircle,
     XCircle,
   } from "lucide-svelte";
+  import { admin } from "$lib/api";
 
   import Button from "$lib/components/ui/Button.svelte";
   import FormField from "$lib/components/ui/FormField.svelte";
@@ -69,24 +70,15 @@
   async function saveDeadlines() {
     deadlinesSaving = true;
     try {
-      const res = await fetch("/api/settings/deadlines", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          submission_open_at: submissionOpen,
-          submission_close_at: submissionClose,
-          max_wishes: maxWishes,
-        }),
+      await admin.updateDeadlines({
+        submission_open_at: submissionOpen,
+        submission_close_at: submissionClose,
+        max_wishes: maxWishes,
       });
-      if (!res.ok) {
-        const err = await res.json();
-        showToast(err.message ?? "Erreur lors de l'enregistrement", "error");
-      } else {
-        showToast("Deadlines enregistrees avec succes");
-        await invalidateAll();
-      }
-    } catch {
-      showToast("Erreur reseau", "error");
+      showToast("Deadlines enregistrees avec succes");
+      await invalidateAll();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erreur reseau", "error");
     } finally {
       deadlinesSaving = false;
     }
@@ -128,77 +120,49 @@
 
   async function createSpeciality() {
     try {
-      const res = await fetch("/api/specialities/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newSpecName,
-          code: newSpecCode,
-          year_type: newSpecYearType,
-        }),
+      await admin.createSpeciality({
+        name: newSpecName,
+        code: newSpecCode,
+        year_type: newSpecYearType,
       });
-      if (res.ok) {
-        showCreateSpecModal = false;
-        newSpecName = "";
-        newSpecCode = "";
-        newSpecYearType = "licence";
-        showToast("Specialite creee avec succes");
-        await invalidateAll();
-      } else {
-        const err = await res.json();
-        showToast(err.message ?? "Erreur lors de la creation", "error");
-      }
-    } catch {
-      showToast("Erreur reseau", "error");
+      showCreateSpecModal = false;
+      newSpecName = "";
+      newSpecCode = "";
+      newSpecYearType = "licence";
+      showToast("Specialite creee avec succes");
+      await invalidateAll();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erreur reseau", "error");
     }
   }
 
   async function updateSpeciality() {
     if (!editingSpec) return;
     try {
-      const res = await fetch("/api/specialities/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingSpec.id,
-          name: editSpecName,
-          code: editSpecCode,
-          year_type: editSpecYearType,
-        }),
+      await admin.updateSpeciality(editingSpec.id, {
+        name: editSpecName,
+        code: editSpecCode,
+        year_type: editSpecYearType,
       });
-      if (res.ok) {
-        showEditSpecModal = false;
-        editingSpec = null;
-        showToast("Specialite modifiee avec succes");
-        await invalidateAll();
-      } else {
-        const err = await res.json();
-        showToast(err.message ?? "Erreur lors de la modification", "error");
-      }
-    } catch {
-      showToast("Erreur reseau", "error");
+      showEditSpecModal = false;
+      editingSpec = null;
+      showToast("Specialite modifiee avec succes");
+      await invalidateAll();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erreur reseau", "error");
     }
   }
 
   async function deleteSpeciality() {
     if (!deletingSpec) return;
     try {
-      const res = await fetch("/api/specialities/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: deletingSpec.id }),
-      });
-      if (res.ok) {
-        showDeleteSpecModal = false;
-        deletingSpec = null;
-        showToast("Specialite supprimee avec succes");
-        await invalidateAll();
-      } else {
-        const err = await res.json();
-        showToast(err.message ?? "Erreur lors de la suppression", "error");
-      }
-    } catch {
-      showToast("Erreur reseau", "error");
+      await admin.deleteSpeciality(deletingSpec.id);
+      showDeleteSpecModal = false;
+      deletingSpec = null;
+      showToast("Specialite supprimee avec succes");
+      await invalidateAll();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erreur reseau", "error");
     }
   }
 </script>

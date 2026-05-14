@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
   import { ArrowLeft } from "lucide-svelte";
+  import { teacher } from "$lib/api";
 
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -45,16 +46,7 @@
     loading = true;
 
     try {
-      const res = await fetch(`/api/subjects/${subject.id}/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision, comment }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error?.message || "Erreur lors de la validation");
-      }
+      await teacher.validateSubject(subject.id, { decision, comment });
 
       await invalidateAll();
       goto("/teacher/subjects-to-validate");

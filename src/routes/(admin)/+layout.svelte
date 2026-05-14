@@ -15,7 +15,7 @@
         Cog,
     } from "lucide-svelte";
 
-    let { children } = $props();
+    let { children, data } = $props();
 
     const adminNavLinks = [
         {
@@ -41,7 +41,7 @@
 
 <AppShell
     links={adminNavLinks}
-    user={{ full_name: "Administrateur", role: "admin" }}
+    user={data.profile ?? { full_name: "Administrateur", role: "admin" }}
     notificationsHref="/admin/notifications"
 >
     {@render children()}

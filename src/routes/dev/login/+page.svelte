@@ -1,5 +1,6 @@
 <script lang="ts">
     import { ChevronRight, ChevronDown, RefreshCw, Plus } from "lucide-svelte";
+    import { authStore } from "$lib/stores/auth";
 
     type Role = "admin" | "teacher" | "student" | "company";
 
@@ -135,6 +136,23 @@
     function newId() {
         cId = `dev-custom-${Math.random().toString(36).slice(2, 8)}`;
     }
+
+    let loginError = $state("");
+
+    async function loginAs(email: string) {
+        loginError = "";
+        try {
+            await authStore.devLogin(email);
+        } catch (err) {
+            loginError =
+                err instanceof Error ? err.message : "Erreur de connexion";
+        }
+    }
+
+    async function loginCustom() {
+        if (!cEmail) return;
+        await loginAs(cEmail);
+    }
 </script>
 
 <svelte:head>
@@ -160,7 +178,13 @@
 
         <section class="persona-list">
             {#each PERSONAS as persona (persona.id)}
-                <div class="persona-row" data-role={persona.role}>
+                <button
+                    type="button"
+                    class="persona-row"
+                    data-role={persona.role}
+                    onclick={() => loginAs(persona.email)}
+                    disabled={authStore.loading}
+                >
                     <span class="role-bar"></span>
                     <span class="persona-main">
                         <span class="persona-name">{persona.full_name}</span>
@@ -172,8 +196,11 @@
                             <ChevronRight size={15} strokeWidth={2} />
                         </span>
                     </span>
-                </div>
+                </button>
             {/each}
+            {#if loginError}
+                <div class="login-error">{loginError}</div>
+            {/if}
         </section>
 
         <section class="custom-section">
@@ -244,6 +271,16 @@
                                 </button>
                             </span>
                         </div>
+                    </div>
+                    <div class="form-submit">
+                        <button
+                            type="button"
+                            class="btn-login"
+                            onclick={loginCustom}
+                            disabled={!cEmail || authStore.loading}
+                        >
+                            Se connecter
+                        </button>
                     </div>
                 </div>
             {/if}
@@ -345,7 +382,7 @@
         margin-bottom: 0.875rem;
     }
 
-    .persona-list div + div .persona-row {
+    .persona-list button + button {
         border-top: 1px solid var(--color-border);
     }
 
@@ -359,10 +396,49 @@
         border: none;
         text-align: left;
         transition: background var(--transition-fast);
+        cursor: pointer;
     }
 
-    .persona-row:hover {
+    .persona-row:hover:not(:disabled) {
         background: var(--color-background-100);
+    }
+
+    .persona-row:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .login-error {
+        padding: 0.75rem 1rem;
+        background: color-mix(in srgb, #ef4444 10%, transparent);
+        color: #ef4444;
+        font-size: 0.8rem;
+        font-family: var(--font-sans);
+        border-top: 1px solid color-mix(in srgb, #ef4444 20%, transparent);
+    }
+
+    .form-submit {
+        margin-top: 0.75rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-login {
+        padding: 0.5rem 1.25rem;
+        background: var(--color-accent);
+        color: #fff;
+        border: none;
+        border-radius: 7px;
+        font-family: var(--font-sans);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity var(--transition-fast);
+    }
+
+    .btn-login:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     .role-bar {

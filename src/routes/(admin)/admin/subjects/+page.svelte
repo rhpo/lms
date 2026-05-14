@@ -3,6 +3,7 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { Check, CheckCircle, Clock, X, XCircle } from "lucide-svelte";
+  import { admin } from "$lib/api";
 
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -131,45 +132,26 @@
   async function assignValidatorsAction() {
     assignError = "";
     try {
-      const res = await fetch("/api/subjects/assign-validators", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject_id: assignSubjectId,
-          validator1_id: validator1Id,
-          validator2_id: validator2Id,
-        }),
+      await admin.subjectAction(assignSubjectId, "assign-validators", {
+        validator1_id: validator1Id,
+        validator2_id: validator2Id,
       });
-      if (res.ok) {
-        showAssignModal = false;
-        assignSubjectId = "";
-        showToast("Validateurs assignes avec succes");
-        await invalidateAll();
-      } else {
-        const err = await res.json();
-        assignError = err.message ?? "Erreur lors de l'assignation";
-      }
-    } catch {
-      assignError = "Erreur reseau";
+      showAssignModal = false;
+      assignSubjectId = "";
+      showToast("Validateurs assignes avec succes");
+      await invalidateAll();
+    } catch (err) {
+      assignError = err instanceof Error ? err.message : "Erreur reseau";
     }
   }
 
   async function unblockSubject(id: string) {
     try {
-      const res = await fetch("/api/subjects/unblock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        showToast(err.message ?? "Erreur lors du deblocage", "error");
-        return;
-      }
+      await admin.subjectAction(id, "unblock");
       showToast("Sujet debloque avec succes");
       await invalidateAll();
-    } catch {
-      showToast("Erreur reseau", "error");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erreur reseau", "error");
     }
   }
 </script>

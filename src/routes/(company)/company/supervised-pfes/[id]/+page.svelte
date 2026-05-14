@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
     import { Calendar, User, Building2, ArrowLeft } from "lucide-svelte";
+    import { company } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -32,25 +33,14 @@
         }
         evalLoading = true;
         try {
-            const res = await fetch("/api/evaluations/supervisor/submit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    assignmentId: pfe.id,
-                    criterion5,
-                }),
+            await company.submitEvaluation(pfe.id, {
+                criterion5,
+                comment: evalComment,
             });
-            if (res.ok) {
-                evalSuccess = "Evaluation soumise avec succes.";
-                await invalidateAll();
-            } else {
-                const body = await res.json().catch(() => ({}));
-                evalError =
-                    body.message ??
-                    "Erreur lors de la soumission de l evaluation.";
-            }
-        } catch {
-            evalError = "Erreur reseau.";
+            evalSuccess = "Evaluation soumise avec succes.";
+            await invalidateAll();
+        } catch (err: unknown) {
+            evalError = err instanceof Error ? err.message : "Erreur reseau.";
         } finally {
             evalLoading = false;
         }
@@ -86,26 +76,15 @@
             return;
         }
         try {
-            const res = await fetch("/api/subjects", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    assignment_id: pfe.id,
-                    meeting_date: newMeetingDate,
-                    notes: newMeetingNotes,
-                }),
+            await company.addMeeting(pfe.id, {
+                meeting_date: newMeetingDate,
+                notes: newMeetingNotes,
             });
-            if (res.ok) {
-                newMeetingDate = "";
-                newMeetingNotes = "";
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                meetingError =
-                    err.message ?? "Erreur lors de l'ajout de la reunion";
-            }
-        } catch {
-            meetingError = "Erreur reseau";
+            newMeetingDate = "";
+            newMeetingNotes = "";
+            await invalidateAll();
+        } catch (err: unknown) {
+            meetingError = err instanceof Error ? err.message : "Erreur reseau";
         }
     }
 </script>

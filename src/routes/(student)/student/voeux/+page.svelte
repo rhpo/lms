@@ -2,6 +2,7 @@
     import { invalidateAll } from "$app/navigation";
     import { goto } from "$app/navigation";
     import { Heart, X, FileText } from "lucide-svelte";
+    import { student } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -41,19 +42,10 @@
     async function removeWishAction(wishId: string) {
         removeError = "";
         try {
-            const res = await fetch("/api/subjects", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ wish_id: wishId }),
-            });
-            if (res.ok) {
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                removeError = err.message ?? "Erreur lors du retrait du voeu";
-            }
-        } catch {
-            removeError = "Erreur reseau";
+            await student.deleteWish(wishId);
+            await invalidateAll();
+        } catch (err: unknown) {
+            removeError = err instanceof Error ? err.message : "Erreur reseau";
         }
     }
 </script>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import { untrack } from "svelte";
+  import { teacher as teacherApi } from "$lib/api";
 
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -39,22 +40,11 @@
     error = "";
 
     try {
-      const res = await fetch("/api/teacher/availability", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status,
-          unavailable_until:
-            status === "indisponible_jusqu_au" ? unavailableUntil : null,
-        }),
+      await teacherApi.updateAvailability({
+        status,
+        unavailable_until:
+          status === "indisponible_jusqu_au" ? unavailableUntil : null,
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(
-          body.error?.message || "Erreur lors de l'enregistrement",
-        );
-      }
 
       await invalidateAll();
     } catch (err: unknown) {

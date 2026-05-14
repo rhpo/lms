@@ -9,7 +9,7 @@
         Bell,
     } from "lucide-svelte";
 
-    let { children } = $props();
+    let { children, data } = $props();
 
     const studentNavLinks = [
         {
@@ -27,7 +27,7 @@
 
 <AppShell
     links={studentNavLinks}
-    user={{ full_name: "Student", role: "student" }}
+    user={data.profile ?? { full_name: "Student", role: "student" }}
     notificationsHref="/student/notifications"
 >
     {@render children()}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import { Check, CheckCheck } from "lucide-svelte";
+  import { shared } from "$lib/api";
 
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -17,7 +18,10 @@
     disponibilite: "Disponibilite",
   };
 
-  const TYPE_VARIANTS: Record<string, "info" | "warning" | "success" | "danger" | "neutral"> = {
+  const TYPE_VARIANTS: Record<
+    string,
+    "info" | "warning" | "success" | "danger" | "neutral"
+  > = {
     validation_requise: "warning",
     affectation: "info",
     jury: "neutral",
@@ -26,7 +30,7 @@
 
   async function markRead(id: string) {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: "POST" });
+      await shared.markNotificationRead(id);
       await invalidateAll();
     } catch {
       // silent
@@ -35,7 +39,7 @@
 
   async function markAllRead() {
     try {
-      await fetch("/api/notifications/read-all", { method: "POST" });
+      await shared.markAllNotificationsRead();
       await invalidateAll();
     } catch {
       // silent
@@ -65,18 +69,24 @@
               variant={TYPE_VARIANTS[notif.type] || "info"}
               label={TYPE_LABELS[notif.type] || notif.type}
             />
-            <span class="date">{new Date(notif.created_at).toLocaleDateString("fr-FR", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}</span>
+            <span class="date"
+              >{new Date(notif.created_at).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}</span
+            >
           </div>
           <p class="message">{notif.payload?.message ?? notif.type}</p>
           {#if !notif.read_at}
             <div class="item-actions">
-              <Button variant="ghost" Icon={Check} onclick={() => markRead(notif.id)}>
+              <Button
+                variant="ghost"
+                Icon={Check}
+                onclick={() => markRead(notif.id)}
+              >
                 Marquer comme lu
               </Button>
             </div>

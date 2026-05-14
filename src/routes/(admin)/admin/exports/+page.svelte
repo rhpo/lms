@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button from "$lib/components/ui/Button.svelte";
   import Page from "$lib/components/ui/Page.svelte";
+  import { downloadBlob } from "$lib/api";
 
   let { data } = $props();
 
@@ -23,14 +24,8 @@
       params.set("type", exportType);
       params.set("format", format);
 
-      const res = await fetch(`/api/exports?${params.toString()}`);
+      const blob = await downloadBlob(`/admin/exports?${params.toString()}`);
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Erreur lors de l'export");
-      }
-
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

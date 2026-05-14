@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
     import { Plus, Calendar, Clock, Tag, FileText } from "lucide-svelte";
+    import { student } from "$lib/api";
 
     import Button from "$lib/components/ui/Button.svelte";
     import Page from "$lib/components/ui/Page.svelte";
@@ -38,25 +39,18 @@
                     "Aucun PFE trouve. Impossible d'ajouter un suivi.";
                 return;
             }
-            const res = await fetch("/api/progress-reports/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    assignmentId: pfe.id,
-                    meeting_date: form.meeting_date,
-                    student_notes: form.student_notes || "",
-                }),
+            await student.addMyMeeting({
+                meeting_date: form.meeting_date,
+                student_notes: form.student_notes || "",
             });
-            if (res.ok) {
-                resetForm();
-                showForm = false;
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                submitError = err.message ?? "Erreur lors de l'ajout du suivi.";
-            }
-        } catch {
-            submitError = "Erreur reseau. Veuillez reessayer.";
+            resetForm();
+            showForm = false;
+            await invalidateAll();
+        } catch (err: unknown) {
+            submitError =
+                err instanceof Error
+                    ? err.message
+                    : "Erreur reseau. Veuillez reessayer.";
         } finally {
             submitting = false;
         }

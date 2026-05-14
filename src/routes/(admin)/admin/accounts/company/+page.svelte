@@ -10,6 +10,7 @@
         CheckCircle,
         XCircle,
     } from "lucide-svelte";
+    import { admin } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -53,15 +54,10 @@
 
     async function toggleVerification(profileId: string, current: boolean) {
         try {
-            const res = await fetch("/api/companies/validate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    company_id: profileId,
-                    is_verified: !current,
-                }),
+            await admin.companyAction(profileId, "verify-company", {
+                is_verified: !current,
             });
-            if (res.ok) await invalidateAll();
+            await invalidateAll();
         } catch {
             // ignore
         }
@@ -72,24 +68,15 @@
         editError = "";
         editLoading = true;
         try {
-            const res = await fetch(
-                `/api/companies/${editingCompany.profile_id}/update`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(editForm),
-                },
+            await admin.companyAction(
+                editingCompany.profile_id,
+                "update",
+                editForm,
             );
-            if (res.ok) {
-                await invalidateAll();
-                closeEdit();
-            } else {
-                const body = await res.json().catch(() => ({}));
-                editError =
-                    body.error?.message ?? "Erreur lors de la modification";
-            }
-        } catch {
-            editError = "Erreur reseau";
+            await invalidateAll();
+            closeEdit();
+        } catch (err) {
+            editError = err instanceof Error ? err.message : "Erreur reseau";
         } finally {
             editLoading = false;
         }

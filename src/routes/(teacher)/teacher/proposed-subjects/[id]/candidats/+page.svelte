@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
   import { ArrowLeft, Check } from "lucide-svelte";
+  import { teacher } from "$lib/api";
 
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -8,7 +9,7 @@
 
   let { data } = $props();
 
-  const { subject, students } = $derived(data);
+  const { subject, candidats } = $derived(data);
 
   const GROUP_LIMITS: Record<string, number> = {
     monome: 1,
@@ -41,16 +42,7 @@
     loading = true;
 
     try {
-      const res = await fetch(`/api/subjects/${subject.id}/assign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ student_ids: selectedIds }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error?.message || "Erreur lors de l'affectation");
-      }
+      await teacher.acceptCandidat(subject.id, { student_ids: selectedIds });
 
       await invalidateAll();
       goto("/teacher/proposed-subjects");
@@ -96,13 +88,13 @@
     >
   </div>
 
-  {#if students.length === 0}
+  {#if candidats.length === 0}
     <div class="empty">
       <p>Aucun etudiant n'a mis ce sujet dans ses voeux pour le moment.</p>
     </div>
   {:else}
     <div class="student-list">
-      {#each students as student (student.id)}
+      {#each candidats as student (student.id)}
         <button
           class="student-card"
           class:selected={selectedIds.includes(student.id)}

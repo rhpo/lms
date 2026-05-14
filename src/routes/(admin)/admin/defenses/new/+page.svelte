@@ -4,6 +4,7 @@
 
   import Button from "$lib/components/ui/Button.svelte";
   import Page from "$lib/components/ui/Page.svelte";
+  import { admin } from "$lib/api";
 
   let { data } = $props();
 
@@ -31,14 +32,15 @@
       return;
     }
 
-    const res = await fetch(
-      `/api/defenses/recommended-teachers?assignment_id=${id}`,
-    );
-    if (res.ok) {
-      const body = await res.json();
-      recommendedTeachers = body.teachers;
+    try {
+      const data = (await admin.recommendJury(id)) as {
+        teachers: { id: string; full_name: string }[];
+      };
+      recommendedTeachers = data?.teachers || [];
       presidentId = "";
       memberId = "";
+    } catch {
+      // ignore
     }
   }
 
@@ -55,22 +57,13 @@
     loading = true;
 
     try {
-      const res = await fetch("/api/defenses/schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assignment_id: assignmentId,
-          scheduled_at: scheduledAt,
-          room,
-          president_id: presidentId,
-          member_id: memberId,
-        }),
+      await admin.createDefense({
+        assignment_id: assignmentId,
+        scheduled_at: scheduledAt,
+        room,
+        president_id: presidentId,
+        member_id: memberId,
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Erreur lors de la planification");
-      }
 
       await invalidateAll();
       goto("/admin/defenses");

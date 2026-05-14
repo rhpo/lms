@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
   import { ArrowLeft, Plus } from "lucide-svelte";
+  import { teacher } from "$lib/api";
 
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -51,24 +52,14 @@
     }
     evalLoading = true;
     try {
-      const res = await fetch("/api/evaluations/supervisor/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assignmentId: pfe.id,
-          criterion5,
-        }),
+      await teacher.submitEvaluation(pfe.id, {
+        criterion5,
       });
-      if (res.ok) {
-        evalSuccess = "Evaluation soumise avec succes.";
-        await invalidateAll();
-      } else {
-        const body = await res.json().catch(() => ({}));
-        evalError =
-          body.message ?? "Erreur lors de la soumission de l evaluation.";
-      }
-    } catch {
-      evalError = "Erreur reseau.";
+
+      evalSuccess = "Evaluation soumise avec succes.";
+      await invalidateAll();
+    } catch (err: unknown) {
+      evalError = err instanceof Error ? err.message : "Erreur reseau.";
     } finally {
       evalLoading = false;
     }
@@ -84,20 +75,11 @@
     meetingLoading = true;
 
     try {
-      const res = await fetch(`/api/assignments/${pfe.id}/log-meeting`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          meeting_date: meetingDate,
-          notes: meetingNotes,
-          progress: meetingProgress,
-        }),
+      await teacher.addMeeting(pfe.id, {
+        meeting_date: meetingDate,
+        notes: meetingNotes,
+        progress: meetingProgress,
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error?.message || "Erreur lors de l'ajout");
-      }
 
       meetingNotes = "";
       meetingProgress = "";

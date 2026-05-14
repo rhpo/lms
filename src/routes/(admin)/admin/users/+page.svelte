@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
+  import { admin } from "$lib/api";
   import {
     Users,
     BookOpen,
@@ -111,25 +112,20 @@
 
   async function addTeacher() {
     try {
-      const res = await fetch("/api/users/add-teacher", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: teacherEmail,
-          grade: teacherGrade,
-          department: teacherDepartment,
-          specialty_ids: teacherSpecialtyId ? [teacherSpecialtyId] : [],
-        }),
+      await admin.createUser({
+        role: "teacher",
+        email: teacherEmail,
+        grade: teacherGrade,
+        department: teacherDepartment,
+        specialty_ids: teacherSpecialtyId ? [teacherSpecialtyId] : [],
       });
-      if (res.ok) {
-        showAddTeacher = false;
-        teacherEmail = "";
-        teacherGrade = "assistant";
-        teacherDepartment = "";
-        teacherNiveau = "";
-        teacherSpecialtyId = "";
-        await invalidateAll();
-      }
+      showAddTeacher = false;
+      teacherEmail = "";
+      teacherGrade = "assistant";
+      teacherDepartment = "";
+      teacherNiveau = "";
+      teacherSpecialtyId = "";
+      await invalidateAll();
     } catch (err) {
       console.error("Erreur reseau", err);
     }
@@ -137,26 +133,21 @@
 
   async function addStudent() {
     try {
-      const res = await fetch("/api/users/add-student", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: studentEmail,
-          student_number: studentNumber,
-          specialty: studentSpecialtyId,
-          level: studentNiveau,
-          promotion_year: studentPromotionYear,
-        }),
+      await admin.createUser({
+        role: "student",
+        email: studentEmail,
+        student_number: studentNumber,
+        specialty: studentSpecialtyId,
+        level: studentNiveau,
+        promotion_year: studentPromotionYear,
       });
-      if (res.ok) {
-        showAddStudent = false;
-        studentEmail = "";
-        studentNumber = "";
-        studentNiveau = "";
-        studentSpecialtyId = "";
-        studentPromotionYear = new Date().getFullYear();
-        await invalidateAll();
-      }
+      showAddStudent = false;
+      studentEmail = "";
+      studentNumber = "";
+      studentNiveau = "";
+      studentSpecialtyId = "";
+      studentPromotionYear = new Date().getFullYear();
+      await invalidateAll();
     } catch (err) {
       console.error("Erreur reseau", err);
     }
@@ -168,15 +159,10 @@
       const formData = new FormData();
       formData.append("type", csvType);
       formData.append("file", csvFile);
-      const res = await fetch("/api/users/import-csv", {
-        method: "POST",
-        body: formData,
-      });
-      if (res.ok) {
-        showImportCsv = false;
-        csvFile = null;
-        await invalidateAll();
-      }
+      await admin.importUsersCSV(formData);
+      showImportCsv = false;
+      csvFile = null;
+      await invalidateAll();
     } catch (err) {
       console.error("Erreur reseau", err);
     }
@@ -184,16 +170,7 @@
 
   async function deactivateUser(id: string) {
     try {
-      const res = await fetch("/api/users/deactivate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        console.error(err.message);
-        return;
-      }
+      await admin.userAction(id, "deactivate");
       await invalidateAll();
     } catch (err) {
       console.error("Erreur reseau", err);
@@ -202,16 +179,10 @@
 
   async function verifyCompany(profileId: string) {
     try {
-      const res = await fetch("/api/users/verify-company", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        console.error(err.message);
-        return;
-      }
+      // For verify_company, you might want to use companyAction or userAction depending on backend route
+      // Let's assume userAction("verify-company") since that uses IDs well, or update admin API endpoints later.
+      // Wait, admin.userAction corresponds to POST /admin/accounts/users/:id/action
+      await admin.userAction(profileId, "verify-company");
       await invalidateAll();
     } catch (err) {
       console.error("Erreur reseau", err);

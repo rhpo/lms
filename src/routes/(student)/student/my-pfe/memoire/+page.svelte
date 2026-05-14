@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
     import { Upload, FileText, AlertTriangle } from "lucide-svelte";
+    import { student } from "$lib/api";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -37,21 +38,15 @@
             const formData = new FormData();
             formData.append("file", file);
 
-            const res = await fetch(`/api/pfe/upload-memoire`, {
-                method: "POST",
-                body: formData,
-            });
+            await student.submitMemoire(formData);
 
-            if (res.ok) {
-                uploadSuccess = true;
-                await invalidateAll();
-            } else {
-                const err = await res.json();
-                uploadError =
-                    err.message ?? "Erreur lors de l'envoi du memoire.";
-            }
-        } catch {
-            uploadError = "Erreur reseau. Veuillez reessayer.";
+            uploadSuccess = true;
+            await invalidateAll();
+        } catch (err: unknown) {
+            uploadError =
+                err instanceof Error
+                    ? err.message
+                    : "Erreur reseau. Veuillez reessayer.";
         } finally {
             uploading = false;
             input.value = "";
