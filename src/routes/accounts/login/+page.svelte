@@ -1,8 +1,7 @@
 <script>
     import Logo from "$lib/components/Logo.svelte";
     import View from "$lib/components/ui/View.svelte";
-    import LoginGoogle from "$lib/components/ui/custom/LoginGoogle.svelte";
-    import LoginDev from "$lib/components/ui/custom/LoginDev.svelte";
+    import Button from "$lib/components/ui/Button.svelte";
     import { BRAND } from "$lib/constants/branding";
 
     import { Building2 } from "lucide-svelte";
@@ -19,9 +18,9 @@
             </div>
 
             <div class="cta">
-                <LoginGoogle />
-
-                <LoginDev autoWidth />
+                <Button variant="secondary" href="/dev/login">
+                    Dev Login
+                </Button>
             </div>
 
             <p class="question">

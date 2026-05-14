@@ -8,8 +8,8 @@ export async function load() {
     const data = await student.dashboard() as Record<string, unknown>;
     return {
       currentPfe: data?.current_pfe ?? null,
-      wishes: (data?.wishes as unknown[]) ?? [],
-      notifications: (data?.notifications as unknown[]) ?? [],
+      wishes: (data?.wishes as any[]) ?? [],
+      notifications: (data?.notifications as any[]) ?? [],
       yearId: (data?.active_year_id as string) ?? null,
     };
   } catch {

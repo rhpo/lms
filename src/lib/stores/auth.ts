@@ -1,5 +1,5 @@
 import { auth as authApi, getToken, setToken, clearToken } from '$lib/api';
-import type { Profile } from '$lib/api';
+import type { SessionUser as Profile } from '$lib/types';
 import { goto } from '$app/navigation';
 
 // ── Reactive state ──────────────────────────────────────────────────────────

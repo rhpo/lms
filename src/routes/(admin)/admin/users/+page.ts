@@ -10,10 +10,10 @@ export async function load() {
       shared.specialities(),
     ]);
     return {
-      formattedTeachers: (usersData?.teachers as unknown[]) ?? [],
-      formattedStudents: (usersData?.students as unknown[]) ?? [],
-      formattedCompanies: (usersData?.companies as unknown[]) ?? [],
-      specialities: (specialities as unknown[]) ?? [],
+      formattedTeachers: (usersData?.teachers as any[]) ?? [],
+      formattedStudents: (usersData?.students as any[]) ?? [],
+      formattedCompanies: (usersData?.companies as any[]) ?? [],
+      specialities: (specialities as any[]) ?? [],
     };
   } catch {
     return { formattedTeachers: [], formattedStudents: [], formattedCompanies: [], specialities: [] };

@@ -14,10 +14,10 @@ export async function load() {
     ]);
     return {
       deadlines: deadlines ?? null,
-      specialities: (specialities as unknown[]) ?? [],
-      domains: (domains as unknown[]) ?? [],
-      promotions: (promotions as unknown[]) ?? [],
-      academicYears: (academicYears as unknown[]) ?? [],
+      specialities: (specialities as any[]) ?? [],
+      domains: (domains as any[]) ?? [],
+      promotions: (promotions as any[]) ?? [],
+      academicYears: (academicYears as any[]) ?? [],
     };
   } catch {
     return { deadlines: null, specialities: [], domains: [], promotions: [], academicYears: [] };

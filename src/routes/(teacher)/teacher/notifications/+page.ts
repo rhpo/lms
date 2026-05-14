@@ -6,7 +6,7 @@ export const prerender = false;
 export async function load() {
   try {
     const notifications = await teacher.listNotifications();
-    return { notifications: (notifications as unknown[]) ?? [] };
+    return { notifications: (notifications as any[]) ?? [] };
   } catch {
     return { notifications: [] };
   }

@@ -12,7 +12,7 @@ export async function load({ params }: LoadEvent) {
     ]);
     return {
       subject: subject ?? null,
-      teachers: ((teachers as Record<string, unknown>)?.teachers as unknown[]) ?? [],
+      teachers: ((teachers as Record<string, unknown>)?.teachers as any[]) ?? [],
     };
   } catch {
     return { subject: null, teachers: [] };

@@ -6,7 +6,7 @@ export const prerender = false;
 export async function load() {
   try {
     const subjects = await company.listSubjects();
-    return { subjects: (subjects as unknown[]) ?? [] };
+    return { subjects: (subjects as any[]) ?? [] };
   } catch {
     return { subjects: [] };
   }

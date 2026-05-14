@@ -123,7 +123,7 @@ export const admin = {
   createUser: (body: unknown) => post('/admin/accounts/users', body),
   getUser: (id: string) => get(`/admin/accounts/users/${id}`),
   updateUser: (id: string, body: unknown) => patch(`/admin/accounts/users/${id}`, body),
-  userAction: (id: string, action: string, payload?: unknown) =>
+  userAction: (id: string, action: string, payload?: any) =>
     post(`/admin/accounts/users/${id}/action`, { action, ...payload }),
   importUsersCSV: (formData: FormData) =>
     request('/admin/accounts/users/import-csv', { method: 'POST', body: formData }),
@@ -138,7 +138,7 @@ export const admin = {
     return get(`/admin/subjects${qs}`);
   },
   getSubject: (id: string) => get(`/admin/subjects/${id}`),
-  subjectAction: (id: string, action: string, payload?: unknown) =>
+  subjectAction: (id: string, action: string, payload?: any) =>
     post(`/admin/subjects/${id}/action`, { action, ...payload }),
   listAssignments: () => get('/admin/pfe'),
   getAssignment: (id: string) => get(`/admin/pfe/${id}`),

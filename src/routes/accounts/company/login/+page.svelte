@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { tippy } from "$lib/scripts/tippy";
   import { BRAND } from "$lib/constants/branding";
   import { GraduationCap, User } from "lucide-svelte";
@@ -10,11 +10,25 @@
   import InputEmail from "$lib/components/ui/Input/InputEmail.svelte";
   import InputPassword from "$lib/components/ui/Input/InputPassword.svelte";
 
-  import { enhance } from "$app/forms";
+  import { authStore } from "$lib/stores/auth";
 
-  let { form } = $props();
   let checked = $state(false);
   let loading = $state(false);
+  let email = $state("");
+  let password = $state("");
+  let error = $state("");
+
+  async function handleLogin() {
+    loading = true;
+    error = "";
+    try {
+      await authStore.devLogin(email);
+    } catch (err: any) {
+      error = err.message || "Failed to login";
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 <View fullScreen center>
@@ -27,21 +41,14 @@
         <p>Connect as a company to manage external PFE's.</p>
       </div>
 
-      {#if form?.error}
+      {#if error}
         <div class="error-banner">
-          <p>{form.error}</p>
+          <p>{error}</p>
         </div>
       {/if}
 
       <form
-        method="POST"
-        use:enhance={() => {
-          loading = true;
-          return async ({ update }) => {
-            loading = false;
-            await update();
-          };
-        }}
+        onsubmit={(e) => { e.preventDefault(); handleLogin(); }}
         class="form-wrapper"
       >
         <div class="form">
@@ -49,13 +56,14 @@
             name="email"
             label="Enter your email"
             placeholder="email@company.com"
-            value={form?.email ?? ''}
+            bind:value={email}
           />
 
           <InputPassword
             name="password"
             label="Enter your password"
             placeholder="********"
+            bind:value={password}
           />
         </div>
 

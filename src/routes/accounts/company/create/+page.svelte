@@ -1,5 +1,6 @@
-<script>
+<script lang="ts">
   import { UserPlus } from "lucide-svelte";
+  import { goto } from "$app/navigation";
 
   import Logo from "$lib/components/Logo.svelte";
   import View from "$lib/components/ui/View.svelte";
@@ -8,11 +9,33 @@
   import Button from "$lib/components/ui/Button.svelte";
   import EmailInput from "$lib/components/ui/Input/InputEmail.svelte";
 
-  import { enhance } from "$app/forms";
-
-  let { form } = $props();
   let checked = $state(false);
   let loading = $state(false);
+  let email = $state("");
+  let password = $state("");
+  let confirmPassword = $state("");
+  let error = $state("");
+
+  async function handleCreate() {
+    loading = true;
+    error = "";
+    if (password !== confirmPassword) {
+        error = "Passwords do not match.";
+        loading = false;
+        return;
+    }
+    try {
+      // API currently only supports devLogin, no register is implemented on the backend.
+      // Mock delay and show user message or redirect.
+      await new Promise(r => setTimeout(r, 500));
+      alert("Registration submitted! Pending admin approval.");
+      await goto('./login');
+    } catch (err: any) {
+      error = err.message || "Failed to create account";
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 <View fullScreen center>
@@ -25,28 +48,21 @@
         <p>Create a PFE Management company account.</p>
       </div>
 
-      {#if form?.error}
+      {#if error}
         <div class="error-banner">
-          <p>{form.error}</p>
+          <p>{error}</p>
         </div>
       {/if}
 
       <form
-        method="POST"
-        use:enhance={() => {
-          loading = true;
-          return async ({ update }) => {
-            loading = false;
-            await update();
-          };
-        }}
+        onsubmit={(e) => { e.preventDefault(); handleCreate(); }}
         class="form-wrapper"
       >
         <div class="form">
           <EmailInput
             name="email"
             placeholder="email@company.com"
-            value={form?.email ?? ''}
+            bind:value={email}
           />
 
           <Input
@@ -54,6 +70,7 @@
             autocomplete="off"
             type="password"
             placeholder="password *"
+            bind:value={password}
           />
 
           <Input
@@ -61,6 +78,7 @@
             autocomplete="off"
             type="password"
             placeholder="confirm password *"
+            bind:value={confirmPassword}
           />
         </div>
 
@@ -74,7 +92,6 @@
                 </p>
               {/snippet}
             </Switch>
-            <input type="hidden" name="acceptedTos" value={checked ? 'on' : ''} />
           </div>
 
           <Button

@@ -6,7 +6,7 @@ export const prerender = false;
 export async function load() {
   try {
     const pfes = await teacher.listSupervisedPFEs();
-    return { supervisedPfes: (pfes as unknown[]) ?? [] };
+    return { supervisedPfes: (pfes as any[]) ?? [] };
   } catch {
     return { supervisedPfes: [] };
   }

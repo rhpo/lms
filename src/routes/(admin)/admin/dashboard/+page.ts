@@ -9,7 +9,7 @@ export async function load() {
     return {
       stats: (data?.stats as Record<string, number>) ?? {},
       activeYear: data?.active_year ?? null,
-      recentAuditLogs: (data?.recent_audit_logs as unknown[]) ?? [],
+      recentAuditLogs: (data?.recent_audit_logs as any[]) ?? [],
     };
   } catch {
     return { stats: {}, activeYear: null, recentAuditLogs: [] };

@@ -6,7 +6,7 @@ export const prerender = false;
 export async function load() {
   try {
     const meetings = await student.listMyMeetings();
-    return { meetings: (meetings as unknown[]) ?? [] };
+    return { meetings: (meetings as any[]) ?? [] };
   } catch {
     return { meetings: [] };
   }

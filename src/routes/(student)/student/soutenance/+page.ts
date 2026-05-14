@@ -5,9 +5,12 @@ export const prerender = false;
 
 export async function load() {
   try {
-    const soutenance = await student.getSoutenance();
-    return { soutenance: soutenance ?? null };
+    const data = await student.getSoutenance() as any;
+    return { 
+      defense: data?.defense ?? data ?? null, 
+      grades: data?.grades ?? [] 
+    };
   } catch {
-    return { soutenance: null };
+    return { defense: null, grades: [] };
   }
 }

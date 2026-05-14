@@ -8,7 +8,7 @@ export async function load() {
     const data = await student.getMyPFE() as Record<string, unknown>;
     return {
       pfe: data?.pfe ?? null,
-      teammates: (data?.teammates as unknown[]) ?? [],
+      teammates: (data?.teammates as any[]) ?? [],
     };
   } catch {
     return { pfe: null, teammates: [] };

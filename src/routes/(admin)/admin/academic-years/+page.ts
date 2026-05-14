@@ -6,7 +6,7 @@ export const prerender = false;
 export async function load() {
   try {
     const academicYears = await admin.listAcademicYears();
-    return { academicYears: (academicYears as unknown[]) ?? [] };
+    return { academicYears: (academicYears as any[]) ?? [] };
   } catch {
     return { academicYears: [] };
   }

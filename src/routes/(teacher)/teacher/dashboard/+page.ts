@@ -10,7 +10,7 @@ export async function load() {
       supervisedCount: (data?.supervised_count as number) ?? 0,
       pendingValidationCount: (data?.pending_validation_count as number) ?? 0,
       proposedCount: (data?.proposed_count as number) ?? 0,
-      upcomingJuryDuties: (data?.upcoming_jury_duties as unknown[]) ?? [],
+      upcomingJuryDuties: (data?.upcoming_jury_duties as any[]) ?? [],
       availabilityStatus: (data?.availability_status as string) ?? 'disponible',
       unavailableUntil: (data?.unavailable_until as string) ?? null,
       unreadCount: (data?.unread_count as number) ?? 0,

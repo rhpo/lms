@@ -11,7 +11,7 @@ export async function load() {
     ]);
     return {
       assignments: assignments ?? [],
-      teachers: ((teachers as Record<string, unknown>)?.teachers as unknown[]) ?? [],
+      teachers: ((teachers as Record<string, unknown>)?.teachers as any[]) ?? [],
     };
   } catch {
     return { assignments: [], teachers: [] };
