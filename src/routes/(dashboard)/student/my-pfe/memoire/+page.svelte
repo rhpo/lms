@@ -23,7 +23,7 @@
             uploadError = "Veuillez saisir l'URL de votre mémoire.";
             return;
         }
-        // Basic URL validation
+
         try {
             new URL(url);
         } catch {

@@ -35,7 +35,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// Run migrations (idempotent – CREATE TABLE IF NOT EXISTS)
+
 	if err := runMigrations(db); err != nil {
 		log.Fatalf("Erreur migration: %v", err)
 	}
@@ -46,11 +46,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Erreur début transaction: %v", err)
 	}
-	defer tx.Rollback() //nolint
+	defer tx.Rollback()
 
-	// ─────────────────────────────────────────────────────────────
-	// 1. DEPARTMENTS
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	deptNames := []string{"Informatique", "Electronique", "Chimie", "Finance"}
 	deptIDs := map[string]int64{}
 	for _, name := range deptNames {
@@ -59,9 +59,9 @@ func main() {
 	}
 	fmt.Println("  ✓ Départements (4)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 2. DOMAINS
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	domainNames := []string{
 		"Intelligence Artificielle",
 		"Génie Logiciel",
@@ -79,9 +79,9 @@ func main() {
 	}
 	fmt.Println("  ✓ Domaines (8)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 3. SPECIALITIES
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	type specDef struct{ name, code, yearType, dept string }
 	specs := []specDef{
 		{"Ingénierie des Systèmes d'Information et Logiciels", "ISIL", "licence", "Informatique"},
@@ -102,9 +102,9 @@ func main() {
 	}
 	fmt.Println("  ✓ Spécialités (8)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 4. ACADEMIC YEARS
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	mustExec(tx, `INSERT OR IGNORE INTO academic_years (label, status) VALUES (?, ?)`, "2023-2024", "cloturee")
 	mustExec(tx, `INSERT OR IGNORE INTO academic_years (label, status, submission_open_at, submission_close_at, max_wishes) VALUES (?, ?, ?, ?, ?)`,
 		"2024-2025", "active", "2025-01-15 00:00:00", "2025-06-30 23:59:59", 5)
@@ -113,20 +113,20 @@ func main() {
 	_ = yearID2024
 	fmt.Println("  ✓ Années académiques (2)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 5. PROMOTIONS
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	mustExec(tx, `INSERT OR IGNORE INTO promotions (label, academic_year_id) VALUES (?, ?)`, "ISIL M2 2024-2025", yearID2025)
 	mustExec(tx, `INSERT OR IGNORE INTO promotions (label, academic_year_id) VALUES (?, ?)`, "ELEC M2 2024-2025", yearID2025)
 	promoISIL := queryID(tx, `SELECT id FROM promotions WHERE label = ?`, "ISIL M2 2024-2025")
 	promoELEC := queryID(tx, `SELECT id FROM promotions WHERE label = ?`, "ELEC M2 2024-2025")
 	fmt.Println("  ✓ Promotions (2)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 6. PROFILES — ADMIN + TEACHERS
-	// ─────────────────────────────────────────────────────────────
 
-	// Admin : DJOUAMAA Amir (rôle admin + enregistrement teacher)
+
+
+
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('admin', 'DJOUAMAA Amir', 'djouamaa.amir@codiha.com', 1)`)
 	djouamaaProfileID := queryID(tx, `SELECT id FROM profiles WHERE email = ?`, "djouamaa.amir@codiha.com")
@@ -140,7 +140,7 @@ func main() {
 		mustExec(tx, `INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (?, ?)`, djouamaaTeacherID, domainIDs[d])
 	}
 
-	// BOUYAKOUB Faycal
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('teacher', 'BOUYAKOUB Faycal', 'bouyakoub.faycal@codiha.com', 1)`)
 	bouyakProfileID := queryID(tx, `SELECT id FROM profiles WHERE email = ?`, "bouyakoub.faycal@codiha.com")
@@ -154,7 +154,7 @@ func main() {
 		mustExec(tx, `INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (?, ?)`, bouyakTeacherID, domainIDs[d])
 	}
 
-	// OUADAHI Nazim
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('teacher', 'OUADAHI Nazim', 'ouadahi.nazim@codiha.com', 1)`)
 	ouadahiProfileID := queryID(tx, `SELECT id FROM profiles WHERE email = ?`, "ouadahi.nazim@codiha.com")
@@ -168,7 +168,7 @@ func main() {
 		mustExec(tx, `INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (?, ?)`, ouadahiTeacherID, domainIDs[d])
 	}
 
-	// MAHMOUDI Mohamed
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('teacher', 'MAHMOUDI Mohamed', 'mahmoudi.mohamed@codiha.com', 1)`)
 	mahmoudiProfileID := queryID(tx, `SELECT id FROM profiles WHERE email = ?`, "mahmoudi.mohamed@codiha.com")
@@ -185,9 +185,9 @@ func main() {
 	fmt.Printf("  ✓ Enseignants (4) — IDs teacher: DJOUAMAA=%d, BOUYAKOUB=%d, OUADAHI=%d, MAHMOUDI=%d\n",
 		djouamaaTeacherID, bouyakTeacherID, ouadahiTeacherID, mahmoudiTeacherID)
 
-	// ─────────────────────────────────────────────────────────────
-	// 7. PROFILES — STUDENTS
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	type studentDef struct {
 		fullName, email, number, specCode, level string
 		promoID                                  int64
@@ -201,7 +201,7 @@ func main() {
 		{"BOUAFIA Racim", "racim.bouafia@codiha.com", "202332056789", "ELEC", "M2", promoELEC},
 	}
 
-	studentIDs := map[string]int64{} // keyed by email
+	studentIDs := map[string]int64{}
 	for _, s := range students {
 		mustExec(tx,
 			`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('student', ?, ?, 1)`,
@@ -215,9 +215,9 @@ func main() {
 	}
 	fmt.Println("  ✓ Étudiants (6)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 8. COMPANY — Sonatrach (en attente de validation)
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('company', 'Salah Zeghdani', 'salah.zeghdani@sonatrach.dz', 1)`)
 	zeghdaniProfileID := queryID(tx, `SELECT id FROM profiles WHERE email = ?`, "salah.zeghdani@sonatrach.dz")
@@ -231,14 +231,14 @@ func main() {
 		"Société Nationale pour la Recherche, la Production, le Transport, la Transformation et la Commercialisation des Hydrocarbures.",
 		"sonatrach@sonatrach.dz",
 		"023 48 31 31",
-		0, // en attente de validation
+		0,
 	)
 	sonatrachCompanyID := queryID(tx, `SELECT id FROM companies WHERE profile_id = ?`, zeghdaniProfileID)
 	fmt.Printf("  ✓ Entreprise Sonatrach (en attente) — company_id=%d\n", sonatrachCompanyID)
 
-	// ─────────────────────────────────────────────────────────────
-	// 9. PFE SUBJECTS
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	type subjectDef struct {
 		title, description, groupType string
 		proposerID                    int64
@@ -309,13 +309,13 @@ func main() {
 	}
 	fmt.Println("  ✓ Sujets PFE (4)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 10. WISHES
-	// ─────────────────────────────────────────────────────────────
-	// HADID + GOUMIRI → sujet BOUYAKOUB (idx 1), accepte
-	// BOUDRAA + SAADI → sujet DJOUAMAA (idx 0), accepte
-	// ABDERAHIM → sujet BOUYAKOUB (idx 1), en_attente
-	// BOUAFIA → sujet OUADAHI (idx 2), en_attente
+
+
+
+
+
+
+
 	type wishDef struct {
 		studentEmail string
 		subjectIdx   int
@@ -338,10 +338,10 @@ func main() {
 	}
 	fmt.Println("  ✓ Vœux (6)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 11. PFE ASSIGNMENTS
-	// ─────────────────────────────────────────────────────────────
-	// Assignment 1 : HADID + GOUMIRI → sujet BOUYAKOUB, encadrant BOUYAKOUB
+
+
+
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO pfe_assignments
 			(pfe_code, subject_id, academic_year_id, student_id, student2_id, supervisor_id, status)
@@ -355,7 +355,7 @@ func main() {
 	)
 	assign1ID := queryID(tx, `SELECT id FROM pfe_assignments WHERE pfe_code = ?`, "PFE-ISIL-2025-001")
 
-	// Assignment 2 : BOUDRAA + SAADI → sujet DJOUAMAA, encadrant DJOUAMAA
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO pfe_assignments
 			(pfe_code, subject_id, academic_year_id, student_id, student2_id, supervisor_id, status)
@@ -372,9 +372,9 @@ func main() {
 
 	fmt.Println("  ✓ Affectations PFE (2)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 12. PROGRESS REPORTS (Journal de suivi — Assignment 1)
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	type meetingDef struct {
 		date, meetingType, topics, observation, status string
 		duration                                       int
@@ -422,18 +422,18 @@ func main() {
 	}
 	fmt.Println("  ✓ Journal de suivi — 5 réunions (assignment 1)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 13. SUPERVISOR EVALUATION (Assignment 1)
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO supervisor_evaluations (pfe_assignment_id, evaluator_id, criterion5) VALUES (?, ?, ?)`,
 		assign1ID, bouyakTeacherID, 3.5,
 	)
 	fmt.Println("  ✓ Évaluation encadrant — 3.5/4 (BOUYAKOUB → HADID/GOUMIRI)")
 
-	// ─────────────────────────────────────────────────────────────
-	// 14. DEFENSE JURY + DEFENSE (Assignment 1)
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	mustExec(tx,
 		`INSERT OR IGNORE INTO defense_juries
 			(assignment_id, president_id, member_id)
@@ -450,9 +450,9 @@ func main() {
 	)
 	fmt.Println("  ✓ Jury + Soutenance planifiée — 16 juin 2025, Salle B205")
 
-	// ─────────────────────────────────────────────────────────────
-	// COMMIT
-	// ─────────────────────────────────────────────────────────────
+
+
+
 	if err := tx.Commit(); err != nil {
 		log.Fatalf("Erreur commit: %v", err)
 	}

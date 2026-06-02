@@ -22,14 +22,14 @@ const DEFAULT_PLUGINS: Plugin[] = [followCursor, animateFill, sticky];
 export function tippy(node: HTMLElement, params: TooltipParams = {}) {
     const { enabled = true, plugins = [], ...tippyProps } = params;
 
-    // always create the instance, even if disabled
+
     const instance = _tippy(node, {
         ...DEFAULT_PROPS,
         ...tippyProps,
         plugins: [...DEFAULT_PLUGINS, ...plugins],
     });
 
-    // apply initial state
+
     if (!enabled || !tippyProps.content) {
         instance.disable();
     }

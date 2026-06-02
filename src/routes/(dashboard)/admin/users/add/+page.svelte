@@ -9,20 +9,20 @@
 
   let { data } = $props();
 
-  // Determine type from preloaded data (set by loader from ?type= param)
+
   let type = $state(data.type as "teacher" | "student");
 
-  // ── Common fields ────────────────────────────────────────────────────────────
+
   let fullName = $state("");
   let email = $state("");
   let saving = $state(false);
 
-  // ── Teacher fields ───────────────────────────────────────────────────────────
+
   let grade = $state("assistant");
   let departmentId = $state<number | null>(null);
   let selectedDomains = $state<number[]>([]);
 
-  // ── Student fields ───────────────────────────────────────────────────────────
+
   let studentNumber = $state("");
   let level = $state("");
   let specialityId = $state<number | null>(null);
@@ -65,8 +65,8 @@
           grade,
           department_id: departmentId ? Number(departmentId) : 0,
         });
-        // After creating the teacher, update domains if any selected
-        // (domain assignment via update endpoint after creation)
+
+
       } else {
         await admin.createStudent({
           full_name: fullName,

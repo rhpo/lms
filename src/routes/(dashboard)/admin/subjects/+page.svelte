@@ -27,7 +27,7 @@
   const subjects: PfeSubject[] = $derived(data.subjects);
   const teachers: Profile[] = $derived(data.teachers);
 
-  // Filters
+
   let statusFilter = $state("");
 
   const filteredSubjects = $derived(() => {
@@ -36,7 +36,7 @@
     return subjects.filter((s) => s.status === statusFilter);
   });
 
-  // Assign validators modal
+
   let showAssignModal = $state(false);
   let assignSubjectId = $state(0);
   let assignError = $state("");
@@ -165,7 +165,7 @@
     <tbody>
       {#each filteredSubjects()
         .sort((a, b) => b.created_at.localeCompare(a.created_at))
-        // make the en_attente the first
+
         .sort((a, b) => {
           if (a.status === "en_attente" && b.status !== "en_attente") return -1;
           if (a.status !== "en_attente" && b.status === "en_attente") return 1;

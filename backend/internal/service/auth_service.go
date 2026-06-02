@@ -102,16 +102,16 @@ func (s *AuthService) GetProfile(id int64) (*entity.Profile, error) {
 
 // RegisterCompanyRequest est la requête d'inscription d'un employé d'entreprise.
 type RegisterCompanyRequest struct {
-	// Employee info
+
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`
 	Position string `json:"position"`
 	Phone    string `json:"phone"`
 
-	// Existing company (mutually exclusive with NewCompany)
+
 	CompanyID int64 `json:"company_id"`
 
-	// New company (when CompanyID == 0)
+
 	CompanyName  string `json:"company_name"`
 	Sector       string `json:"sector"`
 	Description  string `json:"description"`
@@ -123,18 +123,18 @@ type RegisterCompanyRequest struct {
 // Si company_id est fourni, l'employé rejoint une entreprise existante (vérifiée).
 // Sinon, une nouvelle entreprise est créée (non vérifiée, en attente de validation admin).
 func (s *AuthService) RegisterCompanyEmployee(req *RegisterCompanyRequest) (*DevLoginResponse, error) {
-	// Check email uniqueness
+
 	existing, _ := s.profileRepo.FindByEmail(req.Email)
 	if existing != nil {
 		return nil, apperror.Conflict("Un compte existe déjà avec cet email")
 	}
 
-	// Validate
+
 	if req.FullName == "" || req.Email == "" {
 		return nil, apperror.BadRequest("Le nom complet et l'email sont obligatoires")
 	}
 
-	// Create profile
+
 	profile := &entity.Profile{
 		Role:     "company",
 		FullName: req.FullName,
@@ -148,7 +148,7 @@ func (s *AuthService) RegisterCompanyEmployee(req *RegisterCompanyRequest) (*Dev
 	var company *entity.Company
 
 	if req.CompanyID > 0 {
-		// Join existing verified company
+
 		var err error
 		company, err = s.companyRepo.FindByID(req.CompanyID)
 		if err != nil || company == nil {
@@ -157,7 +157,7 @@ func (s *AuthService) RegisterCompanyEmployee(req *RegisterCompanyRequest) (*Dev
 		if !company.IsVerified {
 			return nil, apperror.Forbidden("Cette entreprise n'est pas encore vérifiée")
 		}
-		// Create a company record linked to this profile, copying company info
+
 		newCompany := &entity.Company{
 			ProfileID:    profile.ID,
 			CompanyName:  company.CompanyName,
@@ -167,14 +167,14 @@ func (s *AuthService) RegisterCompanyEmployee(req *RegisterCompanyRequest) (*Dev
 			ContactEmail: company.ContactEmail,
 			ContactPhone: company.ContactPhone,
 			Website:      company.Website,
-			IsVerified:   true, // auto-verified since the company is already verified
+			IsVerified:   true,
 		}
 		if err := s.companyRepo.Insert(newCompany); err != nil {
 			return nil, apperror.Internal("Erreur création du compte entreprise")
 		}
 		company = newCompany
 	} else {
-		// Create new company (pending admin verification)
+
 		if req.CompanyName == "" {
 			return nil, apperror.BadRequest("Le nom de l'entreprise est obligatoire")
 		}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ArrowDown, MessageCircle } from 'lucide-svelte';
 
-	// when mounted, replace the #chatbase-bubble-button with this self component
+
 	let isOpen = $state(false);
 
 	let chatButton: HTMLButtonElement | null = $state(null);
@@ -16,17 +16,17 @@
 			return;
 		}
 
-		// Try to find the chat button
+
 		chatButton = document.querySelector('#chatbase-bubble-button') as HTMLButtonElement;
 
 		if (!chatButton) {
 			console.log('Chat button not found, retrying...');
 			tries++;
-			setTimeout(tryBind, 500); // Retry after 500ms
+			setTimeout(tryBind, 500);
 		}
 	}
 	$effect(() => {
-		// wait until a button with id #chatbase-bubble-button is available
+
 		tryBind();
 	});
 

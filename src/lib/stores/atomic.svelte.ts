@@ -62,7 +62,7 @@ export const atomic = {
       _error = err instanceof Error
         ? err.message
         : 'Impossible de charger les données de référence.';
-      throw err;          // re-throw so the layout gate can catch it
+      throw err;
     }
   },
 

@@ -21,7 +21,7 @@ export async function load() {
     const list = await teacher.listJuryDuties();
     const defenses: Defense[] = list ?? [];
 
-    // Fetch grade context for each defense in parallel (best-effort)
+
     const duties: DutyWithContext[] = await Promise.all(
       defenses.map(async (d) => {
         try {

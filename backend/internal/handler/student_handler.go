@@ -92,16 +92,16 @@ func (h *StudentHandler) CreateWish(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins and subject proposer
+
 	go func() {
-		subjectTitle := fmt.Sprintf("sujet #%d", req.SubjectID) // safe fallback
+		subjectTitle := fmt.Sprintf("sujet #%d", req.SubjectID)
 		if sub, err := h.svc.GetCatalogueSubject(req.SubjectID); err == nil && sub != nil {
 			subjectTitle = sub.Title
 		}
 		h.notifier.NotifyAdmins(notify.TypeAffectation,
 			fmt.Sprintf("Un étudiant a postulé au sujet « %s ».", subjectTitle))
 
-		// Also notify the subject proposer (teacher or company)
+
 		proposerID, _ := h.svc.GetSubjectProposerID(req.SubjectID)
 		if proposerID != 0 {
 			h.notifier.Send(proposerID, notify.TypeSujet,
@@ -183,7 +183,7 @@ func (h *StudentHandler) AddMyMeeting(c fiber.Ctx) error {
 		return response.ValidationError(c, "La durée est requise")
 	}
 
-	// Parse the date — support date-only and datetime-local formats
+
 	var meetingDate time.Time
 	var parseErr error
 	for _, layout := range []string{time.RFC3339, "2006-01-02T15:04", "2006-01-02"} {
@@ -216,7 +216,7 @@ func (h *StudentHandler) AddMyMeeting(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify supervisor about the new meeting
+
 	go func() {
 		assignment, err := h.svc.GetMyPFE(userID)
 		if err != nil || assignment == nil {
@@ -282,9 +282,9 @@ func (h *StudentHandler) SubmitMemoire(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins and supervisor — use subject title, never raw IDs
+
 	go func() {
-		subjectTitle := "un PFE" // safe fallback
+		subjectTitle := "un PFE"
 		if assignment.Subject != nil && assignment.Subject.Title != "" {
 			subjectTitle = fmt.Sprintf("« %s »", assignment.Subject.Title)
 		}

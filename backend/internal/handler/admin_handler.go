@@ -105,7 +105,7 @@ func (h *AdminHandler) UpdateUser(c fiber.Ctx) error {
 		return response.ValidationError(c, "ID invalide")
 	}
 
-	// Fetch existing profile to determine role
+
 	profile, err := h.svc.GetUser(id)
 	if err != nil {
 		return response.Error(c, err)
@@ -117,11 +117,11 @@ func (h *AdminHandler) UpdateUser(c fiber.Ctx) error {
 	var req struct {
 		FullName      string  `json:"full_name"`
 		Email         string  `json:"email"`
-		// Teacher fields
+
 		Grade        string  `json:"grade"`
 		DepartmentID *int64  `json:"department_id"`
 		DomainIDs    []int64 `json:"domain_ids"`
-		// Student fields
+
 		StudentNumber string `json:"student_number"`
 		Level         string `json:"level"`
 		SpecialityID  *int64 `json:"speciality_id"`
@@ -141,7 +141,7 @@ func (h *AdminHandler) UpdateUser(c fiber.Ctx) error {
 			return response.Error(c, err)
 		}
 	default:
-		// Generic profile update
+
 		p := &entity.Profile{FullName: req.FullName, Email: req.Email}
 		if err := h.svc.UpdateUser(id, p); err != nil {
 			return response.Error(c, err)
@@ -164,7 +164,7 @@ func (h *AdminHandler) UpdateUserAvatar(c fiber.Ctx) error {
 		return response.ValidationError(c, "Fichier requis (champ: file)")
 	}
 
-	// Validate size & type
+
 	const maxSize = 2 << 20 // 2 MB
 	if file.Size > maxSize {
 		return response.ValidationError(c, "Fichier trop volumineux (max 2MB)")
@@ -176,7 +176,7 @@ func (h *AdminHandler) UpdateUserAvatar(c fiber.Ctx) error {
 		return response.ValidationError(c, "Type de fichier non supporté (jpg, png, webp)")
 	}
 
-	// Save to disk
+
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	dst := filepath.Join(h.svc.UploadDir(), "avatars", filename)
 	if err := c.SaveFile(file, dst); err != nil {
@@ -329,7 +329,7 @@ func (h *AdminHandler) CompanyAction(c fiber.Ctx) error {
 		return response.ValidationError(c, "Données invalides")
 	}
 
-	// Fetch target company BEFORE action to resolve companyName
+
 	targetCompany, err := h.svc.GetCompany(id)
 	if err != nil {
 		return response.Error(c, err)
@@ -339,13 +339,13 @@ func (h *AdminHandler) CompanyAction(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify company about admin decision
+
 	msg := "Votre compte entreprise a été approuvé."
 	if req.Action == "reject" {
 		msg = "Votre compte entreprise a été rejeté."
 	}
 
-	// Notify each user in the company via their ProfileID
+
 	if targetCompany != nil && targetCompany.CompanyName != nil {
 		allUsersInCompany, _ := h.svc.GetCompaniesByName(*targetCompany.CompanyName)
 		for _, comp := range allUsersInCompany {
@@ -435,7 +435,7 @@ func (h *AdminHandler) SubjectAction(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify subject proposer about admin decision
+
 	if subject, err := h.svc.GetSubject(id); err == nil && subject != nil {
 		var msg string
 		switch req.Action {
@@ -450,7 +450,7 @@ func (h *AdminHandler) SubjectAction(c fiber.Ctx) error {
 		}
 		go h.notifier.Send(subject.ProposerID, notify.TypeAffectation, msg)
 
-		// If assigning validators, notify them (resolve teacher entity ID → profile ID first)
+
 		if req.Validator1 != 0 {
 			if t, err := h.svc.GetTeacherByID(req.Validator1); err == nil && t != nil {
 				go h.notifier.Send(t.ProfileID, notify.TypeValidationRequise,
@@ -574,7 +574,7 @@ func (h *AdminHandler) CreateDefense(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Build a human-readable date and subject title for notifications
+
 	go func() {
 		dateFormatted := req.ScheduledAt
 		if t, err := time.Parse(time.RFC3339, req.ScheduledAt); err == nil {
@@ -701,7 +701,7 @@ func (h *AdminHandler) ResolveGrade(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify student that their grade is available (with subject title)
+
 	go func() {
 		defense, err := h.svc.GetDefense(id)
 		if err != nil || defense == nil || defense.AssignmentID == 0 {
@@ -719,7 +719,7 @@ func (h *AdminHandler) ResolveGrade(c fiber.Ctx) error {
 		if assignment.Student != nil {
 			h.notifier.Send(assignment.Student.ProfileID, notify.TypeJury, msg)
 		}
-		// Also notify the supervisor
+
 		if assignment.Supervisor != nil {
 			h.notifier.Send(assignment.Supervisor.ProfileID, notify.TypeJury,
 				fmt.Sprintf("La note finale pour le sujet %s a été délibérée par l'administration.", subjectTitle))

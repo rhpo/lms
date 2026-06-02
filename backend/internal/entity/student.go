@@ -13,7 +13,7 @@ type Student struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 
-	// Relations
+
 	Profile    *Profile    `json:"profile,omitempty"`
 	Speciality *Speciality `json:"speciality,omitempty"`
 	Promotion  *Promotion  `json:"promotion,omitempty"`

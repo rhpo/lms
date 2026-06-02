@@ -43,12 +43,12 @@
         await sendMailToUsers(targets, emailSubject, emailBody);
       }
 
-      // success/error toasts are handled inside $lib/email
+
       emailTo = "";
       emailSubject = "";
       emailBody = "";
     } catch {
-      // toast already shown by email.ts; just reset the sending state below
+
     } finally {
       sending = false;
     }

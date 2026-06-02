@@ -11,7 +11,7 @@
   let { data } = $props();
   const { teacher } = $derived(data);
 
-  // Capture initial values for form fields (intentionally not reactive)
+
   let status = $state(
     untrack(() => teacher?.availability_status ?? "disponible"),
   );

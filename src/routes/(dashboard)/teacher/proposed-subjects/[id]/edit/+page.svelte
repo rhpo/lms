@@ -19,7 +19,7 @@
     { value: "ingenieur", label: "Ingénieur" },
   ] as const;
 
-  // Pre-fill from existing subject
+
   let title = $state(subject?.title ?? "");
   let description = $state(subject?.description ?? "");
   let groupType = $state<"monome" | "binome" | "trinome">(
@@ -48,7 +48,7 @@
       : [],
   );
 
-  // Validator comments for context
+
   const validator1Comment = $derived(subject?.validator1_comment ?? null);
   const validator2Comment = $derived(subject?.validator2_comment ?? null);
   const hasComments = $derived(

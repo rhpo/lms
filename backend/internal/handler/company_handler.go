@@ -65,7 +65,7 @@ func (h *CompanyHandler) CreateSubject(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins: external subject proposed
+
 	go h.notifier.NotifyAdmins(notify.TypeValidationRequise,
 		fmt.Sprintf("Un sujet externe « %s » a été proposé par une entreprise.", req.Title))
 
@@ -242,7 +242,7 @@ func (h *CompanyHandler) AddMeeting(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify student about the new meeting
+
 	go func() {
 		assignment, err := h.svc.GetSupervisedPFE(id)
 		if err != nil || assignment == nil {
@@ -305,7 +305,7 @@ func (h *CompanyHandler) SubmitEvaluation(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify student and admins that the supervisor evaluation has been submitted
+
 	go func() {
 		assignment, err := h.svc.GetSupervisedPFE(id)
 		if err != nil || assignment == nil {
@@ -353,7 +353,7 @@ func (h *CompanyHandler) CreateReport(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins: new company report
+
 	go h.notifier.NotifyAdmins(notify.TypeValidationRequise,
 		"Un nouveau signalement a été soumis par une entreprise.")
 

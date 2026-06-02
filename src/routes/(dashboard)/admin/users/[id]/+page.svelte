@@ -10,29 +10,29 @@
 
   let { data } = $props();
 
-  // Mutable clone of profile (for avatar_url updates)
+
   let profile = $state(JSON.parse(JSON.stringify(data.profile)));
   let saving = $state(false);
   let uploadingAvatar = $state(false);
 
-  // Editable form fields — must be $state so bind:value works
+
   let fullName = $state(data.profile.full_name || "");
   let email = $state(data.profile.email || "");
 
-  // Teacher fields
+
   let grade = $state(data.profile.teacher?.grade ?? "");
   let departmentId = $state<number | null>(data.profile.teacher?.department_id ?? null);
   let selectedDomains = $state<number[]>(
     data.profile.teacher?.domaines?.map((d: any) => d.id) ?? [],
   );
 
-  // Student fields
+
   let studentNumber = $state(data.profile.student?.student_number ?? "");
   let level = $state(data.profile.student?.level ?? "");
   let specialityId = $state<number | null>(data.profile.student?.speciality_id ?? null);
   let promotionId = $state<number | null>(data.profile.student?.promotion_id ?? null);
 
-  // Re-seed all fields whenever server data changes (e.g. after invalidateAll)
+
   $effect(() => {
     const p = data.profile;
     untrack(() => {

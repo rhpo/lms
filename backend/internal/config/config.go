@@ -22,7 +22,7 @@ type Config struct {
 // Load charge la configuration depuis le fichier .env (si présent) et les variables d'environnement.
 // Panique si une variable obligatoire est absente.
 func Load() *Config {
-	// Tente de charger le .env, ignore l'erreur si le fichier n'existe pas.
+
 	_ = godotenv.Load()
 
 	cfg := &Config{

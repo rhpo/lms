@@ -77,9 +77,9 @@ func (r *PfeAssignmentRepository) MonthlyTimelineStats(months int) ([]MonthlyTim
 	now := time.Now()
 
 	for i := months - 1; i >= 0; i-- {
-		// end of the (i months ago) month
+
 		target := now.AddDate(0, -i, 0)
-		// first day of next month → exclusive upper bound
+
 		endOfMonth := time.Date(target.Year(), target.Month()+1, 1, 0, 0, 0, 0, time.UTC)
 
 		monthNames := []string{"Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"}

@@ -27,8 +27,8 @@
 	}
 
 	function firstDayOfMonth(month: number, year: number): number {
-		// 0 = Sunday, 1 = Monday, ... 6 = Saturday
-		// Convert to Monday-based: Monday=0, Tuesday=1, ... Sunday=6
+
+
 		const day = new Date(year, month, 1).getDay();
 		return day === 0 ? 6 : day - 1;
 	}

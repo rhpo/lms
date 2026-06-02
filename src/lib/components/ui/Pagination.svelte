@@ -14,33 +14,33 @@
 		}
 	});
 
-	// Calculate visible page numbers based on current page and total pages
+
 	function getVisiblePages(currentPage: number, totalPages: number): (number | string)[] {
-		const delta = 1; // Number of pages to show on each side of current page
+		const delta = 1;
 		const range: number[] = [];
 		const rangeWithDots: (number | string)[] = [];
 
-		// Always include first page
+
 		range.push(1);
 
-		// Calculate start and end of middle range
+
 		const start = Math.max(2, currentPage - delta);
 		const end = Math.min(totalPages - 1, currentPage + delta);
 
-		// Add pages around current page
+
 		for (let i = start; i <= end; i++) {
 			range.push(i);
 		}
 
-		// Always include last page if more than 1 page
+
 		if (totalPages > 1) {
 			range.push(totalPages);
 		}
 
-		// Remove duplicates and sort
+
 		const uniqueRange = [...new Set(range)].sort((a, b) => a - b);
 
-		// Add dots where there are gaps
+
 		let prev = 0;
 		for (const pageNum of uniqueRange) {
 			if (pageNum - prev > 1) {

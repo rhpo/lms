@@ -20,10 +20,10 @@
 
   const maxStudents = $derived(subject ? GROUP_LIMITS[subject.group_type] ?? 1 : 1);
 
-  // If any wish is already "accepte", the assignment is already done
+
   const alreadyAssigned = $derived(wishes.some((w) => w.status === "accepte"));
 
-  // Pre-check already-accepted students
+
   let selectedIds = $state<number[]>([]);
   $effect(() => {
     selectedIds = wishes.filter((w) => w.status === "accepte").map((w) => w.student_id);
@@ -33,7 +33,7 @@
   let loading = $state(false);
 
   function toggleStudent(id: number) {
-    // Accepted students are locked — cannot be toggled
+
     if (wishes.find((w) => w.student_id === id)?.status === "accepte") return;
     if (selectedIds.includes(id)) {
       selectedIds = selectedIds.filter((s) => s !== id);

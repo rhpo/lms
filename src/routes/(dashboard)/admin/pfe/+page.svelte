@@ -33,7 +33,7 @@
         refuse: "danger",
     };
 
-    // ── Co-supervisor modal ────────────────────────────────────────────────
+
     let showCoSupModal = $state(false);
     let selectedAssignment = $state<PfeAssignment | null>(null);
     let recommendations = $state<
@@ -85,16 +85,16 @@
         }
     }
 
-    // async function removeCoSupervisor(a: PfeAssignment) {
-    //     if (!confirm("Retirer le co-encadrant de ce PFE ?")) return;
-    //     try {
-    //         await admin.assignmentAction(a.id, "remove-co-supervisor");
-    //         showToast.success("Co-encadrant retiré");
-    //         await invalidateAll();
-    //     } catch (err) {
-    //         showToast.error(err instanceof Error ? err.message : "Erreur réseau");
-    //     }
-    // }
+
+
+
+
+
+
+
+
+
+
 
     function selectRecommended(teacherId: number) {
         selectedTeacherId = teacherId;

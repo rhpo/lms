@@ -19,7 +19,7 @@ export const notificationStore = {
       const count = await notifApi.unreadCount();
       _unreadCount.set(count);
     } catch {
-      // silently ignore — user might not be authenticated yet
+
     }
   },
 

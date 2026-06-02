@@ -106,7 +106,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	t.Run("Access_Unauthorized_Role", func(t *testing.T) {
-		// Un étudiant ne peut pas accéder à /admin/dashboard
+
 		resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/dashboard", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 		if err != nil {
 			t.Fatalf("❌ Erreur requête: %v", err)

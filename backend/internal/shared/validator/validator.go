@@ -21,7 +21,7 @@ func Struct(s any) error {
 		return nil
 	}
 
-	// Traduction des erreurs de validation en français.
+
 	validationErrors, ok := err.(validator.ValidationErrors)
 	if !ok {
 		return err

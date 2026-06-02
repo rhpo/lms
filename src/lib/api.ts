@@ -128,10 +128,10 @@ export const ref = {
 // ─── Admin ───────────────────────────────────────────────────────────────────
 
 export const admin = {
-  // Dashboard
+
   dashboard: () => get<AdminDashboard>('/admin/dashboard'),
 
-  // Users
+
   listUsers: () => get<Profile[]>('/admin/accounts/users'),
   createUser: (body: { role: string; full_name: string; email: string }) =>
     post<Profile>('/admin/accounts/users', body),
@@ -154,23 +154,23 @@ export const admin = {
   importUsersCSV: (csvData: string, csvType: string, replaceMode: boolean) =>
     post<{ message: string }>('/admin/accounts/users/import-csv', { csv_data: csvData, csv_type: csvType, replace: replaceMode }),
 
-  // Companies
+
   listCompanies: () => get<Company[]>('/admin/accounts/companies'),
   companyAction: (id: number, action: string, payload?: Record<string, unknown>) =>
     post<{ message: string }>(`/admin/accounts/companies/${id}/action`, { action, ...payload }),
 
-  // Reports
+
   listReports: () => get<CompanyReport[]>('/admin/reports'),
   reportAction: (id: number, action: string) =>
     post<{ message: string }>(`/admin/reports/${id}/action`, { action }),
 
-  // Subjects
+
   listSubjects: () => get<PfeSubject[]>('/admin/subjects'),
   getSubject: (id: number) => get<PfeSubject>(`/admin/subjects/${id}`),
   subjectAction: (id: number, action: string, payload?: Record<string, unknown>) =>
     post<{ message: string }>(`/admin/subjects/${id}/action`, { action, ...payload }),
 
-  // PFE Assignments
+
   listAssignments: () => get<PfeAssignment[]>('/admin/pfe'),
   getAssignment: (id: number) => get<PfeAssignment>(`/admin/pfe/${id}`),
   assignmentAction: (id: number, action: string, body?: Record<string, unknown>) =>
@@ -180,7 +180,7 @@ export const admin = {
       `/admin/pfe/recommend-co-supervisor?assignment_id=${assignmentId}`
     ),
 
-  // Defenses
+
   listDefenses: () => get<Defense[]>('/admin/defenses'),
   createDefense: (body: {
     assignment_id: number;
@@ -205,50 +205,50 @@ export const admin = {
   declineJury: (defenseId: number) =>
     post<{ message: string }>(`/admin/defenses/${defenseId}/decline-jury`),
 
-  // Settings — Deadlines
+
   listDeadlines: () => get<AcademicYear[]>('/admin/settings/deadlines'),
   updateDeadlines: (body: {
     submission_open_at: string; submission_close_at: string; max_wishes: number;
   }) => post<{ message: string }>('/admin/settings/deadlines', body),
 
-  // Settings — Specialities
+
   listSpecialities: () => get<Speciality[]>('/admin/settings/specialities'),
   createSpeciality: (body: { name: string; code: string; year_type: string; department_id?: number }) =>
     post<Speciality>('/admin/settings/specialities', body),
   deleteSpeciality: (id: number) => del(`/admin/settings/specialities/${id}`),
 
-  // Settings — Domains
+
   listDomains: () => get<Domain[]>('/admin/settings/domains'),
   createDomain: (body: { name: string }) =>
     post<Domain>('/admin/settings/domains', body),
   deleteDomain: (id: number) => del(`/admin/settings/domains/${id}`),
 
-  // Settings — Departments
+
   listDepartments: () => get<Department[]>('/admin/settings/departments'),
   createDepartment: (body: { name: string }) =>
     post<Department>('/admin/settings/departments', body),
   deleteDepartment: (id: number) => del(`/admin/settings/departments/${id}`),
 
-  // Settings — Promotions
+
   listPromotions: () => get<Promotion[]>('/admin/settings/promotions'),
   createPromotion: (body: { label: string; academic_year_id: number }) =>
     post<Promotion>('/admin/settings/promotions', body),
   deletePromotion: (id: number) => del(`/admin/settings/promotions/${id}`),
 
-  // Settings — Academic Years
+
   listAcademicYears: () => get<AcademicYear[]>('/admin/settings/academic-years'),
   createAcademicYear: (body: { label: string; status: string; max_wishes?: number }) =>
     post<AcademicYear>('/admin/settings/academic-years', body),
   closeAcademicYear: (id: number) =>
     post<{ message: string }>(`/admin/settings/academic-years/${id}/close`),
 
-  // (Emails are sent client-side via $lib/email.ts — no backend hop.)
 
-  // Statistics & Audit
+
+
   statistics: () => get<AdminDashboard>('/admin/statistics'),
   auditLog: () => get<AuditLog[]>('/admin/audit-log'),
 
-  // Exports
+
   exportAffectations: () => get<PfeAssignment[]>('/admin/exports/affectations'),
   exportPlannings: () => get<Defense[]>('/admin/exports/plannings'),
   exportStatistics: () => get<AdminDashboard>('/admin/exports/statistiques'),
@@ -259,7 +259,7 @@ export const admin = {
 export const teacher = {
   dashboard: () => get<Record<string, unknown>>('/teacher/dashboard'),
 
-  // Proposed subjects
+
   listProposedSubjects: () => get<PfeSubject[]>('/teacher/proposed-subjects'),
   createProposedSubject: (body: {
     title: string; description: string; group_type: GroupType;
@@ -272,19 +272,19 @@ export const teacher = {
     title: string; description: string; group_type: GroupType; domain_ids?: number[];
   }) => post<{ message: string }>(`/teacher/proposed-subjects/${id}/resubmit`, body),
 
-  // Candidates
+
   listCandidats: (subjectId: number) =>
     get<Wish[]>(`/teacher/proposed-subjects/${subjectId}/candidats`),
   acceptCandidat: (subjectId: number, body: { student_ids: number[] }) =>
     post<{ message: string }>(`/teacher/proposed-subjects/${subjectId}/candidats`, body),
 
-  // Validation
+
   listSubjectsToValidate: () => get<PfeSubject[]>('/teacher/subjects-to-validate'),
   getSubjectToValidate: (id: number) => get<PfeSubject>(`/teacher/subjects-to-validate/${id}`),
   validateSubject: (id: number, body: { decision: ReviewDecision; comment?: string }) =>
     post<{ message: string }>(`/teacher/subjects-to-validate/${id}`, body),
 
-  // Supervised PFEs
+
   listSupervisedPFEs: () => get<PfeAssignment[]>('/teacher/supervised-pfes'),
   getSupervisedPFE: (id: number) => get<PfeAssignment>(`/teacher/supervised-pfes/${id}`),
   listMeetings: (id: number) => get<PfeProgressReport[]>(`/teacher/supervised-pfes/${id}/meetings`),
@@ -296,19 +296,19 @@ export const teacher = {
   submitEvaluation: (id: number, body: { criterion5: number }) =>
     post<{ message: string }>(`/teacher/supervised-pfes/${id}/evaluation`, body),
 
-  // Jury duties
+
   listJuryDuties: () => get<Defense[]>('/teacher/jury-duties'),
   getJuryDuty: (id: number) => get<Defense>(`/teacher/jury-duties/${id}`),
 
-  // Availability
+
   updateAvailability: (body: {
     availability_status: string; unavailable_until?: string;
   }) => post<{ message: string }>('/teacher/availability', body),
 
-  // Notifications
+
   listNotifications: () => get<Notification[]>('/teacher/notifications'),
 
-  // Grading
+
   getGradeContext: (defenseId: number) =>
     get<{
       my_role: 'president' | 'member';

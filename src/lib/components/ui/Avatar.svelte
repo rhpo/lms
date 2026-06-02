@@ -28,7 +28,7 @@
 		const hue = Math.abs(hash) % 360;
 		const background = `hsl(${hue}, 70%, 50%)`;
 
-		// convert HSL -> perceived brightness
+
 		const lightness = 50;
 
 		const text = lightness > 50 ? "black" : "white";

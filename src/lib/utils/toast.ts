@@ -13,7 +13,7 @@
 import { toast } from 'svelte-sonner';
 
 // Common defaults for the app
-const BASE_DURATION = 4000; // ms
+const BASE_DURATION = 4000;
 
 export const showToast = {
 	/** Green success toast */
@@ -27,7 +27,7 @@ export const showToast = {
 	error: (message: string, description?: string) =>
 		toast.error(message, {
 			description,
-			duration: BASE_DURATION + 2000, // errors stay a bit longer
+			duration: BASE_DURATION + 2000,
 		}),
 
 	/** Neutral info toast */

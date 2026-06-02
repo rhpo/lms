@@ -56,7 +56,7 @@
     { id: "domains", label: "Domaines", icon: Globe },
   ];
 
-  // Deadlines
+
   let submissionOpen = $state("");
   let submissionClose = $state("");
   let maxWishes = $state(5);
@@ -95,7 +95,7 @@
     }
   }
 
-  // Departments
+
   let showCreateDeptModal = $state(false);
   let showDeleteDeptModal = $state(false);
   let newDeptName = $state("");
@@ -130,7 +130,7 @@
     }
   }
 
-  // Specialities
+
   let showCreateSpecModal = $state(false);
   let showDeleteSpecModal = $state(false);
   let newSpecName = $state("");
@@ -180,7 +180,7 @@
     }
   }
 
-  // Domains
+
   let showCreateDomainModal = $state(false);
   let showDeleteDomainModal = $state(false);
   let newDomainName = $state("");
@@ -215,7 +215,7 @@
     }
   }
 
-  // Academic Years
+
   let showCreateYearModal = $state(false);
   let showCloseYearModal = $state(false);
   let newYearLabel = $state("");

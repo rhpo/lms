@@ -71,8 +71,8 @@ func (h *AuthHandler) Me(c fiber.Ctx) error {
 
 // Logout gère POST /api/auth/logout.
 func (h *AuthHandler) Logout(c fiber.Ctx) error {
-	// En JWT, la déconnexion est gérée côté client (suppression du token).
-	// On pourrait ajouter une blacklist de tokens si nécessaire.
+
+
 	return response.OK(c, map[string]string{"message": "Déconnexion réussie"})
 }
 
@@ -88,7 +88,7 @@ func (h *AuthHandler) RegisterCompany(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins if a completely new company was created
+
 	if result.Profile.Company != nil && !result.Profile.Company.IsVerified {
 		companyName := ""
 		if result.Profile.Company.CompanyName != nil {

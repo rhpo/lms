@@ -36,14 +36,14 @@
     return role === "Président" ? "warning" : "info";
   }
 
-  // ── Grade form state ──────────────────────────────────────────────────────
+
   type ArchiveDecision = "archivable" | "minor_corrections" | "major_corrections" | "";
 
   type MemberGradeForm = {
     c1: number; c2: number; c3: number; c4: number;
     archiveDecision: ArchiveDecision;
     loading: boolean; error: string; success: boolean;
-    // president-mode: choice for final grade
+
     presidentChoice: "member" | "new" | "";
   };
 
@@ -69,12 +69,12 @@
     "Réalisation et qualité des résultats obtenus",
   ];
 
-  // Pre-populate forms from grade context on load
+
   $effect(() => {
     for (const { defense, gradeCtx } of duties) {
       if (!gradeForms[defense.id]) {
         const f = defaultForm();
-        // If the current user already submitted (my_grade exists), pre-populate
+
         if (gradeCtx?.my_grade) {
           const g = gradeCtx.my_grade;
           f.c1 = g.criterion1 ?? 0;
@@ -83,7 +83,7 @@
           f.c4 = g.criterion4 ?? 0;
           f.archiveDecision = (g.archive_decision ?? "") as ArchiveDecision;
         }
-        // For president with choice "new", pre-populate from member grade if choice is already "new"
+
         gradeForms[defense.id] = f;
       }
     }
@@ -103,7 +103,7 @@
     if (f) f[key] = Math.min(4, Math.max(0, value));
   }
 
-  // Member submits own evaluation (c1–c4)
+
   async function handleSubmitGrade(defenseId: number) {
     const f = gradeForms[defenseId];
     if (!f) return;
@@ -126,7 +126,7 @@
         criterion2: f.c2,
         criterion3: f.c3,
         criterion4: f.c4,
-        archive_decision: "", // Not required for members
+        archive_decision: "",
       });
       f.success = true;
       await invalidateAll();
@@ -137,7 +137,7 @@
     }
   }
 
-  // President submits final grade
+
   async function handleSubmitFinalGrade(defenseId: number, gradeCtx: GradeContext) {
     const f = gradeForms[defenseId];
     if (!f) return;
@@ -186,7 +186,7 @@
     }
   }
 
-  // When president selects "new", pre-populate with member grades for reference
+
   function onPresidentChoiceChange(defenseId: number, choice: "member" | "new", gradeCtx: GradeContext) {
     const f = gradeForms[defenseId];
     if (!f) return;

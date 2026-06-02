@@ -16,7 +16,7 @@
         disabled = false,
         disabledLabel = "",
 
-        // css
+
         large = false,
         uppercase = false,
         round = false,

@@ -174,12 +174,12 @@ func (s *TeacherService) ResubmitSubject(userID, subjectID int64, title, descrip
 	if err := s.pfeSubjectRepo.Resubmit(subjectID, title, description, groupType); err != nil {
 		return err
 	}
-	// Sync domains if provided
+
 	if domainIDs != nil {
-		if err := s.pfeSubjectRepo.RemoveDomain(subjectID, 0); err == nil { // bulk-remove via special call below
+		if err := s.pfeSubjectRepo.RemoveDomain(subjectID, 0); err == nil {
 			_ = err
 		}
-		// Clear all domains then re-add
+
 		_ = s.syncDomains(subjectID, domainIDs)
 	}
 	return nil
@@ -187,9 +187,9 @@ func (s *TeacherService) ResubmitSubject(userID, subjectID int64, title, descrip
 
 // syncDomains replaces all domains for a subject.
 func (s *TeacherService) syncDomains(subjectID int64, domainIDs []int64) error {
-	// Remove all existing domains
+
 	if _, err := s.pfeSubjectRepo.GetDomains(subjectID); err == nil {
-		// We need a bulk-delete; use the repo's RemoveDomain per entry.
+
 		existing, _ := s.pfeSubjectRepo.GetDomains(subjectID)
 		for _, d := range existing {
 			_ = s.pfeSubjectRepo.RemoveDomain(subjectID, d.ID)
@@ -220,7 +220,7 @@ func (s *TeacherService) AcceptCandidats(subjectID int64, studentIDs []int64) (*
 		return nil, apperror.BadRequest("Aucun étudiant sélectionné")
 	}
 
-	// Get subject (supervisor info)
+
 	subject, err := s.pfeSubjectRepo.FindByID(subjectID)
 	if err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func (s *TeacherService) AcceptCandidats(subjectID int64, studentIDs []int64) (*
 		return nil, apperror.NotFound("Sujet introuvable")
 	}
 
-	// Guard: prevent double-assignment
+
 	existing, err := s.pfeAssignmentRepo.FindBySubjectID(subjectID)
 	if err != nil {
 		return nil, err
@@ -238,7 +238,7 @@ func (s *TeacherService) AcceptCandidats(subjectID int64, studentIDs []int64) (*
 		return nil, apperror.BadRequest("Affectation déjà effectuée pour ce sujet")
 	}
 
-	// Get active academic year
+
 	ay, err := s.academicYearRepo.FindActive()
 	if err != nil {
 		return nil, err
@@ -247,19 +247,19 @@ func (s *TeacherService) AcceptCandidats(subjectID int64, studentIDs []int64) (*
 		return nil, apperror.BadRequest("Aucune année académique active")
 	}
 
-	// Load all existing wishes for the subject
+
 	wishes, err := s.wishRepo.FindBySubject(subjectID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Build a set of selected student IDs for quick lookup
+
 	selectedSet := make(map[int64]bool, len(studentIDs))
 	for _, sID := range studentIDs {
 		selectedSet[sID] = true
 	}
 
-	// Mark selected wishes as "accepte" (create wish if missing)
+
 	for _, sID := range studentIDs {
 		found := false
 		for _, w := range wishes {
@@ -280,7 +280,7 @@ func (s *TeacherService) AcceptCandidats(subjectID int64, studentIDs []int64) (*
 		}
 	}
 
-	// Mark all non-selected en_attente wishes as "refuse"
+
 	for _, w := range wishes {
 		if !selectedSet[w.StudentID] && w.Status == "en_attente" {
 			w.Status = "refuse"
@@ -290,7 +290,7 @@ func (s *TeacherService) AcceptCandidats(subjectID int64, studentIDs []int64) (*
 		}
 	}
 
-	// Resolve speciality code from first student
+
 	specialityCode := "GEN"
 	student1, err := s.studentRepo.FindByID(studentIDs[0])
 	if err == nil && student1 != nil && student1.SpecialityID != nil {
@@ -299,22 +299,22 @@ func (s *TeacherService) AcceptCandidats(subjectID int64, studentIDs []int64) (*
 		}
 	}
 
-	// Get next sequence number for this speciality + year
+
 	seq, err := s.pfeAssignmentRepo.CountBySpecialityAndYear(ay.ID, specialityCode)
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate PFE code: PFE-SPEC-YEAR-NNN
+
 	code := pfe_code.Generate(specialityCode, ay.Label, seq+1)
 
-	// Resolve supervisor entity ID from proposer profile ID
+
 	supervisorID, err := s.resolveTeacherID(subject.ProposerID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Build the assignment
+
 	assignment := &entity.PfeAssignment{
 		PfeCode:        code,
 		SubjectID:      subjectID,
@@ -403,12 +403,12 @@ func (s *TeacherService) SubmitEvaluation(assignmentID, profileID int64, criteri
 	if criterion5 < 0 || criterion5 > 4 {
 		return apperror.BadRequest("Le critère 5 doit être entre 0 et 4")
 	}
-	// Resolve profile → teacher entity ID
+
 	teacherID, err := s.resolveTeacherID(profileID)
 	if err != nil {
 		return err
 	}
-	// Seul l'encadrant principal peut soumettre l'évaluation (pas le co-encadrant)
+
 	assignment, err := s.pfeAssignmentRepo.FindByID(assignmentID)
 	if err != nil {
 		return err
@@ -419,7 +419,7 @@ func (s *TeacherService) SubmitEvaluation(assignmentID, profileID int64, criteri
 	if assignment.SupervisorID != teacherID {
 		return apperror.Forbidden("Seul l'encadrant principal peut soumettre l'évaluation")
 	}
-	// Vérifier si une évaluation existe déjà
+
 	existing, err := s.supEvalRepo.FindByAssignment(assignmentID)
 	if err != nil {
 		return err
@@ -524,7 +524,7 @@ func (s *TeacherService) ValidateSubject(userID, id int64, decision, comment str
 		return apperror.Forbidden("Vous n'êtes pas validateur de ce sujet")
 	}
 
-	// Déterminer quel validateur (validator1 ou validator2) et bloquer la re-soumission
+
 	var validatorField string
 	if subject.Validator1ID.Valid && subject.Validator1ID.Int64 == teacherID {
 		if subject.Validator1Decision.Valid {
@@ -540,12 +540,12 @@ func (s *TeacherService) ValidateSubject(userID, id int64, decision, comment str
 		return apperror.Forbidden("Vous n'êtes pas validateur de ce sujet")
 	}
 
-	// Enregistrer la décision
+
 	if err := s.pfeSubjectRepo.UpdateValidation(id, validatorField, decision, comment); err != nil {
 		return err
 	}
 
-	// Recharger pour calculer le nouveau statut
+
 	subject, err = s.pfeSubjectRepo.FindByID(id)
 	if err != nil {
 		return err
@@ -605,13 +605,13 @@ func (s *TeacherService) GetGradeContext(defenseID, callerProfileID int64) (*Gra
 		return nil, apperror.NotFound("Jury introuvable")
 	}
 
-	// Resolve caller's teacher entity ID
+
 	callerTeacherID, err := s.resolveTeacherID(callerProfileID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Determine role
+
 	ctx := &GradeContext{}
 	if jury.PresidentID == callerTeacherID {
 		ctx.MyRole = "president"
@@ -621,15 +621,15 @@ func (s *TeacherService) GetGradeContext(defenseID, callerProfileID int64) (*Gra
 		return nil, apperror.Forbidden("Vous ne faites pas partie de ce jury")
 	}
 
-	// Fetch my own grade
+
 	ctx.MyGrade, _ = s.juryGradeRepo.FindByDefenseAndMember(defenseID, callerTeacherID)
 
-	// Fetch member's grade (always, so president can see it)
+
 	memberGrade, _ := s.juryGradeRepo.FindByDefenseAndMember(defenseID, jury.MemberID)
 	ctx.MemberGrade = memberGrade
 	ctx.MemberSubmitted = memberGrade != nil
 
-	// Hydrate member grade's jury_member teacher info
+
 	if ctx.MemberGrade != nil {
 		ctx.MemberGrade.JuryMember = s.hydrateTeacher(jury.MemberID)
 	}
@@ -637,7 +637,7 @@ func (s *TeacherService) GetGradeContext(defenseID, callerProfileID int64) (*Gra
 		ctx.MyGrade.JuryMember = s.hydrateTeacher(callerTeacherID)
 	}
 
-	// Fetch supervisor evaluation
+
 	assignment, _ := s.pfeAssignmentRepo.FindByID(defense.AssignmentID)
 	if assignment != nil {
 		supEval, _ := s.supEvalRepo.FindByAssignment(assignment.ID)
@@ -670,7 +670,7 @@ func (s *TeacherService) SubmitJuryGrade(defenseID, callerProfileID int64, c1, c
 		return apperror.NotFound("Soutenance introuvable")
 	}
 
-	// Check caller is the member (examinateur), not the president
+
 	jury, err := s.defenseJuryRepo.FindByID(defense.JuryID)
 	if err != nil {
 		return err
@@ -744,13 +744,13 @@ func (s *TeacherService) SubmitFinalGrade(defenseID, callerProfileID int64, choi
 		return apperror.Forbidden("Seul le président du jury peut soumettre la note finale")
 	}
 
-	// Check member has submitted
+
 	memberGrade, _ := s.juryGradeRepo.FindByDefenseAndMember(defenseID, jury.MemberID)
 	if memberGrade == nil {
 		return apperror.BadRequest("L'examinateur n'a pas encore soumis son évaluation")
 	}
 
-	// Check supervisor has submitted
+
 	assignment, err := s.pfeAssignmentRepo.FindByID(defense.AssignmentID)
 	if err != nil {
 		return err
@@ -763,7 +763,7 @@ func (s *TeacherService) SubmitFinalGrade(defenseID, callerProfileID int64, choi
 		return apperror.BadRequest("L'évaluation de l'encadrant n'a pas encore été soumise")
 	}
 
-	// Determine final c1-c4 based on choice
+
 	var fc1, fc2, fc3, fc4 float64
 	switch choice {
 	case "member":
@@ -782,13 +782,13 @@ func (s *TeacherService) SubmitFinalGrade(defenseID, callerProfileID int64, choi
 		return apperror.BadRequest("Choix invalide: utilisez 'member' ou 'new'")
 	}
 
-	// Validate archive decision
+
 	validDecisions := map[string]bool{"archivable": true, "minor_corrections": true, "major_corrections": true}
 	if archiveDecision != "" && !validDecisions[archiveDecision] {
 		return apperror.BadRequest("Décision d'archivage invalide")
 	}
 
-	// Save president's grade record
+
 	archiveNull := entity.NullString{NullString: sql.NullString{String: archiveDecision, Valid: archiveDecision != ""}}
 	existing, _ := s.juryGradeRepo.FindByDefenseAndMember(defenseID, callerTeacherID)
 	if existing != nil {
@@ -811,10 +811,10 @@ func (s *TeacherService) SubmitFinalGrade(defenseID, callerProfileID int64, choi
 		_ = s.juryGradeRepo.Insert(grade)
 	}
 
-	// Compute final grade = jury criteria (fc1+fc2+fc3+fc4) + supervisor (criterion5)
+
 	totalGrade := fc1 + fc2 + fc3 + fc4 + supEval.Criterion5.Float64
 
-	// Determine result based on grade
+
 	result := "admitted"
 	if totalGrade < 10 {
 		result = "not_admitted"
@@ -824,7 +824,7 @@ func (s *TeacherService) SubmitFinalGrade(defenseID, callerProfileID int64, choi
 		return err
 	}
 
-	// Notify student(s) about the final grade
+
 	go func() {
 		subjectTitle := "votre PFE"
 		if assignment.Subject != nil && assignment.Subject.Title != "" {
@@ -838,7 +838,7 @@ func (s *TeacherService) SubmitFinalGrade(defenseID, callerProfileID int64, choi
 
 		msg := fmt.Sprintf("La note finale de votre soutenance pour le sujet %s a été publiée : %.1f/20.", subjectTitle, totalGrade)
 
-		// Notify all students in the assignment
+
 		studentIDs := []int64{assignment.StudentID}
 		if assignment.Student2ID.Valid {
 			studentIDs = append(studentIDs, assignment.Student2ID.Int64)

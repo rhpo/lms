@@ -11,6 +11,6 @@ type AuditLog struct {
 	Action    string     `json:"action"`
 	Entity    string     `json:"entity"`
 	EntityID  NullInt64  `json:"entity_id"`
-	Metadata  NullString `json:"metadata"` // JSON
+	Metadata  NullString `json:"metadata"`
 	CreatedAt time.Time  `json:"created_at"`
 }

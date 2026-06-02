@@ -74,9 +74,9 @@ func (r *PfeSubjectRepository) FindByStatus(status string) ([]*entity.PfeSubject
 }
 
 func (r *PfeSubjectRepository) FindPendingValidation(validatorID int64) ([]*entity.PfeSubject, error) {
-	// Only return subjects where this validator's own slot has no decision yet.
-	// validator1: assigned but validator1_decision is still NULL
-	// validator2: assigned but validator2_decision is still NULL
+
+
+
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids, created_at, updated_at

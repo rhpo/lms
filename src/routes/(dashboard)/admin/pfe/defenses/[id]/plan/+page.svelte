@@ -9,7 +9,7 @@
   import Page from "$lib/components/ui/Page.svelte";
 
   let { data } = $props();
-  // We make them derived so they react to loader data
+
   const assignment = $derived(data.assignment);
   const teachers = $derived(data.teachers || []);
 
@@ -18,7 +18,7 @@
   let scheduledAt = $state("");
   let room = $state("");
 
-  // Minimum datetime for the picker (now, rounded to next minute)
+
   const now = new Date();
   now.setMinutes(now.getMinutes() + 1, 0, 0);
   const minDatetime = now.toISOString().slice(0, 16);
@@ -34,22 +34,22 @@
     if (disabled || !assignment) return;
     submitting = true;
     errorMsg = "";
-    
-    // Date must be in the future
+
+
     if (new Date(scheduledAt) <= new Date()) {
       errorMsg = "La date de soutenance doit être dans le futur";
       submitting = false;
       return;
     }
 
-    // Room must not be empty/whitespace
+
     if (room.trim().length < 1) {
       errorMsg = "La salle est obligatoire";
       submitting = false;
       return;
     }
 
-    // Prevent selecting the same person for both roles
+
     if (presidentId === memberId) {
       errorMsg = "Le président et l'examinateur doivent être des personnes différentes";
       submitting = false;
@@ -57,7 +57,7 @@
     }
 
     try {
-      // Normalize datetime-local value (YYYY-MM-DDTHH:MM) to RFC 3339 (YYYY-MM-DDTHH:MM:00Z)
+
       const scheduledAtRFC3339 = scheduledAt.length === 16 ? `${scheduledAt}:00Z` : scheduledAt;
       await admin.createDefense({
         assignment_id: Number(assignment.id),
@@ -67,7 +67,7 @@
         room,
       });
       showToast.success("Soutenance programmée avec succès");
-      goto("/admin/pfe"); // Back to PFEs table where the action was initiated
+      goto("/admin/pfe");
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : "Erreur réseau";
       showToast.error(errorMsg);
@@ -91,7 +91,7 @@
         {#if errorMsg}
           <div class="error-banner">{errorMsg}</div>
         {/if}
-        
+
         <div class="assignment-info">
             <div class="info-group">
                 <span class="label">PFE:</span>
@@ -102,9 +102,9 @@
                 <span class="value">{assignment.student?.profile?.full_name ?? "Inconnu"}</span>
             </div>
         </div>
-        
+
         <form onsubmit={handleSubmit} class="form-grid">
-          
+
           <div class="separator"></div>
 
           <div class="grid-2">
@@ -128,7 +128,7 @@
               />
             </FormField>
           </div>
-          
+
           <div class="separator"></div>
 
           <div class="grid-2">
@@ -244,14 +244,14 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--spacing-xl);
   }
-  
+
   .separator {
     height: 1px;
     background: var(--color-border);
     margin: var(--spacing-md) 0;
     opacity: 0.5;
   }
-  
+
   .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -283,7 +283,7 @@
       grid-template-columns: 1fr;
       gap: var(--spacing-lg);
     }
-    
+
     .card {
       padding: var(--spacing-lg);
     }

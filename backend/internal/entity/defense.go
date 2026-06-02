@@ -12,13 +12,13 @@ type Defense struct {
 	ScheduledAt     NullTime    `json:"scheduled_at"`
 	Room            NullString  `json:"room"`
 	DefenseDeadline NullTime    `json:"defense_deadline"`
-	Status          string      `json:"status"` // scheduled/done/postponed
-	Result          NullString  `json:"result"` // admitted/corrections_required/not_admitted
+	Status          string      `json:"status"`
+	Result          NullString  `json:"result"`
 	FinalGrade      NullFloat64 `json:"final_grade"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
 
-	// Relations
+
 	Assignment *PfeAssignment `json:"assignment,omitempty"`
 	Jury       *DefenseJury   `json:"jury,omitempty"`
 }

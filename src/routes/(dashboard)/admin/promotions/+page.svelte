@@ -18,7 +18,7 @@
   let academicYearId = $state(0);
   let academicYears = $state<{ id: number; label: string }[]>([]);
 
-  // Load academic years when modal opens
+
   $effect(() => {
     if (showCreateModal && academicYears.length === 0) {
       admin.listAcademicYears().then((years) => {

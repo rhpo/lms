@@ -19,14 +19,14 @@
   let calendarEl = $state<HTMLDivElement>();
   let inputEl = $state<HTMLDivElement>();
 
-  // Parse the current value
+
   const selectedDate = $derived(value ? new Date(value + "T00:00:00") : null);
 
-  // Calendar navigation state
+
   let viewYear = $state(new Date().getFullYear());
   let viewMonth = $state(new Date().getMonth());
 
-  // Reset calendar view when opened
+
   $effect(() => {
     if (showCalendar && selectedDate) {
       viewYear = selectedDate.getFullYear();
@@ -37,7 +37,7 @@
     }
   });
 
-  // Close calendar on click outside
+
   $effect(() => {
     if (!showCalendar) return;
     function handleClick(e: MouseEvent) {
@@ -89,7 +89,7 @@
     const days: Array<{ day: number; currentMonth: boolean; date: string }> =
       [];
 
-    // Previous month's trailing days
+
     const prevMonthDays = daysInMonth(
       viewYear,
       viewMonth - 1 < 0 ? 11 : viewMonth - 1,
@@ -107,7 +107,7 @@
       });
     }
 
-    // Current month's days
+
     const m = String(viewMonth + 1).padStart(2, "0");
     for (let d = 1; d <= totalDays; d++) {
       const day = String(d).padStart(2, "0");
@@ -118,7 +118,7 @@
       });
     }
 
-    // Next month's leading days
+
     const nextMonth = viewMonth + 1 > 11 ? 0 : viewMonth + 1;
     const nextYear = viewMonth + 1 > 11 ? viewYear + 1 : viewYear;
     const remaining = 42 - days.length;

@@ -10,7 +10,7 @@
         try {
             await atomic.load();
         } catch {
-            // error is stored in atomic.error — the template handles it
+
         }
         notificationStore.startPolling(30_000);
     });

@@ -58,7 +58,7 @@
     const file = input.files?.[0];
     if (!file) return;
 
-    // Validate file
+
     if (!file.type.startsWith("image/")) {
       showToast.error("Fichier invalide", "Veuillez sélectionner une image.");
       return;
@@ -74,12 +74,12 @@
       formData.append("file", file);
       const result = await upload.avatar(formData);
 
-      // Update local state
+
       if (profile) {
         profile = { ...profile, avatar_url: result.url };
       }
 
-      // Refresh auth store so the topbar avatar updates too
+
       await authStore.refreshProfile();
 
       showToast.success("Photo de profil mise à jour !");
@@ -87,7 +87,7 @@
       showToast.error("Échec du téléchargement", String(err));
     } finally {
       uploading = false;
-      // Reset input so same file can be re-selected
+
       input.value = "";
     }
   }

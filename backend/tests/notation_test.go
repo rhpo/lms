@@ -8,7 +8,7 @@ func TestNotationWorkflow(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// Step 1: President submits grades
+
 	body := map[string]float64{
 		"criterion1": 3.5,
 		"criterion2": 3.0,
@@ -22,7 +22,7 @@ func TestNotationWorkflow(t *testing.T) {
 	result := MustParseResponse(resp)
 	AssertSuccess(t, result)
 
-	// Step 2: Member submits grades
+
 	body2 := map[string]float64{
 		"criterion1": 3.0,
 		"criterion2": 3.5,
@@ -36,7 +36,7 @@ func TestNotationWorkflow(t *testing.T) {
 	result2 := MustParseResponse(resp2)
 	AssertSuccess(t, result2)
 
-	// Step 3: Admin resolves grade (chooses president's grade)
+
 	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Étape 3 - Erreur requête: %v", err)
@@ -49,7 +49,7 @@ func TestNotationWorkflowResolveWithMemberGrade(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// President submits
+
 	body := map[string]float64{
 		"criterion1": 3.5,
 		"criterion2": 3.0,
@@ -62,7 +62,7 @@ func TestNotationWorkflowResolveWithMemberGrade(t *testing.T) {
 	}
 	MustParseResponse(resp)
 
-	// Member submits
+
 	body2 := map[string]float64{
 		"criterion1": 3.0,
 		"criterion2": 3.5,
@@ -75,7 +75,7 @@ func TestNotationWorkflowResolveWithMemberGrade(t *testing.T) {
 	}
 	MustParseResponse(resp2)
 
-	// Resolve with member's grade
+
 	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "member"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
@@ -88,7 +88,7 @@ func TestNotationWorkflowResolveWithNewEvaluation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// President submits
+
 	body := map[string]float64{
 		"criterion1": 3.5,
 		"criterion2": 3.0,
@@ -101,7 +101,7 @@ func TestNotationWorkflowResolveWithNewEvaluation(t *testing.T) {
 	}
 	MustParseResponse(resp)
 
-	// Member submits
+
 	body2 := map[string]float64{
 		"criterion1": 3.0,
 		"criterion2": 3.5,
@@ -114,7 +114,7 @@ func TestNotationWorkflowResolveWithNewEvaluation(t *testing.T) {
 	}
 	MustParseResponse(resp2)
 
-	// Resolve with new evaluation
+
 	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{
 		"choice": "new",
 		"grades": map[string]float64{
@@ -135,7 +135,7 @@ func TestNotationWorkflowResolveWithoutGrades(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// Try to resolve before anyone submitted
+
 	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
@@ -148,7 +148,7 @@ func TestNotationWorkflowSubmitGradeInvalidCriterion(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// Submit with invalid criterion (> 4)
+
 	body := map[string]float64{
 		"criterion1": 5.0,
 		"criterion2": 3.0,
@@ -245,7 +245,7 @@ func TestNotationWorkflowResolveNewEvaluationWithoutGrades(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// President submits
+
 	body := map[string]float64{
 		"criterion1": 3.5,
 		"criterion2": 3.0,
@@ -258,7 +258,7 @@ func TestNotationWorkflowResolveNewEvaluationWithoutGrades(t *testing.T) {
 	}
 	MustParseResponse(resp)
 
-	// Member submits
+
 	body2 := map[string]float64{
 		"criterion1": 3.0,
 		"criterion2": 3.5,
@@ -271,7 +271,7 @@ func TestNotationWorkflowResolveNewEvaluationWithoutGrades(t *testing.T) {
 	}
 	MustParseResponse(resp2)
 
-	// Resolve with new but missing grades
+
 	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "new"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
@@ -284,7 +284,7 @@ func TestNotationWorkflowFinalGradeCalculation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// Step 1: President submits: 3.5+3.0+4.0+3.5 = 14.0
+
 	body := map[string]float64{
 		"criterion1": 3.5,
 		"criterion2": 3.0,
@@ -297,7 +297,7 @@ func TestNotationWorkflowFinalGradeCalculation(t *testing.T) {
 	}
 	MustParseResponse(resp)
 
-	// Step 2: Member submits: 3.0+3.5+3.0+4.0 = 13.5
+
 	body2 := map[string]float64{
 		"criterion1": 3.0,
 		"criterion2": 3.5,
@@ -310,7 +310,7 @@ func TestNotationWorkflowFinalGradeCalculation(t *testing.T) {
 	}
 	MustParseResponse(resp2)
 
-	// Step 3: Resolve with president's grade (14.0) + existing supervisor eval (3.5) = 17.5/20
+
 	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
@@ -318,7 +318,7 @@ func TestNotationWorkflowFinalGradeCalculation(t *testing.T) {
 	result3 := MustParseResponse(resp3)
 	AssertSuccess(t, result3)
 
-	// Verify the defense shows final grade
+
 	resp4, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur vérification: %v", err)
@@ -338,14 +338,14 @@ func TestNotationWorkflowDoubleSubmission(t *testing.T) {
 		"criterion4": 3.5,
 	}
 
-	// First submission succeeds
+
 	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
 	MustParseResponse(resp)
 
-	// Second submission from same jury member should update (not error)
+
 	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
@@ -358,7 +358,7 @@ func TestNotationWorkflowJuryConfirmsPrintedVersion(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// President confirms printed version
+
 	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/confirm-jury", map[string]any{
 		"member_id":     SeedTeacherISIL2ID,
 		"wants_printed": true,
@@ -413,7 +413,7 @@ func TestNotationWorkflowDuplicateJuryMember(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// President and member same person should fail if the handler checks
+
 	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses", map[string]any{
 		"assignment_id": 1,
 		"president_id":  SeedTeacherISIL1ID,
@@ -432,7 +432,7 @@ func TestNotationWorkflowFullIntegration(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// Complete workflow: submit president grade -> submit member grade -> resolve -> verify
+
 	body := map[string]float64{
 		"criterion1": 3.0,
 		"criterion2": 3.0,
@@ -466,7 +466,7 @@ func TestNotationWorkflowFullIntegration(t *testing.T) {
 	result3 := MustParseResponse(resp3)
 	AssertSuccess(t, result3)
 
-	// Verify final grade: member jury (4+4+4+4=16) + supervisor (3.5) = 19.5/20
+
 	resp4, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur vérification: %v", err)

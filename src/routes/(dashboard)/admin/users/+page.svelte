@@ -48,12 +48,12 @@
   let showImportCsv = $state(false);
   let searchQuery = $state("");
 
-  // Teacher form
+
   let teacherFullName = $state("");
   let teacherEmail = $state("");
   let teacherGrade = $state("assistant");
 
-  // Student form
+
   let studentFullName = $state("");
   let studentEmail = $state("");
 

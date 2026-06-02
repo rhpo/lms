@@ -87,7 +87,7 @@ func (s *StudentService) getStudent(profileID int64) (*entity.Student, error) {
 func (s *StudentService) GetSettings() (map[string]any, error) {
 	year, err := s.academicYearRepo.FindActive()
 	if err != nil || year == nil {
-		// Defaults when no active year exists
+
 		return map[string]any{
 			"max_wishes":          5,
 			"submission_open_at":  nil,
@@ -105,7 +105,7 @@ func (s *StudentService) GetSettings() (map[string]any, error) {
 func (s *StudentService) Dashboard(userID int64) (map[string]any, error) {
 	academicYearID, err := s.getActiveAcademicYear()
 	if err != nil {
-		// No active year → return empty dashboard
+
 		return map[string]any{"wishes_count": 0, "has_pfe": false}, nil
 	}
 
@@ -160,7 +160,7 @@ func (s *StudentService) GetCatalogueSubject(id int64) (*entity.PfeSubject, erro
 func (s *StudentService) ListWishes(userID int64) ([]*entity.Wish, error) {
 	academicYearID, err := s.getActiveAcademicYear()
 	if err != nil {
-		// No active year → no wishes, not an error
+
 		return []*entity.Wish{}, nil
 	}
 	st, err := s.getStudent(userID)
@@ -183,7 +183,7 @@ func (s *StudentService) ListWishes(userID int64) ([]*entity.Wish, error) {
 
 // CreateWish crée un voeu pour l'étudiant.
 func (s *StudentService) CreateWish(userID, subjectID int64) error {
-	// Vérifier que le sujet existe
+
 	subject, err := s.pfeSubjectRepo.FindByID(subjectID)
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (s *StudentService) CreateWish(userID, subjectID int64) error {
 		return apperror.BadRequest("Ce sujet n'est pas disponible")
 	}
 
-	// Vérifier que l'étudiant n'a pas déjà un voeu pour ce sujet
+
 	academicYearID, err := s.getActiveAcademicYear()
 	if err != nil {
 		return err
@@ -355,7 +355,7 @@ func (s *StudentService) GetSoutenance(userID int64) (map[string]any, error) {
 		return map[string]any{"has_soutenance": false}, nil
 	}
 
-	// Récupérer les infos du jury et hydrater president/member
+
 	var jury *entity.DefenseJury
 	if defense.JuryID != 0 {
 		jury, _ = s.defenseJuryRepo.FindByID(defense.JuryID)
@@ -371,7 +371,7 @@ func (s *StudentService) GetSoutenance(userID int64) (map[string]any, error) {
 		}
 	}
 
-	// Note encadrant (criterion5)
+
 	supEval, _ := s.supEvalRepo.FindByAssignment(assignment.ID)
 
 	return map[string]any{

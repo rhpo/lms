@@ -21,10 +21,10 @@ export const authStore = {
    * Always re-checks the token on the client, even if called before during SSR.
    */
   async init() {
-    // On SSR (no window), skip entirely — don't mark as initialized
+
     if (typeof window === 'undefined') return;
 
-    // On client, always try to restore from token
+
     if (_initialized) return;
     _initialized = true;
 
@@ -50,7 +50,7 @@ export const authStore = {
       _profile.set(profile);
       await invalidate('auth:profile');
     } catch {
-      // leave current profile in place
+
     }
   },
 

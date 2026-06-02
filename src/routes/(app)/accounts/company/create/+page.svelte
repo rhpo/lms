@@ -27,13 +27,13 @@
     X,
   } from "lucide-svelte";
 
-  // ─── State ───
-  let step = $state(1); // 1 = employee info, 2 = company selection, 3 = new company form
+
+  let step = $state(1);
   let loading = $state(false);
   let error = $state("");
   let success = $state(false);
 
-  // Employee info
+
   let fullName = $state("");
   let email = $state("");
   let password = $state("");
@@ -41,20 +41,20 @@
   let phone = $state("");
   let position = $state("");
 
-  // Company search
+
   let companySearch = $state("");
   let verifiedCompanies = $state<Company[]>([]);
   let selectedCompany = $state<Company | null>(null);
   let companiesLoaded = $state(false);
 
-  // New company info
+
   let companyName = $state("");
   let sector = $state("");
   let description = $state("");
   let contactEmail = $state("");
   let contactPhone = $state("");
 
-  // Company logo
+
   let logoFile = $state<File | null>(null);
   let logoPreview = $state<string>("");
 
@@ -75,7 +75,7 @@
     logoPreview = "";
   }
 
-  // Hardcoded autocomplete for positions
+
   const positionSuggestions = [
     "Directeur Général",
     "Directeur Technique",
@@ -105,7 +105,7 @@
       : positionSuggestions,
   );
 
-  // Filtered companies
+
   let filteredCompanies = $derived(
     companySearch.length > 0
       ? verifiedCompanies.filter(
@@ -118,7 +118,7 @@
       : verifiedCompanies,
   );
 
-  // ─── Step validation ───
+
   let step1Valid = $derived(
     fullName.trim().length >= 3 &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
@@ -128,7 +128,7 @@
 
   let step3Valid = $derived(companyName.trim().length >= 2);
 
-  // ─── Load verified companies ───
+
   async function loadCompanies() {
     if (companiesLoaded) return;
     try {
@@ -141,7 +141,7 @@
     }
   }
 
-  // ─── Navigation ───
+
   function goToStep2() {
     if (!step1Valid) return;
     step = 2;
@@ -157,12 +157,12 @@
     step = 3;
   }
 
-  // ─── Submit ───
+
   async function handleSubmit() {
     loading = true;
     error = "";
 
-    // Final validation before submit
+
     if (fullName.trim().length < 3) {
       error = "Le nom complet doit contenir au moins 3 caractères.";
       loading = false;
@@ -191,7 +191,7 @@
     try {
       let result;
       if (step === 2 && selectedCompany) {
-        // Join existing company
+
         result = await auth.registerCompany({
           full_name: fullName,
           email,
@@ -200,7 +200,7 @@
           company_id: selectedCompany.id,
         });
       } else if (step === 3) {
-        // Create new company
+
         result = await auth.registerCompany({
           full_name: fullName,
           email,
@@ -219,23 +219,23 @@
       }
 
       if (step === 2 && selectedCompany) {
-        // Existing verified company → go straight to company dashboard
+
         goto("/company/dashboard");
         return;
       }
 
-      // If a logo was chosen, upload it now (token is set, role=company)
+
       if (logoFile) {
         try {
           const fd = new FormData();
           fd.append("file", logoFile);
           await upload.companyLogo(fd);
         } catch {
-          // Logo upload failed — non-fatal, company was created
+
         }
       }
 
-      // New company → show success screen (pending admin verification)
+
       success = true;
     } catch (err: any) {
       error = err.message || "Échec de l'inscription";

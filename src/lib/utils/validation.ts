@@ -87,7 +87,7 @@ function isValidDate(x: string): boolean {
 
 function isValidPhoneNumber(phone: string) {
 
-    phone = phone.split(' ').join(''); // remove spaces
+    phone = phone.split(' ').join('');
 
     if (!phone.startsWith('0')) {
         return "Your phone number must start with 0."
@@ -127,7 +127,7 @@ function parseISODate(dateStr: string): Date | null {
     const d = new Date(year, month - 1, day);
     d.setHours(0, 0, 0, 0);
 
-    // Ensure no auto-correction (e.g. 2025-02-31 → 2025-03-03)
+
     if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) {
         return null;
     }
@@ -181,12 +181,12 @@ export const validation: Record<string, ValidationFunc> = {
 
         if (!isSanitized(name)) return "Invalid characters found.";
 
-        // verify by name.
+
         let names = name.split(' ');
         if (names.length < 2) return "Please enter your full name.";
         if (names.some(name => name.length < 3)) return "Name is too short."
 
-        return ""; // is correct! (no error)
+        return "";
     },
 
     name(name: string): Error {
@@ -195,7 +195,7 @@ export const validation: Record<string, ValidationFunc> = {
             return "Name is too short."
         }
 
-        return ""; // is correct! (no error)
+        return "";
 
     },
 

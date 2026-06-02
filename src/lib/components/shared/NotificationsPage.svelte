@@ -55,7 +55,7 @@
         try {
             await notifApi.markRead(id);
             notificationStore.decrement();
-            // Update locally — no full reload needed
+
             notifs = notifs.map((n) =>
                 n.id === id ? { ...n, read_at: new Date().toISOString() } : n,
             );

@@ -23,7 +23,7 @@
   const subject = $derived(data.subject);
   const teachers = $derived(data.teachers ?? []);
 
-  // Assign validators modal
+
   let showAssignModal = $state(false);
   let validator1Id: number | null = $state(null);
   let validator2Id: number | null = $state(null);

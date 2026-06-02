@@ -17,7 +17,7 @@ type DefenseJury struct {
 	CreatedAt             time.Time `json:"created_at"`
 	UpdatedAt             time.Time `json:"updated_at"`
 
-	// Relations
+
 	Assignment *PfeAssignment `json:"assignment,omitempty"`
 	President  *Teacher       `json:"president,omitempty"`
 	Member     *Teacher       `json:"member,omitempty"`

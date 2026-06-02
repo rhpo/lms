@@ -70,7 +70,7 @@ func Error(c fiber.Ctx, err error) error {
 		})
 	}
 
-	// Erreur inconnue -> 500
+
 	return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 		Success: false,
 		Error:   "Erreur interne du serveur",

@@ -4,10 +4,10 @@
     align?: "row" | "column" | "default";
     center?: boolean;
     fullScreen?: boolean;
-    maxWidth?: string; // Custom max-width
-    editor?: boolean; // For editor layout
-    main?: boolean; // For main layout
-    [key: string]: any; // Allow other attributes
+    maxWidth?: string;
+    editor?: boolean;
+    main?: boolean;
+    [key: string]: any;
   }
 
   let {

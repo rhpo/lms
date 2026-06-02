@@ -16,7 +16,7 @@
             await admin.reportAction(reportId, "resolve");
             await invalidateAll();
         } catch {
-            // ignore
+
         }
     }
 
@@ -25,7 +25,7 @@
             await admin.reportAction(reportId, "reject");
             await invalidateAll();
         } catch {
-            // ignore
+
         }
     }
 

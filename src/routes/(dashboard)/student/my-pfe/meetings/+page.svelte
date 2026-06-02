@@ -52,7 +52,7 @@
       await student.updateMyMeeting(reportId, { status: newStatus });
       await invalidateAll();
     } catch {
-      // silently ignore — status reverts on next load
+
     } finally {
       updatingStatusId = null;
     }

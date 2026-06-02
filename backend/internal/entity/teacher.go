@@ -15,7 +15,7 @@ type Teacher struct {
 	CreatedAt          time.Time  `json:"created_at"`
 	UpdatedAt          time.Time  `json:"updated_at"`
 
-	// Relations
+
 	Profile    *Profile    `json:"profile,omitempty"`
 	Department *Department `json:"department,omitempty"`
 	Domaines   []*Domain   `json:"domaines,omitempty"`

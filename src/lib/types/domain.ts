@@ -107,7 +107,7 @@ export interface Teacher {
   unavailable_until: string | null;
   created_at: string;
   updated_at: string;
-  // Relations (omitempty — present when backend joins)
+
   profile?: Profile;
   department?: Department;
   domaines?: Domain[];
@@ -122,7 +122,7 @@ export interface Student {
   promotion_id: number | null;
   created_at: string;
   updated_at: string;
-  // Relations
+
   profile?: Profile;
   speciality?: Speciality;
   promotion?: Promotion;
@@ -141,7 +141,7 @@ export interface Company {
   is_verified: boolean;
   created_at: string;
   updated_at: string;
-  // Relations
+
   profile?: Profile;
 }
 
@@ -166,7 +166,7 @@ export interface PfeSubject {
   is_assigned: boolean;
   created_at: string;
   updated_at: string;
-  // Relations
+
   proposer?: Profile;
   company?: Company;
   validator1?: Teacher;
@@ -183,11 +183,11 @@ export interface Wish {
   status: WishStatus;
   created_at: string;
   updated_at: string;
-  // Relations
+
   student?: Student;
   subject?: PfeSubject;
   academic_year?: AcademicYear;
-  // Computed (populated by JOINs)
+
   student_name?: string;
   student_specialty?: string;
   subject_title?: string;
@@ -207,7 +207,7 @@ export interface PfeAssignment {
   status: PfeAssignmentStatus;
   created_at: string;
   updated_at: string;
-  // Relations
+
   subject?: PfeSubject;
   academic_year?: AcademicYear;
   student?: Student;
@@ -215,7 +215,7 @@ export interface PfeAssignment {
   student3?: Student;
   supervisor?: Teacher;
   co_supervisor?: Teacher;
-  // Computed (populated by JOINs)
+
   subject_title?: string;
 }
 
@@ -230,7 +230,7 @@ export interface PfeProgressReport {
   observation: string | null;
   created_at: string;
   updated_at: string;
-  // Relations
+
   assignment?: PfeAssignment;
 }
 
@@ -245,7 +245,7 @@ export interface DefenseJury {
   member_wants_printed: boolean;
   created_at: string;
   updated_at: string;
-  // Relations
+
   assignment?: PfeAssignment;
   president?: Teacher;
   member?: Teacher;
@@ -263,7 +263,7 @@ export interface Defense {
   final_grade: number | null;
   created_at: string;
   updated_at: string;
-  // Relations
+
   assignment?: PfeAssignment;
   jury?: DefenseJury;
 }
@@ -282,7 +282,7 @@ export interface JuryGrade {
   total?: number;
   created_at: string;
   updated_at: string;
-  // Relations
+
   defense?: Defense;
   jury_member?: Teacher;
 }
@@ -294,7 +294,7 @@ export interface SupervisorEvaluation {
   criterion5: number | null;
   created_at: string;
   updated_at: string;
-  // Relations
+
   assignment?: PfeAssignment;
   evaluator?: Teacher;
 }
@@ -310,7 +310,7 @@ export interface CompanyReport {
   resolved_at: string | null;
   created_at: string;
   updated_at: string;
-  // Relations
+
   company?: Company;
 }
 

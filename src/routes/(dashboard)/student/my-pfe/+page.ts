@@ -9,7 +9,7 @@ export async function load() {
       student.getSoutenance().catch(() => null),
     ]);
 
-    // Extract defense info for the final grade banner
+
     let defense: Defense | null = null;
     let supervisorNote: number | null = null;
     if (soutenanceRaw?.has_soutenance && soutenanceRaw.defense) {

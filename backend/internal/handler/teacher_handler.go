@@ -76,7 +76,7 @@ func (h *TeacherHandler) CreateProposedSubject(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins: new subject awaiting validation
+
 	go h.notifier.NotifyAdmins(notify.TypeValidationRequise,
 		fmt.Sprintf("Un nouveau sujet « %s » a été proposé par un enseignant et attend votre validation.", req.Title))
 
@@ -138,7 +138,7 @@ func (h *TeacherHandler) ResubmitSubject(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins that a subject has been resubmitted
+
 	title := req.Title
 	if title == "" {
 		title = h.svc.GetSubjectTitle(id)
@@ -181,7 +181,7 @@ func (h *TeacherHandler) AcceptCandidat(c fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, err)
 	}
-	// Notify each student (needs profile ID, not entity ID) with subject title
+
 	subjectTitle := h.svc.GetSubjectTitle(id)
 	for _, studentID := range req.StudentIDs {
 		go func(sID int64) {
@@ -263,8 +263,8 @@ func (h *TeacherHandler) ValidateSubject(c fiber.Ctx) error {
 	if err := c.Bind().Body(&req); err != nil {
 		return response.ValidationError(c, "Données invalides")
 	}
-	// Load subject title before validation for the notification
-	subjectTitle := fmt.Sprintf("sujet #%d", id) // fallback
+
+	subjectTitle := fmt.Sprintf("sujet #%d", id)
 	if sub, err := h.svc.GetSubjectToValidate(userID, id); err == nil && sub != nil {
 		subjectTitle = sub.Title
 	}
@@ -273,7 +273,7 @@ func (h *TeacherHandler) ValidateSubject(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins — human-readable decision label, subject title (never raw IDs)
+
 	decisionLabels := map[string]string{
 		"valide":               "validé",
 		"accepte_sous_reserve": "accepté sous réserve",
@@ -342,7 +342,7 @@ func (h *TeacherHandler) AddMeeting(c fiber.Ctx) error {
 		return response.ValidationError(c, "La durée est requise")
 	}
 
-	// Parse date — support date-only and datetime-local formats
+
 	var meetingDate time.Time
 	var parseErr error
 	for _, layout := range []string{time.RFC3339, "2006-01-02T15:04", "2006-01-02"} {
@@ -376,7 +376,7 @@ func (h *TeacherHandler) AddMeeting(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify student about the new meeting (with subject title and date)
+
 	go func() {
 		assignment, err := h.svc.GetSupervisedPFE(id)
 		if err != nil || assignment == nil {
@@ -439,7 +439,7 @@ func (h *TeacherHandler) SubmitEvaluation(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify student and admins that the supervisor evaluation has been submitted
+
 	go func() {
 		assignment, err := h.svc.GetSupervisedPFE(id)
 		if err != nil || assignment == nil {
@@ -521,7 +521,7 @@ func (h *TeacherHandler) SubmitJuryGrade(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins that the member has submitted their grade
+
 	go func() {
 		duty, err := h.svc.GetJuryDuty(id)
 		if err != nil || duty == nil {
@@ -546,7 +546,7 @@ func (h *TeacherHandler) SubmitFinalGrade(c fiber.Ctx) error {
 	}
 	callerID := middleware.GetProfileID(c)
 	var req struct {
-		Choice          string  `json:"choice"`           // "member" or "new"
+		Choice          string  `json:"choice"`
 		Criterion1      float64 `json:"criterion1"`
 		Criterion2      float64 `json:"criterion2"`
 		Criterion3      float64 `json:"criterion3"`
@@ -560,7 +560,7 @@ func (h *TeacherHandler) SubmitFinalGrade(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Notify admins that the president has finalized the grade
+
 	go func() {
 		duty, err := h.svc.GetJuryDuty(id)
 		if err != nil || duty == nil {

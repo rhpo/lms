@@ -7,7 +7,7 @@
   let profile = $derived(data.profile);
   let company = $derived(profile?.company);
 
-  // Logo upload state
+
   let logoFile = $state<File | null>(null);
   let logoPreview = $state<string>("");
   let uploading = $state(false);

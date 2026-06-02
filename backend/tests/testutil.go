@@ -32,7 +32,7 @@ type TestHelper struct {
 	App   *fiber.App
 	DB    *sql.DB
 	Cfg   *config.Config
-	Admin string // token admin
+	Admin string
 }
 
 // Seed profile IDs (explicit integers for test predictability)
@@ -98,7 +98,7 @@ func NewTestHelper() *TestHelper {
 		AllowMethods: []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
 	}))
 
-	// Repositories
+
 	profileRepo := repository.NewProfileRepository(db)
 	teacherRepo := repository.NewTeacherRepository(db)
 	studentRepo := repository.NewStudentRepository(db)
@@ -121,7 +121,7 @@ func NewTestHelper() *TestHelper {
 
 	departmentRepo := repository.NewDepartmentRepository(db)
 
-	// Services
+
 	authService := service.NewAuthService(profileRepo, teacherRepo, studentRepo, companyRepo, cfg)
 	testNotifier := notify.New(notificationRepo, profileRepo, "test-resend-key")
 	adminService := service.NewAdminService(
@@ -150,10 +150,10 @@ func NewTestHelper() *TestHelper {
 		supEvalRepo, companyReportRepo, notificationRepo, academicYearRepo, testNotifier,
 	)
 
-	// Notifier
+
 	notifier := notify.New(notificationRepo, profileRepo, "test-resend-key")
 
-	// Handlers
+
 	authHandler := handler.NewAuthHandler(authService, cfg, notifier)
 	adminHandler := handler.NewAdminHandler(adminService, notifier)
 	teacherHandler := handler.NewTeacherHandler(teacherService, notifier)
@@ -652,10 +652,10 @@ func runTestMigrations(db *sql.DB) error {
 }
 
 func runTestSeed(db *sql.DB) error {
-	// Use explicit integer IDs for predictability in tests.
-	// Profile IDs match the Seed*ID constants above.
+
+
 	seeds := []string{
-		// Domains (IDs: 1-8)
+
 		`INSERT OR IGNORE INTO domains (id, name) VALUES (1, 'Intelligence Artificielle')`,
 		`INSERT OR IGNORE INTO domains (id, name) VALUES (2, 'Développement Web')`,
 		`INSERT OR IGNORE INTO domains (id, name) VALUES (3, 'Réseaux et Sécurité')`,
@@ -665,25 +665,25 @@ func runTestSeed(db *sql.DB) error {
 		`INSERT OR IGNORE INTO domains (id, name) VALUES (7, 'Cloud Computing')`,
 		`INSERT OR IGNORE INTO domains (id, name) VALUES (8, 'Bio-Informatique')`,
 
-		// Departments (IDs: 1-2)
+
 		`INSERT OR IGNORE INTO departments (id, name) VALUES (1, 'Informatique')`,
 		`INSERT OR IGNORE INTO departments (id, name) VALUES (2, 'Chimie')`,
 
-		// Specialities (IDs: 1-3)
+
 		`INSERT OR IGNORE INTO specialities (id, name, code, year_type, department_id) VALUES (1, 'ISIL', 'ISIL', 'master', 1)`,
 		`INSERT OR IGNORE INTO specialities (id, name, code, year_type, department_id) VALUES (2, 'Chimie', 'CHIM', 'licence', 2)`,
 		`INSERT OR IGNORE INTO specialities (id, name, code, year_type, department_id) VALUES (3, 'Électrotechnique', 'ELEC', 'master', 1)`,
 
-		// Academic years (IDs: 1-2)
+
 		`INSERT OR IGNORE INTO academic_years (id, label, status) VALUES (1, '2023-2024', 'cloturee')`,
 		`INSERT OR IGNORE INTO academic_years (id, label, status, submission_open_at, submission_close_at, max_wishes)
 		 VALUES (2, '2024-2025', 'active', datetime('now', '-30 days'), datetime('now', '+30 days'), 5)`,
 
-		// Promotions (IDs: 1-2)
+
 		`INSERT OR IGNORE INTO promotions (id, label, academic_year_id) VALUES (1, 'ISIL 2024-2025', 2)`,
 		`INSERT OR IGNORE INTO promotions (id, label, academic_year_id) VALUES (2, 'CHIM 2024-2025', 2)`,
 
-		// Profiles (IDs: 1-9, matching Seed*ID constants)
+
 		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (1, 'admin', 'Admin Test', 'admin@test.dz', 1)`,
 		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (2, 'teacher', 'Dr. ISIL Teacher', 'teacher.isil@test.dz', 1)`,
 		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (3, 'teacher', 'Pr. ISIL Validator', 'teacher.isil2@test.dz', 1)`,
@@ -694,27 +694,27 @@ func runTestSeed(db *sql.DB) error {
 		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (8, 'student', 'Étudiant ISIL 4', 'student.isil4@test.dz', 1)`,
 		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (9, 'company', 'TechCorp Algérie', 'contact@techcorp.dz', 1)`,
 
-		// Teachers (IDs: 1-3, profile_id references profiles)
+
 		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department_id, availability_status) VALUES (1, 2, 'mca', 1, 'disponible')`,
 		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department_id, availability_status) VALUES (2, 3, 'professeur', 1, 'disponible')`,
 		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department_id, availability_status) VALUES (3, 4, 'mcb', 2, 'disponible')`,
 
-		// Teacher domains
+
 		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (1, 1)`,
 		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (1, 2)`,
 		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (2, 1)`,
 		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (3, 4)`,
 
-		// Students (IDs: 1-4, profile_id references profiles)
+
 		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (1, 5, '2024001', 1, 'M2', 1)`,
 		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (2, 6, '2024002', 1, 'M2', 1)`,
 		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (3, 7, '2024003', 2, 'L3', 2)`,
 		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (4, 8, '2024004', 1, 'M2', 1)`,
 
-		// Companies (ID: 1)
+
 		`INSERT OR IGNORE INTO companies (id, profile_id, company_name, sector, description, is_verified) VALUES (1, 9, 'TechCorp Algérie', 'Technologie', 'Entreprise tech', 1)`,
 
-		// PFE Subjects (IDs: 1-6)
+
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status)
 		 VALUES (1, 'IA pour la santé', 'Sujet IA santé', 'binome', 2, 'teacher', 2, 'en_attente')`,
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status)
@@ -732,40 +732,40 @@ func runTestSeed(db *sql.DB) error {
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status)
 		 VALUES (6, 'Blockchain', 'Sujet blockchain', 'monome', 2, 'teacher', 2, 'refuse')`,
 
-		// Subject domains
+
 		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES (1, 1)`,
 		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES (2, 2)`,
 		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES (3, 7)`,
 
-		// Wishes (IDs: 1-3)
+
 		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status) VALUES (1, 1, 2, 2, 'en_attente')`,
 		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status) VALUES (2, 1, 3, 2, 'en_attente')`,
 		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status) VALUES (3, 2, 3, 2, 'accepte')`,
 
-		// Assignments (IDs: 1-2)
+
 		`INSERT OR IGNORE INTO pfe_assignments (id, pfe_code, subject_id, academic_year_id, student_id, student2_id, supervisor_id, status)
 		 VALUES (1, 'PFE-ISIL-2025-001', 3, 2, 1, 2, 1, 'en_cours')`,
 		`INSERT OR IGNORE INTO pfe_assignments (id, pfe_code, subject_id, academic_year_id, student_id, supervisor_id, status)
 		 VALUES (2, 'PFE-ISIL-2025-002', 5, 2, 4, 1, 'en_cours')`,
 
-		// Progress reports (IDs: 1-2)
+
 		`INSERT OR IGNORE INTO pfe_progress_reports (id, assignment_id, meeting_date, duration, meeting_type, topics, status)
 		 VALUES (1, 1, datetime('now', '-14 days'), 60, 'presentiel', 'Introduction, planification', 'termine')`,
 		`INSERT OR IGNORE INTO pfe_progress_reports (id, assignment_id, meeting_date, duration, meeting_type, topics, status)
 		 VALUES (2, 1, datetime('now', '-7 days'), 45, 'visio', 'État d''avancement', 'termine')`,
 
-		// Supervisor evaluation (ID: 1)
+
 		`INSERT OR IGNORE INTO supervisor_evaluations (id, pfe_assignment_id, evaluator_id, criterion5) VALUES (1, 1, 1, 3.5)`,
 
-		// Defense jury (ID: 1)
+
 		`INSERT OR IGNORE INTO defense_juries (id, assignment_id, president_id, member_id, president_confirmed, member_confirmed)
 		 VALUES (1, 1, 2, 3, 1, 1)`,
 
-		// Defense (ID: 1)
+
 		`INSERT OR IGNORE INTO defenses (id, assignment_id, jury_id, scheduled_at, room, status)
 		 VALUES (1, 1, 1, datetime('now', '+14 days'), 'Salle A', 'scheduled')`,
 
-		// Notifications (IDs: 1-2)
+
 		`INSERT OR IGNORE INTO notifications (id, recipient_id, type, payload) VALUES (1, 1, 'nouveau_sujet', '{"subject_id":1}')`,
 		`INSERT OR IGNORE INTO notifications (id, recipient_id, type, payload) VALUES (2, 2, 'sujet_valide', '{"subject_id":3}')`,
 	}

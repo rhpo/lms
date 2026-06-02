@@ -126,7 +126,7 @@ func (s *CompanyService) CreateSubject(userID int64, subject *entity.PfeSubject,
 	}
 
 	subject.CompanyID = entity.NullInt64{NullInt64: sql.NullInt64{Int64: company.ID, Valid: true}}
-	subject.ProposerID = company.ProfileID // profiles.id, NOT companies.id
+	subject.ProposerID = company.ProfileID
 	subject.ProposerRole = "company"
 	subject.AcademicYearID = ay.ID
 	if subject.Status == "" {
@@ -137,12 +137,12 @@ func (s *CompanyService) CreateSubject(userID int64, subject *entity.PfeSubject,
 		return err
 	}
 
-	// Persist domain associations so validators can be recommended by domain match.
+
 	for _, did := range domainIDs {
 		_ = s.pfeSubjectRepo.AddDomain(subject.ID, did)
 	}
 
-	// Confirmation à l'entreprise + notification aux admins
+
 	go s.notifier.Send(company.ProfileID, notify.TypeSujet,
 		fmt.Sprintf("Votre sujet « %s » a bien été soumis et est en attente de validation.", subject.Title))
 	go s.notifier.NotifyAdmins(notify.TypeSujet,
@@ -157,7 +157,7 @@ func isCompanySubject(subject *entity.PfeSubject, companyID, companyProfileID in
 	if subject.CompanyID.Valid && subject.CompanyID.Int64 == companyID {
 		return true
 	}
-	// Fallback: le proposer_id est un profile ID, pas un company entity ID
+
 	return subject.ProposerID == companyProfileID && subject.ProposerRole == "company"
 }
 
@@ -229,13 +229,13 @@ func (s *CompanyService) ListCandidats(subjectID int64) ([]*entity.Wish, error) 
 
 // AcceptCandidats accepte les étudiants sélectionnés pour un sujet et crée le PfeAssignment.
 func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) error {
-	// 1. Guard: refuse si une affectation existe déjà pour ce sujet
+
 	existing, _ := s.pfeAssignmentRepo.FindBySubjectID(subjectID)
 	if existing != nil {
 		return apperror.Conflict("Les étudiants ont déjà été affectés à ce sujet")
 	}
 
-	// 2. Charger le sujet pour récupérer le validateur académique
+
 	subject, err := s.pfeSubjectRepo.FindByID(subjectID)
 	if err != nil || subject == nil {
 		return apperror.NotFound("Sujet introuvable")
@@ -244,13 +244,13 @@ func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) er
 		return apperror.Conflict("Ce sujet n'a pas encore de validateur assigné — contactez l'administration")
 	}
 
-	// 3. Année académique active
+
 	ay, err := s.academicYearRepo.FindActive()
 	if err != nil || ay == nil {
 		return apperror.NotFound("Aucune année académique active")
 	}
 
-	// 4. Mettre à jour les voeux : accepter les sélectionnés, refuser les autres
+
 	wishes, err := s.wishRepo.FindBySubject(subjectID)
 	if err != nil {
 		return err
@@ -269,7 +269,7 @@ func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) er
 		}
 	}
 
-	// 5. Générer le code PFE
+
 	specialityCode := "GEN"
 	student1, err := s.studentRepo.FindByID(studentIDs[0])
 	if err == nil && student1 != nil && student1.SpecialityID != nil {
@@ -280,7 +280,7 @@ func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) er
 	seq, _ := s.pfeAssignmentRepo.CountBySpecialityAndYear(ay.ID, specialityCode)
 	code := pfe_code.Generate(specialityCode, ay.Label, seq+1)
 
-	// 6. Créer le PfeAssignment (validateur1 = encadreur académique interne)
+
 	assignment := &entity.PfeAssignment{
 		PfeCode:        code,
 		SubjectID:      subjectID,
@@ -367,7 +367,7 @@ func (s *CompanyService) SubmitEvaluation(assignmentID, evaluatorID int64, crite
 	if criterion5 < 0 || criterion5 > 4 {
 		return apperror.BadRequest("Le critère 5 doit être entre 0 et 4")
 	}
-	// Resolve company → use assignment's supervisor_id as evaluator
+
 	assignment, err := s.pfeAssignmentRepo.FindByID(assignmentID)
 	if err != nil || assignment == nil {
 		return apperror.NotFound("Affectation introuvable")

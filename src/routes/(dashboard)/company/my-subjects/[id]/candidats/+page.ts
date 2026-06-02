@@ -9,7 +9,7 @@ export async function load({ params }: LoadEvent) {
       company.listCandidats(Number(params.id)),
     ]);
     const wishesList = (wishes ?? []) as Wish[];
-    // If any wish is already accepted, the assignment is locked
+
     const isLocked = wishesList.some((w) => w.status === 'accepte');
     return {
       subject: subject ?? null,

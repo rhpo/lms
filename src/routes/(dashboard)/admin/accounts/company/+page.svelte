@@ -57,7 +57,7 @@
             });
             await invalidateAll();
         } catch {
-            // ignore
+
         }
     }
 

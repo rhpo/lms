@@ -3,7 +3,7 @@
 declare global {
   namespace App {
     interface PageData {
-      // no server data
+
     }
   }
 }

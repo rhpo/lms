@@ -123,7 +123,7 @@ func (s *AdminService) Dashboard() (map[string]any, error) {
 		}
 	}
 
-	// Timeline réelle : 10 derniers mois glissants depuis les données de la DB.
+
 	const timelineMonths = 10
 	monthlyStats, _ := s.pfeAssignmentRepo.MonthlyTimelineStats(timelineMonths)
 	totalStudents := len(students)
@@ -431,7 +431,7 @@ func (s *AdminService) CreateAcademicYear(ay *entity.AcademicYear) error {
 			return apperror.Conflict("Une année académique est déjà active (« " + existing.Label + " »). Clôturez-la d'abord.")
 		}
 	}
-	// Default max_wishes to 5 if not provided
+
 	if ay.MaxWishes <= 0 {
 		ay.MaxWishes = 5
 	}
@@ -520,7 +520,7 @@ func (s *AdminService) GetTeacherByID(id int64) (*entity.Teacher, error) {
 func (s *AdminService) GetTeacherProfileID(teacherID int64) int64 {
 	t, err := s.teacherRepo.FindByID(teacherID)
 	if err != nil || t == nil {
-		// Fallback: treat the ID as a profile ID and look up by profile
+
 		t2, err2 := s.teacherRepo.FindByProfileID(teacherID)
 		if err2 != nil || t2 == nil {
 			return 0
@@ -626,7 +626,7 @@ func (s *AdminService) RecommendCoSupervisor(assignmentID int64) (map[string]any
 		if t.AvailabilityStatus != "disponible" {
 			continue
 		}
-		// Exclude the current supervisor
+
 		if t.ID == assignment.SupervisorID {
 			continue
 		}
@@ -654,7 +654,7 @@ func (s *AdminService) RecommendCoSupervisor(assignmentID int64) (map[string]any
 		})
 	}
 
-	// Sort by score descending
+
 	for i := 0; i < len(recommendations); i++ {
 		for j := i + 1; j < len(recommendations); j++ {
 			if recommendations[j].Score > recommendations[i].Score {
@@ -725,9 +725,9 @@ func (s *AdminService) UpdateTeacherProfile(profileID int64, fullName, email, gr
 		if err := s.teacherRepo.Update(teacher); err != nil {
 			return err
 		}
-		// Replace domains
+
 		if domainIDs != nil {
-			// Remove all existing domains
+
 			existing, _ := s.teacherRepo.GetDomains(teacher.ID)
 			for _, d := range existing {
 				_ = s.teacherRepo.RemoveDomain(teacher.ID, d.ID)
@@ -796,7 +796,7 @@ func (s *AdminService) TransferAdmin(id int64) error {
 	if profile.Role != "teacher" {
 		return apperror.BadRequest("Le transfert admin n'est possible que vers un enseignant")
 	}
-	// Désactiver l'admin actuel
+
 	currentAdmin, err := s.FindAdmin()
 	if err != nil {
 		return err
@@ -893,7 +893,7 @@ func (s *AdminService) ImportUsersCSV(csvData, csvType string, replace bool) err
 		return apperror.BadRequest("CSV vide ou sans données")
 	}
 
-	// Preload lookups for optional fields
+
 	allDomains, _ := s.domainRepo.FindAll()
 	domainByName := make(map[string]*entity.Domain)
 	for _, d := range allDomains {
@@ -943,12 +943,12 @@ func (s *AdminService) ImportUsersCSV(csvData, csvType string, replace bool) err
 			var profileID int64
 			if existing != nil {
 				if !replace {
-					// Still upsert the teacher record even in non-replace mode
-					// so that an admin imported as teacher gets their teacher row.
+
+
 					profileID = existing.ID
 				} else {
 					existing.FullName = fullName
-					// Never demote an admin to teacher.
+
 					if existing.Role != "admin" {
 						existing.Role = "teacher"
 					}
@@ -967,7 +967,7 @@ func (s *AdminService) ImportUsersCSV(csvData, csvType string, replace bool) err
 				profileID = profile.ID
 			}
 
-			// Upsert teacher record
+
 			existingTeacher, _ := s.teacherRepo.FindByProfileID(profileID)
 			if existingTeacher == nil {
 				teacher := &entity.Teacher{
@@ -986,15 +986,15 @@ func (s *AdminService) ImportUsersCSV(csvData, csvType string, replace bool) err
 				_ = s.teacherRepo.Update(existingTeacher)
 			}
 
-			// Optional speciality (col 4)
+
 			if len(row) > 4 && strings.TrimSpace(row[4]) != "" {
 				specCode := strings.ToLower(strings.TrimSpace(row[4]))
 				if sp, ok := specByCode[specCode]; ok {
-					_ = sp // speciality exists but teachers don't have a speciality_id field directly
+					_ = sp
 				}
 			}
 
-			// Optional domains (col 5, semicolon-separated)
+
 			if len(row) > 5 && strings.TrimSpace(row[5]) != "" {
 				domainNames := strings.Split(row[5], ";")
 				for _, dn := range domainNames {
@@ -1038,7 +1038,7 @@ func (s *AdminService) ImportUsersCSV(csvData, csvType string, replace bool) err
 				profileID = profile.ID
 			}
 
-			// Resolve optional fields
+
 			var specialityID *int64
 			if len(row) > 3 && strings.TrimSpace(row[3]) != "" {
 				if sp, ok := specByCode[strings.ToLower(strings.TrimSpace(row[3]))]; ok {
@@ -1111,7 +1111,7 @@ func (s *AdminService) ReportAction(id int64, action string) error {
 func (s *AdminService) SubjectAction(id int64, action string, validatorID, validator1ID, validator2ID int64) error {
 	switch action {
 	case "assign-validators":
-		// Support either new (validator1_id + validator2_id) or legacy (validator_id only)
+
 		v1 := validator1ID
 		if v1 == 0 {
 			v1 = validatorID
@@ -1153,7 +1153,7 @@ func (s *AdminService) CreateDefense(assignmentID, presidentID, memberID int64, 
 	if presidentID == memberID {
 		return nil, apperror.BadRequest("Le président et le membre du jury doivent être différents")
 	}
-	// Vérifier que l'assignation existe
+
 	assignment, err := s.pfeAssignmentRepo.FindByID(assignmentID)
 	if err != nil {
 		return nil, err
@@ -1162,7 +1162,7 @@ func (s *AdminService) CreateDefense(assignmentID, presidentID, memberID int64, 
 		return nil, apperror.NotFound("Affectation introuvable")
 	}
 
-	// Vérifier que l'année académique associée est active
+
 	academicYear, err := s.academicYearRepo.FindByID(assignment.AcademicYearID)
 	if err != nil || academicYear == nil {
 		return nil, apperror.BadRequest("Année académique introuvable pour cette affectation")
@@ -1171,7 +1171,7 @@ func (s *AdminService) CreateDefense(assignmentID, presidentID, memberID int64, 
 		return nil, apperror.BadRequest("Impossible de planifier une soutenance : l'année académique est clôturée")
 	}
 
-	// Créer le jury
+
 	jury := &entity.DefenseJury{
 		AssignmentID: assignmentID,
 		PresidentID:  presidentID,
@@ -1181,13 +1181,13 @@ func (s *AdminService) CreateDefense(assignmentID, presidentID, memberID int64, 
 		return nil, err
 	}
 
-	// Parsing du temps scheduledAt
+
 	var scheduledAtTime entity.NullTime
 	if t, err := time.Parse(time.RFC3339, scheduledAt); err == nil {
 		scheduledAtTime = entity.NullTime{NullTime: sql.NullTime{Time: t, Valid: true}}
 	}
 
-	// Créer la soutenance
+
 	defense := &entity.Defense{
 		AssignmentID: assignmentID,
 		JuryID:       jury.ID,
@@ -1199,10 +1199,10 @@ func (s *AdminService) CreateDefense(assignmentID, presidentID, memberID int64, 
 		return nil, err
 	}
 
-	// Mettre à jour le statut de l'assignation
+
 	_ = s.pfeAssignmentRepo.UpdateStatus(assignmentID, "soutenance_planifiee")
 
-	// Notifier les étudiants et le jury
+
 	s.notifyDefenseScheduled(defense, jury)
 
 	return defense, nil
@@ -1216,7 +1216,7 @@ func (s *AdminService) notifyDefenseScheduled(defense *entity.Defense, jury *ent
 		title = fmt.Sprintf("« %s »", subject.Title)
 	}
 
-	// Notification aux étudiants
+
 	assignment, _ := s.pfeAssignmentRepo.FindByID(defense.AssignmentID)
 	if assignment != nil {
 		students := []int64{assignment.StudentID}
@@ -1235,12 +1235,12 @@ func (s *AdminService) notifyDefenseScheduled(defense *entity.Defense, jury *ent
 		}
 	}
 
-	// Notification au président du jury (teacher entity ID → profile ID)
+
 	if t, _ := s.teacherRepo.FindByID(jury.PresidentID); t != nil {
 		go s.notifier.Send(t.ProfileID, notify.TypeJury,
 			fmt.Sprintf("Vous avez été désigné président du jury pour la soutenance du sujet %s.", title))
 	}
-	// Notification au membre du jury
+
 	if t, _ := s.teacherRepo.FindByID(jury.MemberID); t != nil {
 		go s.notifier.Send(t.ProfileID, notify.TypeJury,
 			fmt.Sprintf("Vous avez été désigné membre du jury pour la soutenance du sujet %s.", title))
@@ -1295,7 +1295,7 @@ func (s *AdminService) RecommendJury(pfeID int64) (map[string]any, error) {
 		if t.AvailabilityStatus != "disponible" {
 			continue
 		}
-		// Skip the proposer if they are a teacher
+
 		if t.ProfileID == subject.ProposerID {
 			continue
 		}
@@ -1323,7 +1323,7 @@ func (s *AdminService) RecommendJury(pfeID int64) (map[string]any, error) {
 		})
 	}
 
-	// Sort by score descending (most matching domains first)
+
 	for i := 0; i < len(recommendations); i++ {
 		for j := i + 1; j < len(recommendations); j++ {
 			if recommendations[j].Score > recommendations[i].Score {
@@ -1341,7 +1341,7 @@ func (s *AdminService) RecommendJury(pfeID int64) (map[string]any, error) {
 
 // SubmitGrade soumet une note jury pour l'utilisateur authentifié.
 func (s *AdminService) SubmitGrade(defenseID, callerID int64, c1, c2, c3, c4 float64, archiveDecision string) error {
-	// Valider les critères (0-4)
+
 	for _, v := range []float64{c1, c2, c3, c4} {
 		if v < 0 || v > 4 {
 			return apperror.BadRequest("Les critères doivent être entre 0 et 4")
@@ -1352,7 +1352,7 @@ func (s *AdminService) SubmitGrade(defenseID, callerID int64, c1, c2, c3, c4 flo
 		return apperror.BadRequest("Décision d'archivage invalide")
 	}
 
-	// Vérifier la défense
+
 	defense, err := s.defenseRepo.FindByID(defenseID)
 	if err != nil {
 		return err
@@ -1363,7 +1363,7 @@ func (s *AdminService) SubmitGrade(defenseID, callerID int64, c1, c2, c3, c4 flo
 
 	archiveNull := entity.NullString{NullString: sql.NullString{String: archiveDecision, Valid: archiveDecision != ""}}
 
-	// Upsert: vérifier si une note existe déjà pour ce membre
+
 	existing, err := s.juryGradeRepo.FindByDefenseAndMember(defenseID, callerID)
 	if err != nil {
 		return err
@@ -1392,12 +1392,12 @@ func (s *AdminService) SubmitGrade(defenseID, callerID int64, c1, c2, c3, c4 flo
 
 // ResolveGradeRequest contient les paramètres de résolution de notes.
 type ResolveGradeRequest struct {
-	Choice     string             // "president", "member", "new", ou "" (ancien mode direct)
+	Choice     string
 	Criterion1 float64
 	Criterion2 float64
 	Criterion3 float64
 	Criterion4 float64
-	Grades     map[string]float64 // pour choice="new"
+	Grades     map[string]float64
 }
 
 // ResolveGrade résout la note finale d'une soutenance.
@@ -1414,7 +1414,7 @@ func (s *AdminService) ResolveGrade(defenseID int64, req ResolveGradeRequest) er
 
 	switch req.Choice {
 	case "president", "member":
-		// Trouver le jury
+
 		jury, err := s.defenseJuryRepo.FindByID(defense.JuryID)
 		if err != nil {
 			return err
@@ -1452,14 +1452,14 @@ func (s *AdminService) ResolveGrade(defenseID int64, req ResolveGradeRequest) er
 		c4 = req.Grades["criterion4"]
 
 	default:
-		// Mode direct (rétrocompatibilité)
+
 		c1 = req.Criterion1
 		c2 = req.Criterion2
 		c3 = req.Criterion3
 		c4 = req.Criterion4
 	}
 
-	// Récupérer l'évaluation encadrant
+
 	assignment, err := s.pfeAssignmentRepo.FindByID(defense.AssignmentID)
 	if err != nil {
 		return err
@@ -1487,7 +1487,7 @@ func (s *AdminService) findJuryByIDOrDefenseID(id int64) (*entity.DefenseJury, e
 	if jury != nil {
 		return jury, nil
 	}
-	// Essayer comme ID de soutenance
+
 	defense, err := s.defenseRepo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -1528,14 +1528,14 @@ func (s *AdminService) DeclineJury(id int64) error {
 
 // UpdateDeadlines met à jour les délais de soumission.
 func (s *AdminService) UpdateDeadlines(openAt, closeAt string, maxWishes int) error {
-	// Trouver l'année académique active
+
 	years, err := s.academicYearRepo.FindAll()
 	if err != nil {
 		return err
 	}
 	for _, y := range years {
 		if y.Status == "active" {
-			// Parsing des dates
+
 			if t, err := time.Parse(time.RFC3339, openAt); err == nil {
 				y.SubmissionOpenAt = entity.NullTime{NullTime: sql.NullTime{Time: t, Valid: true}}
 			}
@@ -1557,7 +1557,7 @@ func (s *AdminService) hydrateTeacher(id int64) *entity.Teacher {
 	}
 	t, _ := s.teacherRepo.FindByID(id)
 	if t == nil {
-		// Try as profile ID
+
 		t, _ = s.teacherRepo.FindByProfileID(id)
 	}
 	if t != nil {

@@ -10,11 +10,11 @@ type Wish struct {
 	StudentID      int64     `json:"student_id"`
 	SubjectID      int64     `json:"subject_id"`
 	AcademicYearID int64     `json:"academic_year_id"`
-	Status         string    `json:"status"` // en_attente/accepte/refuse
+	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 
-	// Relations
+
 	Student      *Student      `json:"student,omitempty"`
 	Subject      *PfeSubject   `json:"subject,omitempty"`
 	AcademicYear *AcademicYear `json:"academic_year,omitempty"`

@@ -2,7 +2,7 @@
     import { MetaTags } from "svelte-meta-tags";
     import { getContext } from "svelte";
 
-    //@ts-ignore
+
     import { BRAND } from "$lib/constants/branding";
 
     let {

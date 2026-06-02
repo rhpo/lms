@@ -69,7 +69,7 @@ func main() {
 		AllowMethods: []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
 	}))
 
-	// ---- Repositories ----
+
 	profileRepo := repository.NewProfileRepository(db)
 	teacherRepo := repository.NewTeacherRepository(db)
 	studentRepo := repository.NewStudentRepository(db)
@@ -91,10 +91,10 @@ func main() {
 	notificationRepo := repository.NewNotificationRepository(db)
 	auditLogRepo := repository.NewAuditLogRepository(db)
 
-	// ---- Services ----
+
 	authService := service.NewAuthService(profileRepo, teacherRepo, studentRepo, companyRepo, cfg)
 
-	// ---- Notifier (created early so services can use it) ----
+
 	notifier := notify.New(notificationRepo, profileRepo, cfg.ResendAPIKey)
 
 	adminService := service.NewAdminService(
@@ -124,7 +124,7 @@ func main() {
 		supEvalRepo, companyReportRepo, notificationRepo, academicYearRepo, notifier,
 	)
 
-	// ---- Handlers ----
+
 	authHandler := handler.NewAuthHandler(authService, cfg, notifier)
 	adminHandler := handler.NewAdminHandler(adminService, notifier)
 	teacherHandler := handler.NewTeacherHandler(teacherService, notifier)
@@ -134,7 +134,7 @@ func main() {
 
 	api := app.Group("/api")
 
-	// Routes publiques
+
 	api.Get("/health", func(c fiber.Ctx) error {
 		return c.JSON(map[string]any{
 			"success": true,
@@ -144,7 +144,7 @@ func main() {
 		})
 	})
 
-	// Rate limit auth mutation routes: 10 requests per minute per IP
+
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
 		Expiration: time.Minute,
@@ -162,7 +162,7 @@ func main() {
 
 	api.Get("/accounts/users", adminHandler.ListUsers)
 
-	// Données référentielles (tous rôles authentifiés)
+
 	ref := api.Group("/ref", middleware.AuthRequired(cfg))
 	ref.Get("/domains", func(c fiber.Ctx) error {
 		domains, err := domainRepo.FindAll()
@@ -195,26 +195,26 @@ func main() {
 		return c.JSON(map[string]any{"success": true, "data": departments})
 	})
 
-	// Routes auth protégées
+
 	auth := api.Group("/auth")
 	auth.Use(middleware.AuthRequired(cfg))
 	auth.Get("/me", authHandler.Me)
 	auth.Post("/logout", authHandler.Logout)
 
-	// Fichiers statiques (uploads)
-	// app.Static("/uploads", "./uploads")
+
+
 	app.Use("/uploads", static.New("./uploads"))
 
-	// Profile avatar
+
 	api.Post("/profile/avatar", middleware.AuthRequired(cfg), uploadHandler.UploadAvatar)
 
-	// Upload
+
 	upload := api.Group("/upload", middleware.AuthRequired(cfg))
 	upload.Post("/company-logo", uploadHandler.UploadCompanyLogo)
 	upload.Post("/memoire", uploadHandler.UploadMemoire)
 	upload.Post("/avatar", uploadHandler.UploadAvatar)
 
-	// Admin (rôle: admin)
+
 	admin := api.Group("/admin", middleware.AuthRequired(cfg), middleware.RequireRole("admin"))
 	admin.Get("/dashboard", adminHandler.Dashboard)
 	admin.Get("/accounts/users", adminHandler.ListUsers)
@@ -268,7 +268,7 @@ func main() {
 	admin.Get("/exports/plannings", adminHandler.ExportPlannings)
 	admin.Get("/exports/statistiques", adminHandler.ExportStatistics)
 
-	// Enseignant (rôle: teacher ou admin)
+
 	teacher := api.Group("/teacher", middleware.AuthRequired(cfg), middleware.RequireRole("teacher", "admin"))
 	teacher.Get("/dashboard", teacherHandler.Dashboard)
 	teacher.Get("/proposed-subjects", teacherHandler.ListProposedSubjects)
@@ -295,7 +295,7 @@ func main() {
 	teacher.Post("/availability", teacherHandler.UpdateAvailability)
 	teacher.Get("/notifications", teacherHandler.ListNotifications)
 
-	// Étudiant (rôle: student)
+
 	student := api.Group("/student", middleware.AuthRequired(cfg), middleware.RequireRole("student"))
 	student.Get("/settings", studentHandler.GetSettings)
 	student.Get("/dashboard", studentHandler.Dashboard)
@@ -312,7 +312,7 @@ func main() {
 	student.Get("/soutenance", studentHandler.GetSoutenance)
 	student.Get("/notifications", studentHandler.ListNotifications)
 
-	// Entreprise (rôle: company)
+
 	company := api.Group("/company", middleware.AuthRequired(cfg), middleware.RequireRole("company"))
 	company.Get("/dashboard", companyHandler.Dashboard)
 	company.Get("/subjects", companyHandler.ListSubjects)
@@ -331,7 +331,7 @@ func main() {
 	company.Post("/reports", companyHandler.CreateReport)
 	company.Get("/notifications", companyHandler.ListNotifications)
 
-	// Notifications (tous rôles authentifiés)
+
 	notifs := api.Group("/notifications", middleware.AuthRequired(cfg))
 	notifs.Get("/", func(c fiber.Ctx) error {
 		profileID := middleware.GetProfileID(c)
@@ -623,10 +623,10 @@ func runMigrations(db *sql.DB) error {
 		}
 	}
 
-	// Migrate jury_grades: add archive_decision column (silently ignored if already exists)
+
 	_, _ = db.Exec(`ALTER TABLE jury_grades ADD COLUMN archive_decision TEXT CHECK(archive_decision IN ('archivable','minor_corrections','major_corrections'))`)
 
-	// Migrate pfe_progress_reports: add 'a_faire' to status CHECK constraint
+
 	var progressSchema string
 	_ = db.QueryRow(`SELECT sql FROM sqlite_master WHERE type='table' AND name='pfe_progress_reports'`).Scan(&progressSchema)
 	if progressSchema != "" && !strings.Contains(progressSchema, "a_faire") {
@@ -669,13 +669,13 @@ func runMigrations(db *sql.DB) error {
 		}
 	}
 
-	// Seed default departments
+
 	defaultDepts := []string{"Informatique", "Electronique", "Chimie", "Finance"}
 	for _, name := range defaultDepts {
 		_, _ = db.Exec(`INSERT OR IGNORE INTO departments (name) VALUES (?)`, name)
 	}
 
-	// Seed default domains
+
 	defaultDomains := []string{
 		"Intelligence Artificielle", "Développement Web", "Sécurité Informatique",
 		"Big Data", "Réseaux & Télécommunications", "Systèmes Embarqués",
@@ -685,7 +685,7 @@ func runMigrations(db *sql.DB) error {
 		_, _ = db.Exec(`INSERT OR IGNORE INTO domains (name) VALUES (?)`, name)
 	}
 
-	// Resolve department IDs for speciality seeding
+
 	deptIDs := map[string]int64{}
 	for _, name := range defaultDepts {
 		var id int64
@@ -693,7 +693,7 @@ func runMigrations(db *sql.DB) error {
 		deptIDs[name] = id
 	}
 
-	// Seed default specialities
+
 	defaultSpecs := []struct {
 		name, code, yearType, dept string
 	}{
@@ -711,8 +711,8 @@ func runMigrations(db *sql.DB) error {
 			s.name, s.code, s.yearType, deptIDs[s.dept])
 	}
 
-	// Seed default admin profile + teacher record if not exists.
-	// DJOUAMAA Amir is both the platform admin and a teacher (MCA, Informatique).
+
+
 	var count int
 	_ = db.QueryRow(`SELECT COUNT(*) FROM profiles WHERE role = 'admin'`).Scan(&count)
 	if count == 0 {
@@ -721,13 +721,13 @@ func runMigrations(db *sql.DB) error {
 		_, _ = db.Exec(`INSERT INTO teachers (profile_id, grade, department_id, availability_status) VALUES (?, 'mca', ?, 'disponible')`, adminID, deptIDs["Informatique"])
 	}
 
-	// Seed active academic year if none exists.
+
 	var ayCount int
 	_ = db.QueryRow(`SELECT COUNT(*) FROM academic_years WHERE status = 'active'`).Scan(&ayCount)
 	if ayCount == 0 {
 		now := time.Now()
 		year := now.Year()
-		// If we're past August, the academic year is YEAR/YEAR+1, otherwise YEAR-1/YEAR
+
 		if now.Month() < 9 {
 			year--
 		}

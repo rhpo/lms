@@ -52,7 +52,7 @@ type Notifier struct {
 func New(notifRepo *repository.NotificationRepository, profileRepo *repository.ProfileRepository, resendAPIKey string) *Notifier {
 	channels := []Channel{&dbChannel{repo: notifRepo}}
 
-	// Add email channel if Resend API key is configured and not a test key
+
 	if resendAPIKey != "" && resendAPIKey != "test-resend-key" {
 		channels = append(channels, &emailChannel{
 			apiKey:      resendAPIKey,
@@ -155,13 +155,13 @@ var notifTypeSubjects = map[string]string{
 }
 
 func (e *emailChannel) Send(n *entity.Notification) error {
-	// Resolve recipient email
+
 	profile, err := e.profileRepo.FindByID(n.RecipientID)
 	if err != nil || profile == nil || profile.Email == "" {
-		return nil // silently skip — no email to send to
+		return nil
 	}
 
-	// Extract message from payload
+
 	var msg Message
 	_ = json.Unmarshal([]byte(n.Payload), &msg)
 	if msg.Message == "" {
@@ -173,7 +173,7 @@ func (e *emailChannel) Send(n *entity.Notification) error {
 		subject = "Notification — Plateforme PFE"
 	}
 
-	// Build Resend API request
+
 	body := map[string]interface{}{
 		"from":    "Plateforme PFE <noreply@codiha.com>",
 		"to":      []string{profile.Email},

@@ -13,7 +13,7 @@
 
     const { pfe, progressReports, defense, supervisorNote } = $derived(data);
 
-    // Has a final grade been set?
+
     const hasFinalGrade = $derived(!!(defense?.final_grade !== null && defense?.final_grade !== undefined));
 
     let showMeetingForm = $state(false);
@@ -49,7 +49,7 @@
         termine: "Terminé",
     };
 
-    // Mémoire upload
+
     let memoireFile = $state<File | null>(null);
     let memoireUploading = $state(false);
     let memoireError = $state("");
@@ -73,12 +73,12 @@
         memoireError = "";
         memoireUploading = true;
         try {
-            // 1. Upload the PDF file
+
             const formData = new FormData();
             formData.append("file", memoireFile);
             const { url } = await upload.memoire(formData);
 
-            // 2. Submit the URL to the PFE
+
             await student.submitMemoire({ memoire_url: url });
 
             memoireSuccess = true;
@@ -99,7 +99,7 @@
             await student.updateMyMeeting(reportId, { status: newStatus });
             await invalidateAll();
         } catch {
-            // silently ignore — reverts on next load
+
         } finally {
             updatingStatusId = null;
         }

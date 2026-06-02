@@ -19,7 +19,7 @@
   let loading = $state(false);
   let error = $state("");
 
-  // Show validator comments so the company knows what to fix
+
   const validator1Comment = $derived(subject?.validator1_comment ?? null);
   const validator2Comment = $derived(subject?.validator2_comment ?? null);
   const hasComments = $derived(Boolean(validator1Comment) || Boolean(validator2Comment));

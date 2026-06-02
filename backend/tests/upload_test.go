@@ -41,7 +41,7 @@ func TestUploadAvatar(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	// Valid PNG-like content (just for testing)
+
 	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/avatar", "file", "avatar.png", "fake-png-content", h.AuthToken(SeedAdminID, "admin"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)

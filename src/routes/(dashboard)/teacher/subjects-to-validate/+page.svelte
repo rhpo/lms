@@ -16,12 +16,12 @@
 
   const { subjects } = $derived(data);
 
-  // Shows whether the *other* validator has already decided, giving context
-  // while waiting for the current teacher to submit their own decision.
+
+
   function otherValidatorDecision(subject: PfeSubject): string | null {
     const d1 = subject.validator1_decision;
     const d2 = subject.validator2_decision;
-    // One of them is ours (null = not decided yet), the other may be set
+
     if (d1 && !d2) return d1;
     if (d2 && !d1) return d2;
     return null;

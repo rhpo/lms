@@ -51,7 +51,7 @@
         return m ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
     }
 
-    // Meeting form
+
     let newMeeting = $state({
         date: new Date().toISOString().split("T")[0],
         duration: 60,
@@ -99,7 +99,7 @@
         }
     }
 
-    // Evaluation form
+
     let criterion5 = $state(0);
     let evalComment = $state("");
     let evalError = $state("");

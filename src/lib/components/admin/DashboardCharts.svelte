@@ -20,7 +20,7 @@
       };
     }
 
-    // Grab an existing text element in the DOM that has the proper text color applied!
+
     const headerEl = document.querySelector(".chart-header h3") as HTMLElement;
     let textRaw = "#111827";
     if (headerEl) {
@@ -30,7 +30,7 @@
       headerEl.style.transition = oldTrans;
     }
 
-    // The grid should be subtle, grab the computed border
+
     const dashCard = document.querySelector(".chart-card") as HTMLElement;
     let borderRaw = "#e5e7eb";
     let surfaceRaw = "#ffffff";
@@ -43,12 +43,12 @@
       dashCard.style.transition = oldTrans;
     }
 
-    // Convert strong border to a grid color using opacity, or fallback
+
     let gridRaw = borderRaw;
     if (gridRaw.startsWith("rgb(")) {
       gridRaw = gridRaw.replace("rgb(", "rgba(").replace(")", ", 0.3)");
     } else if (gridRaw.startsWith("rgba(")) {
-      // Just keep it as is, or you could do a regex to replace alpha, but this is safe
+
       gridRaw = gridRaw.replace(/[\d\.]+\)$/g, "0.3)");
     }
 
@@ -63,7 +63,7 @@
   onMount(() => {
     const colors = getThemeColors();
 
-    // Line chart
+
     lineChart = new Chart(lineCanvas, {
       type: "line",
       data: {
@@ -107,7 +107,7 @@
             data: timeline.sans_sujet || [
               120, 110, 90, 60, 35, 20, 10, 2, 0, 0,
             ],
-            borderColor: "#f43f5e", // red
+            borderColor: "#f43f5e",
             backgroundColor: "color-mix(in srgb, #f43f5e 20%, transparent)",
             fill: true,
             tension: 0.4,
@@ -175,7 +175,7 @@
       },
     });
 
-    // Donut chart
+
     donutChart = new Chart(donutCanvas, {
       type: "doughnut",
       data: {
@@ -189,15 +189,15 @@
           {
             data: [
               stats.pendingSubjects || 0,
-              (stats.validatedSubjects || 0) - (stats.assignedSubjects || 0), // Assuming assigned is a subset of validated, otherwise adjust
+              (stats.validatedSubjects || 0) - (stats.assignedSubjects || 0),
               stats.assignedSubjects || 0,
               stats.rejectedSubjects || 0,
             ],
             backgroundColor: [
-              "#f59e0b", // orange
-              "#8b5cf6", // purple
-              "#3b82f6", // blue
-              "#ef4444", // red
+              "#f59e0b",
+              "#8b5cf6",
+              "#3b82f6",
+              "#ef4444",
             ],
             borderWidth: 0,
             hoverOffset: 8,
@@ -210,7 +210,7 @@
         cutout: "75%",
         plugins: {
           legend: {
-            display: false, // We will use a custom HTML legend for perfect centering!
+            display: false,
           },
           tooltip: {
             backgroundColor: colors.surface,
@@ -234,15 +234,15 @@
       },
     });
 
-    // Make sure we set global defaults initially too!
+
     Chart.defaults.color = colors.text;
     Chart.defaults.borderColor = colors.grid;
   });
 
-  // Keep charts updated if data propagates later or theme toggles
+
   $effect(() => {
-    // Read theme to register it as a Svelte 5 tracking dependency
-    // We do a tiny trick: Svelte will track this and re-run!
+
+
     const currentTheme = theme;
 
     if (lineChart && timeline) {
@@ -255,7 +255,7 @@
         lineChart.data.datasets[2].data = timeline.sans_sujet;
       const colors = getThemeColors();
 
-      // Globally apply default colors to ensure all text (legend, axes, etc.) updates perfectly
+
       Chart.defaults.color = colors.text;
       Chart.defaults.borderColor = colors.grid;
 

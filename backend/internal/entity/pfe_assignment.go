@@ -7,7 +7,7 @@ import (
 // PfeAssignment représente l'affectation d'étudiants à un sujet PFE.
 type PfeAssignment struct {
 	ID             int64      `json:"id"`
-	PfeCode        string     `json:"pfe_code"` // PFE-ISIL-2025-001
+	PfeCode        string     `json:"pfe_code"`
 	SubjectID      int64      `json:"subject_id"`
 	AcademicYearID int64      `json:"academic_year_id"`
 	StudentID      int64      `json:"student_id"`
@@ -16,11 +16,11 @@ type PfeAssignment struct {
 	SupervisorID   int64      `json:"supervisor_id"`
 	CoSupervisorID NullInt64  `json:"co_supervisor_id"`
 	MemoireURL     NullString `json:"memoire_url"`
-	Status         string     `json:"status"` // en_cours/memoire_soumis/soutenance_planifiee/valide/refuse
+	Status         string     `json:"status"`
 	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
 
-	// Relations
+
 	Subject      *PfeSubject   `json:"subject,omitempty"`
 	AcademicYear *AcademicYear `json:"academic_year,omitempty"`
 	Student      *Student      `json:"student,omitempty"`
