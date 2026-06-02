@@ -10,27 +10,50 @@
     value?: string;
     error?: string;
     required?: boolean;
-    validation?: (value: any) => string | null;
+    validation?: ValidationFunc;
     onInput?: (e: Event) => void;
   };
 
+  type InputType = NonNullable<HTMLInputAttributes["type"]>;
+
+  const validationMatch: Partial<Record<InputType, ValidationFunc>> = {
+    email: validationCollection.email,
+    text: (value: string) => "",
+  };
+
   export type InputProps =
-    | ({ category?: "input" } & SharedProps & HTMLInputAttributes)
-    | ({ category: "textarea" } & SharedProps & HTMLTextareaAttributes);
+    | ({
+        category?: "input";
+        type?: HTMLInputAttributes["type"];
+        validation?: ValidationFunc;
+      } & SharedProps &
+        HTMLInputAttributes)
+    | ({
+        category: "textarea";
+        type?: HTMLInputAttributes["type"];
+        validation?: ValidationFunc;
+      } & SharedProps &
+        HTMLTextareaAttributes);
 </script>
 
 <script lang="ts">
   import { tippy, type TooltipParams } from "$lib/scripts/tippy";
-  import { validate } from "$lib/utils/validation";
+  import {
+    validate,
+    validateValue,
+    validation as validationCollection,
+    type ValidationFunc,
+  } from "$lib/utils/validation";
 
   let {
     category = "input",
     label = "",
     value = $bindable(""),
+    type = "text",
     error = $bindable(""),
     placeholder,
     required = false,
-    validation = undefined,
+    validation = validationMatch[type || "text"],
     onInput = () => {},
     ...rest
   }: InputProps = $props();
@@ -42,12 +65,12 @@
   }
 
   function handleInput(e: Event) {
-    error = validate(value);
+    error = validateValue(value, validation);
     onInput(e);
   }
 
   function handleBlur() {
-    error = validate(value);
+    error = validateValue(value, validation);
   }
 
   let tippyProps = $state({

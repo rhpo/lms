@@ -1,31 +1,33 @@
 package entity
 
 import (
-	"database/sql"
 	"time"
 )
 
 // PfeSubject représente un sujet de PFE proposé par un enseignant ou une entreprise.
 type PfeSubject struct {
-	ID                    string         `json:"id"`
-	Title                 string         `json:"title"`
-	Description           string         `json:"description"`
-	GroupType             string         `json:"group_type"` // monome/binome/trinome
-	ProposerID            string         `json:"proposer_id"`
-	ProposerRole          string         `json:"proposer_role"` // teacher/company
-	CompanyID             sql.NullString `json:"company_id"`
-	AcademicYearID        string         `json:"academic_year_id"`
-	Validator1ID          sql.NullString `json:"validator1_id"`
-	Validator2ID          sql.NullString `json:"validator2_id"`
-	Validator1Decision    sql.NullString `json:"validator1_decision"` // valide/accepte_sous_reserve/refuse
-	Validator2Decision    sql.NullString `json:"validator2_decision"`
-	Validator1Comment     sql.NullString `json:"validator1_comment"`
-	Validator2Comment     sql.NullString `json:"validator2_comment"`
-	Status                string         `json:"status"` // en_attente/valide/accepte_sous_reserve/refuse/expire
-	CoSupervisorID        sql.NullString `json:"co_supervisor_id"`
-	PreAssignedStudentIDs sql.NullString `json:"pre_assigned_student_ids"` // JSON array d'IDs
-	CreatedAt             time.Time      `json:"created_at"`
-	UpdatedAt             time.Time      `json:"updated_at"`
+	ID                    int64      `json:"id"`
+	Title                 string     `json:"title"`
+	Description           string     `json:"description"`
+	GroupType             string     `json:"group_type"` // monome/binome/trinome
+	ProposerID            int64      `json:"proposer_id"`
+	ProposerRole          string     `json:"proposer_role"` // teacher/company
+	CompanyID             NullInt64  `json:"company_id"`
+	AcademicYearID        int64      `json:"academic_year_id"`
+	Validator1ID          NullInt64  `json:"validator1_id"`
+	Validator2ID          NullInt64  `json:"validator2_id"`
+	Validator1Decision    NullString `json:"validator1_decision"` // valide/accepte_sous_reserve/refuse
+	Validator2Decision    NullString `json:"validator2_decision"`
+	Validator1Comment     NullString `json:"validator1_comment"`
+	Validator2Comment     NullString `json:"validator2_comment"`
+	Status                string     `json:"status"` // en_attente/valide/accepte_sous_reserve/refuse/expire
+	CoSupervisorID        NullInt64  `json:"co_supervisor_id"`
+	PreAssignedStudentIDs NullString `json:"pre_assigned_student_ids"` // JSON array d'IDs
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
+
+	// Computed (not stored)
+	IsAssigned bool `json:"is_assigned"`
 
 	// Relations
 	Proposer     *Profile  `json:"proposer,omitempty"`

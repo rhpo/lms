@@ -26,6 +26,10 @@
 </button>
 
 <style>
+  .hidden {
+    opacity: 0;
+  }
+
   .theme-toggle {
     color: inherit;
 

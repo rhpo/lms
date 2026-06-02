@@ -90,7 +90,7 @@ func (h *UploadHandler) UploadAvatar(c fiber.Ctx) error {
 		return response.ValidationError(c, err.Error())
 	}
 	profileID := middleware.GetProfileID(c)
-	if profileID != "" && h.profileRepo != nil {
+	if profileID != 0 && h.profileRepo != nil {
 		_ = h.profileRepo.UpdateAvatarURL(profileID, url)
 	}
 	return response.OK(c, map[string]string{"url": url})
@@ -108,7 +108,7 @@ func (h *UploadHandler) UploadCompanyLogo(c fiber.Ctx) error {
 		return response.ValidationError(c, err.Error())
 	}
 	profileID := middleware.GetProfileID(c)
-	if profileID != "" && h.companyRepo != nil {
+	if profileID != 0 && h.companyRepo != nil {
 		_ = h.companyRepo.UpdateLogoURLByProfileID(profileID, url)
 	}
 	return response.OK(c, map[string]string{"url": url})

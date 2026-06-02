@@ -6,11 +6,13 @@ export type Sanitation<T> = {
 type Error = string | "";
 type Value = string | number | any;
 
+export type ValidationFunc = (value: any, ...args: any[]) => Error;
+
 export type Fillable = {
     [key: string]: {
         value: Value;
         error: Error;
-        validator: (value: string) => Error;
+        validator: ValidationFunc;
     } | Value;
 };
 
@@ -29,7 +31,20 @@ export function extract<T>(data: T): Sanitation<T> {
     return out;
 }
 
-export function validate(data: Fillable): string {
+export function validateValue(data: string, validator?: ValidationFunc): Error {
+
+    if (!validator) return "";
+
+    let error = validator(data);
+
+    if (error.length > 0) {
+        return error;
+    } else {
+        return "";
+    }
+}
+
+export function validate(data: Fillable): Error {
     let elementWithError = Object.values(data).find(element =>
         [element.error, element.validator(element?.value)].some(thing => thing !== ''));
 
@@ -120,7 +135,7 @@ function parseISODate(dateStr: string): Date | null {
     return d;
 }
 
-export const validation = {
+export const validation: Record<string, ValidationFunc> = {
 
     notEmpty(string: string): Error {
         return string.trim() !== "" ? "" : "This field cannot be empty.";

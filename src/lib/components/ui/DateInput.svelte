@@ -4,11 +4,13 @@
   let {
     value = $bindable(""),
     required = false,
+    min,
     onchange,
     placeholder = "Choisir une date",
   }: {
     value?: string;
     required?: boolean;
+    min?: string;
     onchange?: (e: Event) => void;
     placeholder?: string;
   } = $props();
@@ -39,7 +41,12 @@
   $effect(() => {
     if (!showCalendar) return;
     function handleClick(e: MouseEvent) {
-      if (calendarEl && !calendarEl.contains(e.target as Node) && inputEl && !inputEl.contains(e.target as Node)) {
+      if (
+        calendarEl &&
+        !calendarEl.contains(e.target as Node) &&
+        inputEl &&
+        !inputEl.contains(e.target as Node)
+      ) {
         showCalendar = false;
       }
     }
@@ -48,8 +55,18 @@
   });
 
   const MONTHS = [
-    "Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin",
-    "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre",
+    "Janvier",
+    "Fevrier",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Aout",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Decembre",
   ];
 
   const DAYS = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
@@ -62,27 +79,43 @@
     return new Date(year, month, 1).getDay();
   }
 
+  function isBeforeMin(date: string): boolean {
+    return !!min && date < min;
+  }
+
   const calendarDays = $derived.by(() => {
     const totalDays = daysInMonth(viewYear, viewMonth);
     const startDay = firstDayOfMonth(viewYear, viewMonth);
-    const days: Array<{ day: number; currentMonth: boolean; date: string }> = [];
+    const days: Array<{ day: number; currentMonth: boolean; date: string }> =
+      [];
 
     // Previous month's trailing days
-    const prevMonthDays = daysInMonth(viewYear, viewMonth - 1 < 0 ? 11 : viewMonth - 1);
+    const prevMonthDays = daysInMonth(
+      viewYear,
+      viewMonth - 1 < 0 ? 11 : viewMonth - 1,
+    );
     const prevMonth = viewMonth - 1 < 0 ? 11 : viewMonth - 1;
     const prevYear = viewMonth - 1 < 0 ? viewYear - 1 : viewYear;
     for (let i = startDay - 1; i >= 0; i--) {
       const d = prevMonthDays - i;
       const m = String(prevMonth + 1).padStart(2, "0");
       const day = String(d).padStart(2, "0");
-      days.push({ day: d, currentMonth: false, date: `${prevYear}-${m}-${day}` });
+      days.push({
+        day: d,
+        currentMonth: false,
+        date: `${prevYear}-${m}-${day}`,
+      });
     }
 
     // Current month's days
     const m = String(viewMonth + 1).padStart(2, "0");
     for (let d = 1; d <= totalDays; d++) {
       const day = String(d).padStart(2, "0");
-      days.push({ day: d, currentMonth: true, date: `${viewYear}-${m}-${day}` });
+      days.push({
+        day: d,
+        currentMonth: true,
+        date: `${viewYear}-${m}-${day}`,
+      });
     }
 
     // Next month's leading days
@@ -92,22 +125,27 @@
     const nm = String(nextMonth + 1).padStart(2, "0");
     for (let d = 1; d <= remaining; d++) {
       const day = String(d).padStart(2, "0");
-      days.push({ day: d, currentMonth: false, date: `${nextYear}-${nm}-${day}` });
+      days.push({
+        day: d,
+        currentMonth: false,
+        date: `${nextYear}-${nm}-${day}`,
+      });
     }
 
     return days;
   });
 
   function selectDate(dateStr: string) {
+    if (isBeforeMin(dateStr)) return;
+
     value = dateStr;
     showCalendar = false;
-    // Dispatch change event for filter patterns
+
     if (onchange) {
       const event = new Event("change", { bubbles: true });
       onchange(event);
     }
   }
-
   function prevMonth() {
     if (viewMonth === 0) {
       viewMonth = 11;
@@ -169,7 +207,9 @@
     role="button"
     tabindex="0"
     onclick={() => (showCalendar = !showCalendar)}
-    onkeydown={(e) => { if (e.key === "Enter") showCalendar = !showCalendar; }}
+    onkeydown={(e) => {
+      if (e.key === "Enter") showCalendar = !showCalendar;
+    }}
     bind:this={inputEl}
   >
     <CalendarDays size={16} class="icon" />
@@ -179,7 +219,10 @@
     {#if value}
       <button
         class="clear-btn"
-        onclick={(e) => { e.stopPropagation(); clearDate(); }}
+        onclick={(e) => {
+          e.stopPropagation();
+          clearDate();
+        }}
         aria-label="Effacer la date"
       >
         &times;
@@ -245,7 +288,9 @@
     font-size: var(--text-sm);
     font-family: var(--font-sans);
     cursor: pointer;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast);
     user-select: none;
     min-height: 38px;
   }
@@ -257,7 +302,8 @@
   .date-input-trigger:focus-visible {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
 
   .date-input-trigger.has-value {
@@ -385,7 +431,9 @@
     font-family: var(--font-sans);
     cursor: pointer;
     border-radius: 8px;
-    transition: background var(--transition-fast), color var(--transition-fast);
+    transition:
+      background var(--transition-fast),
+      color var(--transition-fast);
   }
 
   .day-cell:hover {

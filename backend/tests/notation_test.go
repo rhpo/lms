@@ -15,7 +15,7 @@ func TestNotationWorkflow(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 3.5,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Étape 1 - Erreur requête: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestNotationWorkflow(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 4.0,
 	}
-	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body2, h.AuthHeader("seed-teacher-chim-001", "admin")))
+	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body2, h.AuthHeader(SeedTeacherCHIM1ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Étape 2 - Erreur requête: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestNotationWorkflow(t *testing.T) {
 	AssertSuccess(t, result2)
 
 	// Step 3: Admin resolves grade (chooses president's grade)
-	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader("seed-admin-001", "admin")))
+	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Étape 3 - Erreur requête: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestNotationWorkflowResolveWithMemberGrade(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 3.5,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -69,14 +69,14 @@ func TestNotationWorkflowResolveWithMemberGrade(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 4.0,
 	}
-	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body2, h.AuthHeader("seed-teacher-chim-001", "admin")))
+	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body2, h.AuthHeader(SeedTeacherCHIM1ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
 	MustParseResponse(resp2)
 
 	// Resolve with member's grade
-	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{"choice": "member"}, h.AuthHeader("seed-admin-001", "admin")))
+	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "member"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestNotationWorkflowResolveWithNewEvaluation(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 3.5,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -108,14 +108,14 @@ func TestNotationWorkflowResolveWithNewEvaluation(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 4.0,
 	}
-	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body2, h.AuthHeader("seed-teacher-chim-001", "admin")))
+	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body2, h.AuthHeader(SeedTeacherCHIM1ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
 	MustParseResponse(resp2)
 
 	// Resolve with new evaluation
-	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{
+	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{
 		"choice": "new",
 		"grades": map[string]float64{
 			"criterion1": 3.0,
@@ -123,7 +123,7 @@ func TestNotationWorkflowResolveWithNewEvaluation(t *testing.T) {
 			"criterion3": 3.5,
 			"criterion4": 3.5,
 		},
-	}, h.AuthHeader("seed-admin-001", "admin")))
+	}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -136,7 +136,7 @@ func TestNotationWorkflowResolveWithoutGrades(t *testing.T) {
 	defer h.Close()
 
 	// Try to resolve before anyone submitted
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestNotationWorkflowSubmitGradeInvalidCriterion(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 3.5,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -173,7 +173,7 @@ func TestNotationWorkflowSubmitGradeNegativeCriterion(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 3.5,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestNotationWorkflowSubmitGradeUnauthorized(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 3.0,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -209,7 +209,7 @@ func TestNotationWorkflowSubmitGradeDefenseNotFound(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 3.0,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/invalid-defense/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/99999/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -221,7 +221,7 @@ func TestNotationWorkflowResolveUnauthorized(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -233,7 +233,7 @@ func TestNotationWorkflowResolveDefenseNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/invalid-defense/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/99999/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestNotationWorkflowResolveNewEvaluationWithoutGrades(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 3.5,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -265,14 +265,14 @@ func TestNotationWorkflowResolveNewEvaluationWithoutGrades(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 4.0,
 	}
-	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body2, h.AuthHeader("seed-teacher-chim-001", "admin")))
+	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body2, h.AuthHeader(SeedTeacherCHIM1ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
 	MustParseResponse(resp2)
 
 	// Resolve with new but missing grades
-	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{"choice": "new"}, h.AuthHeader("seed-admin-001", "admin")))
+	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "new"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -291,7 +291,7 @@ func TestNotationWorkflowFinalGradeCalculation(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 3.5,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -304,14 +304,14 @@ func TestNotationWorkflowFinalGradeCalculation(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 4.0,
 	}
-	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body2, h.AuthHeader("seed-teacher-chim-001", "admin")))
+	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body2, h.AuthHeader(SeedTeacherCHIM1ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
 	MustParseResponse(resp2)
 
 	// Step 3: Resolve with president's grade (14.0) + existing supervisor eval (3.5) = 17.5/20
-	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader("seed-admin-001", "admin")))
+	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "president"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -319,7 +319,7 @@ func TestNotationWorkflowFinalGradeCalculation(t *testing.T) {
 	AssertSuccess(t, result3)
 
 	// Verify the defense shows final grade
-	resp4, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/seed-defense-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp4, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur vérification: %v", err)
 	}
@@ -339,14 +339,14 @@ func TestNotationWorkflowDoubleSubmission(t *testing.T) {
 	}
 
 	// First submission succeeds
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
 	MustParseResponse(resp)
 
 	// Second submission from same jury member should update (not error)
-	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -359,10 +359,10 @@ func TestNotationWorkflowJuryConfirmsPrintedVersion(t *testing.T) {
 	defer h.Close()
 
 	// President confirms printed version
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/confirm-jury", map[string]any{
-		"member_id":     "seed-teacher-isil-002",
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/confirm-jury", map[string]any{
+		"member_id":     SeedTeacherISIL2ID,
 		"wants_printed": true,
-	}, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	}, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -374,10 +374,10 @@ func TestNotationWorkflowJuryDeclines(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/decline-jury", map[string]any{
-		"member_id": "seed-teacher-chim-001",
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/decline-jury", map[string]any{
+		"member_id": SeedTeacherCHIM1ID,
 		"reason":    "Conflit d'intérêts",
-	}, h.AuthHeader("seed-admin-001", "admin")))
+	}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -389,7 +389,7 @@ func TestNotationWorkflowRecommendJury(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury?pfe_id=seed-assignment-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury?pfe_id=1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -401,7 +401,7 @@ func TestNotationWorkflowRecommendJuryNoPFE(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -415,12 +415,12 @@ func TestNotationWorkflowDuplicateJuryMember(t *testing.T) {
 
 	// President and member same person should fail if the handler checks
 	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses", map[string]any{
-		"assignment_id": "seed-assignment-001",
-		"president_id":  "seed-teacher-isil-001",
-		"member_id":     "seed-teacher-isil-001",
+		"assignment_id": 1,
+		"president_id":  SeedTeacherISIL1ID,
+		"member_id":     SeedTeacherISIL1ID,
 		"scheduled_at":  "2025-06-15T10:00:00Z",
 		"room":          "Salle B",
-	}, h.AuthHeader("seed-admin-001", "admin")))
+	}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -439,7 +439,7 @@ func TestNotationWorkflowFullIntegration(t *testing.T) {
 		"criterion3": 3.0,
 		"criterion4": 3.0,
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-teacher-isil-002", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedTeacherISIL2ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -452,14 +452,14 @@ func TestNotationWorkflowFullIntegration(t *testing.T) {
 		"criterion3": 4.0,
 		"criterion4": 4.0,
 	}
-	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body2, h.AuthHeader("seed-teacher-chim-001", "admin")))
+	resp2, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body2, h.AuthHeader(SeedTeacherCHIM1ID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
 	result2 := MustParseResponse(resp2)
 	AssertSuccess(t, result2)
 
-	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", map[string]any{"choice": "member"}, h.AuthHeader("seed-admin-001", "admin")))
+	resp3, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", map[string]any{"choice": "member"}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -467,7 +467,7 @@ func TestNotationWorkflowFullIntegration(t *testing.T) {
 	AssertSuccess(t, result3)
 
 	// Verify final grade: member jury (4+4+4+4=16) + supervisor (3.5) = 19.5/20
-	resp4, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/seed-defense-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp4, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur vérification: %v", err)
 	}

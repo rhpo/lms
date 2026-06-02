@@ -42,7 +42,7 @@ func TestUploadAvatar(t *testing.T) {
 	defer h.Close()
 
 	// Valid PNG-like content (just for testing)
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/avatar", "file", "avatar.png", "fake-png-content", h.AuthToken("seed-admin-001", "admin"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/avatar", "file", "avatar.png", "fake-png-content", h.AuthToken(SeedAdminID, "admin"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestUploadAvatarInvalidType(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/avatar", "file", "avatar.txt", "fake-text-content", h.AuthToken("seed-admin-001", "admin"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/avatar", "file", "avatar.txt", "fake-text-content", h.AuthToken(SeedAdminID, "admin"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestUploadCompanyLogo(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/company-logo", "file", "logo.png", "fake-png-content", h.AuthToken("seed-company-001", "company"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/company-logo", "file", "logo.png", "fake-png-content", h.AuthToken(SeedCompany1ID, "company"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestUploadCompanyLogoWrongRole(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/company-logo", "file", "logo.png", "fake-png-content", h.AuthToken("seed-student-isil-001", "student"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/company-logo", "file", "logo.png", "fake-png-content", h.AuthToken(SeedStudentISIL1ID, "student"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestUploadCompanyLogoInvalidType(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/company-logo", "file", "logo.gif", "fake-gif-content", h.AuthToken("seed-company-001", "company"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/company-logo", "file", "logo.gif", "fake-gif-content", h.AuthToken(SeedCompany1ID, "company"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestUploadMemoire(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/memoire", "file", "memoire.pdf", "fake-pdf-content", h.AuthToken("seed-student-isil-001", "student"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/memoire", "file", "memoire.pdf", "fake-pdf-content", h.AuthToken(SeedStudentISIL1ID, "student"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -150,7 +150,7 @@ func TestUploadMemoireWrongRole(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/memoire", "file", "memoire.pdf", "fake-pdf-content", h.AuthToken("seed-teacher-isil-001", "teacher"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/memoire", "file", "memoire.pdf", "fake-pdf-content", h.AuthToken(SeedTeacherISIL1ID, "teacher"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestUploadMemoireInvalidType(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/memoire", "file", "memoire.txt", "fake-text-content", h.AuthToken("seed-student-isil-001", "student"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/upload/memoire", "file", "memoire.txt", "fake-text-content", h.AuthToken(SeedStudentISIL1ID, "student"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestUploadProfilePhoto(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/profile/avatar", "file", "profile.png", "fake-png-content", h.AuthToken("seed-admin-001", "admin"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/profile/avatar", "file", "profile.png", "fake-png-content", h.AuthToken(SeedAdminID, "admin"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -198,7 +198,7 @@ func TestUploadProfilePhotoInvalidType(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := createMultipartRequest(h.App, "POST", "/api/profile/avatar", "file", "profile.bmp", "fake-bmp-content", h.AuthToken("seed-admin-001", "admin"))
+	resp, err := createMultipartRequest(h.App, "POST", "/api/profile/avatar", "file", "profile.bmp", "fake-bmp-content", h.AuthToken(SeedAdminID, "admin"))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}

@@ -6,10 +6,10 @@ import (
 
 // DefenseJury représente le jury d'une soutenance (président + membre).
 type DefenseJury struct {
-	ID                    string    `json:"id"`
-	AssignmentID          string    `json:"assignment_id"`
-	PresidentID           string    `json:"president_id"`
-	MemberID              string    `json:"member_id"`
+	ID                    int64     `json:"id"`
+	AssignmentID          int64     `json:"assignment_id"`
+	PresidentID           int64     `json:"president_id"`
+	MemberID              int64     `json:"member_id"`
 	PresidentConfirmed    bool      `json:"president_confirmed"`
 	MemberConfirmed       bool      `json:"member_confirmed"`
 	PresidentWantsPrinted bool      `json:"president_wants_printed"`

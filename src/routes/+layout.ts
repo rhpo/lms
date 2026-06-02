@@ -1,12 +1,10 @@
 import { authStore } from '$lib/stores/auth';
 
 export const ssr = false;
-export const prerender = false;
 
-export async function load() {
-  if (typeof window !== 'undefined' && !authStore.initialized) {
-    await authStore.init();
-  }
+export async function load({ depends }: any) {
+  depends('auth:profile');
+  await authStore.init();
   return {
     profile: authStore.profile
   };

@@ -1,345 +1,392 @@
-/**
- * Domain Types
- *
- * Single source of truth for all business types in the application.
- * All types are string unions (never TypeScript enums) so they can be
- * used safely on both server and client without tree-shaking issues.
- *
- * Naming convention: English identifiers, French UI labels defined separately.
- */
+// ═══════════════════════════════════════════════════════════════════════════════
+// Domain Types — single source of truth, 1:1 with Go backend entity JSON tags
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// === Role & Auth ===============
+// ── Union types (string unions, never TS enums) ─────────────────────────────
 
-export type UserRole = "student" | "teacher" | "admin" | "company";
+export type UserRole = 'admin' | 'teacher' | 'student' | 'company';
 
-// === Academic ==
+export type TeacherGrade = 'assistant' | 'mab' | 'maa' | 'mcb' | 'mca' | 'professeur';
 
-export type Level = "licence" | "master" | "ingenieur";
+export type AvailabilityStatus = 'disponible' | 'indisponible' | 'indisponible_jusqu_au';
 
-export type AcademicYearStatus = "active" | "cloturee";
+export type YearType = 'licence' | 'master';
 
-// === Teacher ===
+export type GroupType = 'monome' | 'binome' | 'trinome';
 
-/**
- * Teacher grades in ascending order:
- * assistant < mab < maa < mcb < mca < professeur
- */
-export type TeacherGrade =
-  | "assistant"
-  | "mab"
-  | "maa"
-  | "mcb"
-  | "mca"
-  | "professeur";
+export type ProposerRole = 'teacher' | 'company';
 
-export type AvailabilityStatus =
-  | "disponible"
-  | "indisponible"
-  | "indisponible_jusqu_au"; // requires unavailable_until date
+export type SubjectStatus = 'en_attente' | 'valide' | 'accepte_sous_reserve' | 'refuse' | 'expire';
 
-// === Subject ===
+export type ReviewDecision = 'valide' | 'accepte_sous_reserve' | 'refuse';
 
-export type GroupType = "monome" | "binome" | "trinome";
+export type WishStatus = 'en_attente' | 'accepte' | 'refuse';
 
-/**
- * Subject lifecycle statuses (visible to end-users):
- * - en_attente : submitted, waiting for both validators
- * - valide     : both validators approved
- * - refuse     : at least one validator refused
- * - expire     : academic year closed while subject was pending
- */
-export type SubjectStatus = "en_attente" | "valide" | "refuse" | "expire";
+export type PfeAssignmentStatus = 'en_cours' | 'memoire_soumis' | 'soutenance_planifiee' | 'valide' | 'refuse';
 
-/**
- * Decision rendered by a validator teacher on a subject.
- */
-export type ReviewDecision =
-  | "accepte"
-  | "accepte_sous_reserve"
-  | "refuse";
+export type MeetingType = 'presentiel' | 'visio';
 
-// === Wish (Voeu) ==============
+export type ProgressReportStatus = 'a_faire' | 'en_cours' | 'termine';
 
-export type WishStatus = "en_attente" | "accepte" | "refuse";
+export type DefenseStatus = 'scheduled' | 'done' | 'postponed';
 
-// === PFE Assignment ===========
+export type DefenseResult = 'admitted' | 'corrections_required' | 'not_admitted';
 
-/**
- * PFE (assignment) lifecycle statuses:
- * - en_cours             : work in progress
- * - soutenance_planifiee : defense has been scheduled
- * - valide               : admitted after defense
- * - refuse               : not admitted after defense
- */
-export type PfeStatus =
-  | "en_cours"
-  | "soutenance_planifiee"
-  | "valide"
-  | "refuse";
+export type AcademicYearStatus = 'active' | 'cloturee';
 
-// === Defense ===
+export type CompanyReportStatus = 'en_attente' | 'resolu' | 'rejete';
 
-export type DefenseStatus = "scheduled" | "done" | "postponed";
+export type TiebreakChoice = 'president' | 'member' | 'average';
 
-export type DefenseResult =
-  | "admitted"
-  | "corrections_required"
-  | "not_admitted";
-
-/**
- * How the jury president resolves a grade disagreement (gap > 1 point).
- */
-export type TiebreakChoice = "president" | "member" | "average";
-
-// === Audit =====
-
-export type AuditActionType =
-  | "SUBJECT_SUBMITTED"
-  | "SUBJECT_VALIDATED"
-  | "SUBJECT_REFUSED"
-  | "STUDENT_ASSIGNED"
-  | "JURY_ASSIGNED"
-  | "DEFENSE_SCHEDULED"
-  | "GRADE_SUBMITTED"
-  | "GRADE_VALIDATED"
-  | "COMPANY_REGISTERED"
-  | "WISH_SUBMITTED"
-  | "NOTIFICATION_SENT"
-  | "CSV_IMPORTED"
-  | "ROLE_TRANSFERRED";
-
-// === Interfaces ================
+// ── Entity interfaces (match Go JSON tags exactly) ──────────────────────────
 
 export interface Profile {
-  id: string;
+  id: number;
   role: UserRole;
   full_name: string;
+  email: string;
   avatar_url: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  teacher?: Teacher;
+  student?: Student;
+  company?: Company;
+}
+
+export interface Department {
+  id: number;
+  name: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface Student {
-  id: string;
-  profile_id: string | null;
-  email: string | null;
-  student_number: string;
-  specialty: string;
-  level: Level;
-  promotion_year: number;
-  promotion_id: string | null;
+export interface Domain {
+  id: number;
+  name: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface Teacher {
-  id: string;
-  profile_id: string | null;
-  email: string | null;
-  grade: TeacherGrade;
-  department: string;
-  specialties: string[];
-  availability_status: AvailabilityStatus;
-  unavailable_until: string | null; // ISO date, only relevant when status = indisponible_jusqu_au
+export interface Speciality {
+  id: number;
+  name: string;
+  code: string;
+  year_type: YearType;
+  department_id: number | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface Company {
-  profile_id: string;
-  company_name: string;
-  address: string;
-  sector: string;
-  website: string | null;
-  contact_phone: string;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
+  department?: Department;
 }
 
 export interface AcademicYear {
-  id: string;
-  label: string;                // ex. "2024-2025"
+  id: number;
+  label: string;
   status: AcademicYearStatus;
-  submission_open_at: string;   // ISO datetime
-  submission_close_at: string;  // ISO datetime — subjects expire after this
-  max_wishes: number;           // max voeux per student (configured by admin)
+  submission_open_at: string | null;
+  submission_close_at: string | null;
+  max_wishes: number;
   created_at: string;
   updated_at: string;
 }
 
 export interface Promotion {
-  id: string;
-  label: string;                // ex. "Promotion ISIL 2024-2025"
-  specialty: string;
-  academic_year_id: string;
+  id: number;
+  label: string;
+  academic_year_id: number;
   created_at: string;
   updated_at: string;
 }
 
-export interface PFESubject {
-  id: string;
-  code: string | null;
+export interface Teacher {
+  id: number;
+  profile_id: number;
+  grade: TeacherGrade | null;
+  department_id: number | null;
+  availability_status: AvailabilityStatus;
+  unavailable_until: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relations (omitempty — present when backend joins)
+  profile?: Profile;
+  department?: Department;
+  domaines?: Domain[];
+}
+
+export interface Student {
+  id: number;
+  profile_id: number;
+  student_number: string | null;
+  speciality_id: number | null;
+  level: string | null;
+  promotion_id: number | null;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  profile?: Profile;
+  speciality?: Speciality;
+  promotion?: Promotion;
+}
+
+export interface Company {
+  id: number;
+  profile_id: number;
+  company_name: string | null;
+  sector: string | null;
+  description: string | null;
+  logo_url: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  website: string | null;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  profile?: Profile;
+}
+
+export interface PfeSubject {
+  id: number;
   title: string;
   description: string;
   group_type: GroupType;
-  specialty: string;
-  level: Level;
-  proposer_id: string;
-  proposer_role: UserRole;
-  company_id: string | null;
-  academic_year_id: string | null;
-  // Validators assigned by admin
-  validator1_id: string | null;
-  validator2_id: string | null;
+  proposer_id: number;
+  proposer_role: ProposerRole;
+  company_id: number | null;
+  academic_year_id: number;
+  validator1_id: number | null;
+  validator2_id: number | null;
   validator1_decision: ReviewDecision | null;
   validator2_decision: ReviewDecision | null;
   validator1_comment: string | null;
   validator2_comment: string | null;
   status: SubjectStatus;
+  co_supervisor_id: number | null;
+  pre_assigned_student_ids: string | null;
+  is_assigned: boolean;
   created_at: string;
   updated_at: string;
+  // Relations
+  proposer?: Profile;
+  company?: Company;
+  validator1?: Teacher;
+  validator2?: Teacher;
+  co_supervisor?: Teacher;
+  domains?: Domain[];
 }
 
-/**
- * A student wish (voeu) for a specific subject in a given academic year.
- * No priority order — the supervisor chooses among all applicants.
- */
 export interface Wish {
-  id: string;
-  student_id: string;          // profile_id of the student
-  subject_id: string;
-  academic_year_id: string;
+  id: number;
+  student_id: number;
+  subject_id: number;
+  academic_year_id: number;
   status: WishStatus;
   created_at: string;
   updated_at: string;
+  // Relations
+  student?: Student;
+  subject?: PfeSubject;
+  academic_year?: AcademicYear;
+  // Computed (populated by JOINs)
+  student_name?: string;
+  student_specialty?: string;
+  subject_title?: string;
 }
 
-/**
- * A PFE assignment links a validated subject to 1–3 students and a supervisor.
- * student2_id and student3_id are null for monome, student3_id is null for binome.
- */
-export interface PFEAssignment {
-  id: string;
-  subject_id: string;
-  academic_year_id: string;
-  student_id: string;
-  student2_id: string | null;
-  student3_id: string | null;
-  supervisor_id: string;
-  co_supervisor_id: string | null; // company co-supervisor
-  status: PfeStatus;
-  assigned_at: string;
+export interface PfeAssignment {
+  id: number;
+  pfe_code: string;
+  subject_id: number;
+  academic_year_id: number;
+  student_id: number;
+  student2_id: number | null;
+  student3_id: number | null;
+  supervisor_id: number;
+  co_supervisor_id: number | null;
+  memoire_url: string | null;
+  status: PfeAssignmentStatus;
   created_at: string;
   updated_at: string;
+  // Relations
+  subject?: PfeSubject;
+  academic_year?: AcademicYear;
+  student?: Student;
+  student2?: Student;
+  student3?: Student;
+  supervisor?: Teacher;
+  co_supervisor?: Teacher;
+  // Computed (populated by JOINs)
+  subject_title?: string;
 }
 
-export interface PFEProgressReport {
-  id: string;
-  assignment_id: string;
-  meeting_date: string;          // ISO date "YYYY-MM-DD"
-  student_notes: string;
-  teacher_feedback: string | null;
-  attachments: string[];
-  signed_by_teacher: boolean;
+export interface PfeProgressReport {
+  id: number;
+  assignment_id: number;
+  meeting_date: string;
+  duration: number;
+  meeting_type: MeetingType;
+  topics: string;
+  status: ProgressReportStatus;
+  observation: string | null;
   created_at: string;
   updated_at: string;
+  // Relations
+  assignment?: PfeAssignment;
 }
 
-/**
- * A defense jury has exactly two members: a president and one member.
- */
 export interface DefenseJury {
-  id: string;
-  assignment_id: string;
-  president_id: string;
-  member_id: string;
+  id: number;
+  assignment_id: number;
+  president_id: number;
+  member_id: number;
+  president_confirmed: boolean;
+  member_confirmed: boolean;
+  president_wants_printed: boolean;
+  member_wants_printed: boolean;
   created_at: string;
   updated_at: string;
-}
-
-/**
- * One jury member's grade for a defense.
- * Each criterion is scored 0–5; total = sum (max 20).
- */
-export interface JuryGrade {
-  id: string;
-  defense_id: string;
-  jury_member_id: string;   // profile_id of president or member
-  criterion1: number;       // /5
-  criterion2: number;       // /5
-  criterion3: number;       // /5
-  criterion4: number;       // /5
-  total: number;            // computed: criterion1+2+3+4 (0–20)
-  submitted_at: string;
-  created_at: string;
-  updated_at: string;
+  // Relations
+  assignment?: PfeAssignment;
+  president?: Teacher;
+  member?: Teacher;
 }
 
 export interface Defense {
-  id: string;
-  assignment_id: string;
-  jury_id: string;
-  scheduled_at: string;
-  room: string;
+  id: number;
+  assignment_id: number;
+  jury_id: number;
+  scheduled_at: string | null;
+  room: string | null;
+  defense_deadline: string | null;
   status: DefenseStatus;
   result: DefenseResult | null;
-  final_grade: number | null;              // resolved after grading or tiebreak
-  grade_gap: number | null;               // |president_total - member_total|
-  tiebreak_choice: TiebreakChoice | null; // only set when gap > 1
-  comment: string | null;
+  final_grade: number | null;
   created_at: string;
   updated_at: string;
+  // Relations
+  assignment?: PfeAssignment;
+  jury?: DefenseJury;
+}
+
+export type ArchiveDecision = 'archivable' | 'minor_corrections' | 'major_corrections';
+
+export interface JuryGrade {
+  id: number;
+  defense_id: number;
+  jury_member_id: number;
+  criterion1: number | null;
+  criterion2: number | null;
+  criterion3: number | null;
+  criterion4: number | null;
+  archive_decision: ArchiveDecision | null;
+  total?: number;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  defense?: Defense;
+  jury_member?: Teacher;
+}
+
+export interface SupervisorEvaluation {
+  id: number;
+  pfe_assignment_id: number;
+  evaluator_id: number;
+  criterion5: number | null;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  assignment?: PfeAssignment;
+  evaluator?: Teacher;
+}
+
+export interface CompanyReport {
+  id: number;
+  company_id: number;
+  submitted_by: number;
+  correction_type: string;
+  description: string;
+  requested_value: string;
+  status: CompanyReportStatus;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  company?: Company;
 }
 
 export interface Notification {
-  id: string;
-  recipient_id: string;
+  id: number;
+  recipient_id: number;
   type: string;
-  payload: Record<string, unknown>;
+  payload: string;
+  message?: string;
   read_at: string | null;
   created_at: string;
 }
 
 export interface AuditLog {
-  id: string;
-  actor_id: string;
-  action: AuditActionType;
+  id: number;
+  actor_id: number;
+  action: string;
   entity: string;
-  entity_id: string;
-  metadata: Record<string, unknown>;
+  entity_id: number | null;
+  metadata: string | null;
   created_at: string;
 }
 
-export interface PFEStatusHistory {
-  id: string;
-  subject_id: string;
-  from_status: SubjectStatus | null;
-  to_status: SubjectStatus;
-  actor_id: string;
-  reason: string | null;
-  created_at: string;
-}
+// ── Auth ────────────────────────────────────────────────────────────────────
 
 export interface SessionUser {
-  id: string;
+  id: number;
   email: string;
   role: UserRole;
   full_name: string;
   avatar_url: string | null;
-  provider?: string;
-  created_at?: string;
 }
 
-/**
- * Type for Svelte 4 class-based components used as icons (e.g. lucide-svelte).
- * These extend SvelteComponentTyped and accept size/color props.
- *
- * WARNING: This is a deliberately loose type to work around the Svelte 4/5
- * incompatibility with lucide-svelte (which exports Svelte 4 classes while
- * the project uses Svelte 5's Component type). DO NOT reuse this type for
- * anything other than icon props. For proper Svelte 5 component typing,
- * use `Component` from 'svelte' instead.
- */
+export interface AuthResult {
+  token: string;
+  profile: Profile;
+}
+
+// ── Dashboard ───────────────────────────────────────────────────────────────
+
+export interface AdminDashboard {
+  total_users: number;
+  total_teachers: number;
+  total_students: number;
+  total_companies: number;
+  total_subjects: number;
+  total_pfes: number;
+  pending_subjects: number;
+  validated_subjects: number;
+  refused_subjects: number;
+  rejected_subjects: number;
+  assigned_subjects: number;
+  active_pfes: number;
+  defended_pfes: number;
+  total_assignments: number;
+  total_defenses: number;
+  scheduled_defenses: number;
+  done_defenses: number;
+  total_reports: number;
+  timeline: {
+    labels: string[];
+    soumis_memoire: number[];
+    avec_sujet: number[];
+    sans_sujet: number[];
+  };
+}
+
+// ── Recommendation ──────────────────────────────────────────────────────────
+
+export interface ValidatorRecommendation {
+  teacher: Teacher;
+  score: number;
+  matching_domains: Domain[];
+}
+
+// ── Utility type ────────────────────────────────────────────────────────────
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type IconComponent = new (...args: any[]) => any;

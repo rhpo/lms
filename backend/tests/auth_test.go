@@ -61,7 +61,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	t.Run("Me_Success", func(t *testing.T) {
-		resp, err := h.App.Test(newHTTPRequest("GET", "/api/auth/me", nil, h.AuthHeader("seed-admin-001", "admin")))
+		resp, err := h.App.Test(newHTTPRequest("GET", "/api/auth/me", nil, h.AuthHeader(SeedAdminID, "admin")))
 		if err != nil {
 			t.Fatalf("❌ Erreur requête: %v", err)
 		}
@@ -97,7 +97,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	t.Run("Logout", func(t *testing.T) {
-		resp, err := h.App.Test(newHTTPRequest("POST", "/api/auth/logout", nil, h.AuthHeader("seed-admin-001", "admin")))
+		resp, err := h.App.Test(newHTTPRequest("POST", "/api/auth/logout", nil, h.AuthHeader(SeedAdminID, "admin")))
 		if err != nil {
 			t.Fatalf("❌ Erreur requête: %v", err)
 		}
@@ -107,7 +107,7 @@ func TestAuth(t *testing.T) {
 
 	t.Run("Access_Unauthorized_Role", func(t *testing.T) {
 		// Un étudiant ne peut pas accéder à /admin/dashboard
-		resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/dashboard", nil, h.AuthHeader("seed-student-isil-001", "student")))
+		resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/dashboard", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 		if err != nil {
 			t.Fatalf("❌ Erreur requête: %v", err)
 		}

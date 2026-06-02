@@ -31,7 +31,7 @@
 		// convert HSL -> perceived brightness
 		const lightness = 50;
 
-		const text = lightness > 40 ? "black" : "white";
+		const text = lightness > 50 ? "black" : "white";
 
 		return {
 			background,

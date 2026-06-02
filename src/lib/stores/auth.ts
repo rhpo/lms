@@ -1,65 +1,84 @@
+import { writable, get } from 'svelte/store';
 import { auth as authApi, getToken, setToken, clearToken } from '$lib/api';
-import type { SessionUser as Profile } from '$lib/types';
-import { goto } from '$app/navigation';
+import type { Profile } from '$lib/types';
+import { goto, invalidate } from '$app/navigation';
 
-// ── Reactive state ──────────────────────────────────────────────────────────
-
-let _profile = $state<Profile | null>(null);
-let _loading = $state(false);
-let _initialized = $state(false);
+const _profile = writable<Profile | null>(null);
+const _loading = writable(false);
+let _initialized = false;
 
 export const authStore = {
-  get profile() { return _profile; },
-  get loading() { return _loading; },
+  get profile() { return get(_profile); },
+  get loading() { return get(_loading); },
   get initialized() { return _initialized; },
-  get isAuthenticated() { return _profile !== null; },
+  get isAuthenticated() { return get(_profile) !== null; },
+
+  /** Subscribe to profile changes (for reactive use in components) */
+  subscribe: _profile.subscribe,
 
   /**
    * Call once on app mount to restore the session from localStorage.
+   * Always re-checks the token on the client, even if called before during SSR.
    */
   async init() {
+    // On SSR (no window), skip entirely — don't mark as initialized
+    if (typeof window === 'undefined') return;
+
+    // On client, always try to restore from token
     if (_initialized) return;
     _initialized = true;
+
     const token = getToken();
     if (!token) return;
-    _loading = true;
+
+    _loading.set(true);
     try {
-      _profile = await authApi.me();
+      const profile = await authApi.me();
+      _profile.set(profile);
     } catch {
-      // Token expired or invalid
       clearToken();
-      _profile = null;
+      _profile.set(null);
     } finally {
-      _loading = false;
+      _loading.set(false);
     }
   },
 
-  /**
-   * Dev-login (only available in development env).
-   */
+  /** Re-fetch profile from backend (e.g. after avatar upload). */
+  async refreshProfile(): Promise<void> {
+    try {
+      const profile = await authApi.me();
+      _profile.set(profile);
+      await invalidate('auth:profile');
+    } catch {
+      // leave current profile in place
+    }
+  },
+
   async devLogin(email: string): Promise<void> {
-    _loading = true;
+    _loading.set(true);
     try {
       const result = await authApi.devLogin(email);
       setToken(result.token);
-      _profile = result.profile;
-      // Redirect based on role
+      _profile.set(result.profile);
+      await invalidate('auth:profile');
       const redirects: Record<string, string> = {
         admin: '/admin/dashboard',
         teacher: '/teacher/dashboard',
         student: '/student/dashboard',
         company: '/company/dashboard',
       };
-      await goto(redirects[result.profile.role] ?? '/');
+      await goto(redirects[result.profile.role] ?? '/', { invalidateAll: true });
     } finally {
-      _loading = false;
+      _loading.set(false);
     }
   },
 
   async logout(): Promise<void> {
     try { await authApi.logout(); } catch { /* ignore */ }
     clearToken();
-    _profile = null;
-    await goto('/accounts/login');
+    _profile.set(null);
+    _initialized = false;
+    await invalidate('auth:profile');
+    await goto('/accounts/login', { invalidateAll: true });
   },
 };

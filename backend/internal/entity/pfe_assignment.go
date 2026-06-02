@@ -1,25 +1,24 @@
 package entity
 
 import (
-	"database/sql"
 	"time"
 )
 
 // PfeAssignment représente l'affectation d'étudiants à un sujet PFE.
 type PfeAssignment struct {
-	ID             string         `json:"id"`
-	PfeCode        string         `json:"pfe_code"` // PFE-ISIL-2025-001
-	SubjectID      string         `json:"subject_id"`
-	AcademicYearID string         `json:"academic_year_id"`
-	StudentID      string         `json:"student_id"`
-	Student2ID     sql.NullString `json:"student2_id"`
-	Student3ID     sql.NullString `json:"student3_id"`
-	SupervisorID   string         `json:"supervisor_id"`
-	CoSupervisorID sql.NullString `json:"co_supervisor_id"`
-	MemoireURL     sql.NullString `json:"memoire_url"`
-	Status         string         `json:"status"` // en_cours/memoire_soumis/soutenance_planifiee/valide/refuse
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
+	ID             int64      `json:"id"`
+	PfeCode        string     `json:"pfe_code"` // PFE-ISIL-2025-001
+	SubjectID      int64      `json:"subject_id"`
+	AcademicYearID int64      `json:"academic_year_id"`
+	StudentID      int64      `json:"student_id"`
+	Student2ID     NullInt64  `json:"student2_id"`
+	Student3ID     NullInt64  `json:"student3_id"`
+	SupervisorID   int64      `json:"supervisor_id"`
+	CoSupervisorID NullInt64  `json:"co_supervisor_id"`
+	MemoireURL     NullString `json:"memoire_url"`
+	Status         string     `json:"status"` // en_cours/memoire_soumis/soutenance_planifiee/valide/refuse
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 
 	// Relations
 	Subject      *PfeSubject   `json:"subject,omitempty"`

@@ -16,6 +16,7 @@ import (
 	"pfe-backend/internal/repository"
 	"pfe-backend/internal/service"
 	"pfe-backend/internal/shared/middleware"
+	"pfe-backend/internal/shared/notify"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -33,6 +34,19 @@ type TestHelper struct {
 	Cfg   *config.Config
 	Admin string // token admin
 }
+
+// Seed profile IDs (explicit integers for test predictability)
+const (
+	SeedAdminID        int64 = 1
+	SeedTeacherISIL1ID int64 = 2
+	SeedTeacherISIL2ID int64 = 3
+	SeedTeacherCHIM1ID int64 = 4
+	SeedStudentISIL1ID int64 = 5
+	SeedStudentISIL2ID int64 = 6
+	SeedStudentCHIM1ID int64 = 7
+	SeedStudentISIL4ID int64 = 8
+	SeedCompany1ID     int64 = 9
+)
 
 // NewTestHelper initialise un serveur de test avec une base SQLite en mémoire.
 func NewTestHelper() *TestHelper {
@@ -105,41 +119,49 @@ func NewTestHelper() *TestHelper {
 	notificationRepo := repository.NewNotificationRepository(db)
 	auditLogRepo := repository.NewAuditLogRepository(db)
 
+	departmentRepo := repository.NewDepartmentRepository(db)
+
 	// Services
-	authService := service.NewAuthService(profileRepo, cfg)
+	authService := service.NewAuthService(profileRepo, teacherRepo, studentRepo, companyRepo, cfg)
+	testNotifier := notify.New(notificationRepo, profileRepo, "test-resend-key")
 	adminService := service.NewAdminService(
-		profileRepo, teacherRepo, studentRepo, companyRepo,
+		profileRepo, teacherRepo, studentRepo, companyRepo, departmentRepo,
 		domainRepo, specialityRepo, promotionRepo, academicYearRepo,
 		pfeSubjectRepo, wishRepo, pfeAssignmentRepo,
 		progressRepo, defenseJuryRepo, defenseRepo,
 		juryGradeRepo, supEvalRepo, companyReportRepo,
-		notificationRepo, auditLogRepo,
+		notificationRepo, auditLogRepo, testNotifier, "./uploads",
 	)
+
 	teacherService := service.NewTeacherService(
-		profileRepo, teacherRepo, pfeSubjectRepo, wishRepo,
-		pfeAssignmentRepo, progressRepo, defenseJuryRepo,
-		defenseRepo, supEvalRepo, notificationRepo, academicYearRepo,
+		profileRepo, teacherRepo, studentRepo, companyRepo, specialityRepo,
+		pfeSubjectRepo, wishRepo, pfeAssignmentRepo, progressRepo,
+		defenseJuryRepo, defenseRepo, juryGradeRepo, supEvalRepo, notificationRepo, academicYearRepo, testNotifier,
 	)
+
 	studentService := service.NewStudentService(
-		profileRepo, studentRepo, pfeSubjectRepo, wishRepo,
-		pfeAssignmentRepo, progressRepo, defenseRepo,
-		defenseJuryRepo, notificationRepo, academicYearRepo,
+		profileRepo, studentRepo, teacherRepo, companyRepo, specialityRepo,
+		pfeSubjectRepo, wishRepo, pfeAssignmentRepo, progressRepo,
+		defenseRepo, defenseJuryRepo, supEvalRepo, notificationRepo, academicYearRepo,
 	)
 	companyService := service.NewCompanyService(
-		profileRepo, companyRepo, pfeSubjectRepo, wishRepo,
-		pfeAssignmentRepo, progressRepo, supEvalRepo,
-		companyReportRepo, notificationRepo, academicYearRepo,
+		profileRepo, companyRepo, teacherRepo, studentRepo, specialityRepo,
+		pfeSubjectRepo, wishRepo, pfeAssignmentRepo, progressRepo,
+		supEvalRepo, companyReportRepo, notificationRepo, academicYearRepo, testNotifier,
 	)
 
+	// Notifier
+	notifier := notify.New(notificationRepo, profileRepo, "test-resend-key")
+
 	// Handlers
-	authHandler := handler.NewAuthHandler(authService, cfg)
-	adminHandler := handler.NewAdminHandler(adminService)
-	teacherHandler := handler.NewTeacherHandler(teacherService)
-	studentHandler := handler.NewStudentHandler(studentService)
-	companyHandler := handler.NewCompanyHandler(companyService)
+	authHandler := handler.NewAuthHandler(authService, cfg, notifier)
+	adminHandler := handler.NewAdminHandler(adminService, notifier)
+	teacherHandler := handler.NewTeacherHandler(teacherService, notifier)
+	studentHandler := handler.NewStudentHandler(studentService, notifier)
+	companyHandler := handler.NewCompanyHandler(companyService, notifier)
 	uploadHandler := handler.NewUploadHandler(profileRepo, companyRepo, "./uploads")
 
-	app.Static("/uploads", "./uploads")
+	app.Get("/uploads/*", static.New("./uploads"))
 
 	api := app.Group("/api")
 
@@ -298,7 +320,7 @@ func NewTestHelper() *TestHelper {
 		return c.JSON(map[string]any{"success": true, "data": map[string]string{"message": "Toutes les notifications lues"}})
 	})
 
-	adminToken := generateToken(cfg.JWTSecret, "seed-admin-001", "admin")
+	adminToken := generateToken(cfg.JWTSecret, SeedAdminID, "admin")
 
 	return &TestHelper{
 		App:   app,
@@ -312,17 +334,17 @@ func (h *TestHelper) Close() {
 	h.DB.Close()
 }
 
-func (h *TestHelper) AuthHeader(profileID, role string) map[string]string {
+func (h *TestHelper) AuthHeader(profileID int64, role string) map[string]string {
 	return map[string]string{
 		"Authorization": "Bearer " + generateToken(h.Cfg.JWTSecret, profileID, role),
 	}
 }
 
-func (h *TestHelper) AuthToken(profileID, role string) string {
+func (h *TestHelper) AuthToken(profileID int64, role string) string {
 	return generateToken(h.Cfg.JWTSecret, profileID, role)
 }
 
-func generateToken(secret, profileID, role string) string {
+func generateToken(secret string, profileID int64, role string) string {
 	claims := jwt.MapClaims{
 		"sub":  profileID,
 		"role": role,
@@ -398,7 +420,7 @@ type TestingT interface {
 func runTestMigrations(db *sql.DB) error {
 	migrations := []string{
 		`CREATE TABLE IF NOT EXISTS profiles (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			role TEXT NOT NULL CHECK(role IN ('admin','teacher','student','company')),
 			full_name TEXT NOT NULL,
 			email TEXT UNIQUE NOT NULL,
@@ -408,21 +430,28 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS domains (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL UNIQUE,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS departments (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL UNIQUE,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS specialities (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
 			code TEXT NOT NULL UNIQUE,
 			year_type TEXT NOT NULL CHECK(year_type IN ('licence','master')),
+			department_id INTEGER REFERENCES departments(id),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS academic_years (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			label TEXT NOT NULL UNIQUE,
 			status TEXT NOT NULL CHECK(status IN ('active','cloturee')),
 			submission_open_at DATETIME,
@@ -432,40 +461,40 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS promotions (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			label TEXT NOT NULL,
-			academic_year_id TEXT NOT NULL REFERENCES academic_years(id),
+			academic_year_id INTEGER NOT NULL REFERENCES academic_years(id),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS teachers (
-			id TEXT PRIMARY KEY,
-			profile_id TEXT UNIQUE NOT NULL REFERENCES profiles(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			profile_id INTEGER UNIQUE NOT NULL REFERENCES profiles(id),
 			grade TEXT NOT NULL CHECK(grade IN ('assistant','mab','maa','mcb','mca','professeur')),
-			department TEXT,
+			department_id INTEGER REFERENCES departments(id),
 			availability_status TEXT DEFAULT 'disponible' CHECK(availability_status IN ('disponible','indisponible','indisponible_jusqu_au')),
 			unavailable_until DATETIME,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS teacher_domains (
-			teacher_id TEXT NOT NULL REFERENCES teachers(id),
-			domain_id TEXT NOT NULL REFERENCES domains(id),
+			teacher_id INTEGER NOT NULL REFERENCES teachers(id),
+			domain_id INTEGER NOT NULL REFERENCES domains(id),
 			PRIMARY KEY (teacher_id, domain_id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS students (
-			id TEXT PRIMARY KEY,
-			profile_id TEXT UNIQUE NOT NULL REFERENCES profiles(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			profile_id INTEGER UNIQUE NOT NULL REFERENCES profiles(id),
 			student_number TEXT UNIQUE NOT NULL,
-			speciality_id TEXT REFERENCES specialities(id),
+			speciality_id INTEGER REFERENCES specialities(id),
 			level TEXT,
-			promotion_id TEXT REFERENCES promotions(id),
+			promotion_id INTEGER REFERENCES promotions(id),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS companies (
-			id TEXT PRIMARY KEY,
-			profile_id TEXT UNIQUE NOT NULL REFERENCES profiles(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			profile_id INTEGER UNIQUE NOT NULL REFERENCES profiles(id),
 			company_name TEXT NOT NULL,
 			sector TEXT,
 			description TEXT,
@@ -478,58 +507,58 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS pfe_subjects (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			title TEXT NOT NULL,
 			description TEXT,
 			group_type TEXT DEFAULT 'binome' CHECK(group_type IN ('monome','binome','trinome')),
-			proposer_id TEXT NOT NULL REFERENCES profiles(id),
+			proposer_id INTEGER NOT NULL REFERENCES profiles(id),
 			proposer_role TEXT NOT NULL CHECK(proposer_role IN ('teacher','company')),
-			company_id TEXT REFERENCES companies(id),
-			academic_year_id TEXT NOT NULL REFERENCES academic_years(id),
-			validator1_id TEXT REFERENCES teachers(id),
-			validator2_id TEXT REFERENCES teachers(id),
+			company_id INTEGER REFERENCES companies(id),
+			academic_year_id INTEGER NOT NULL REFERENCES academic_years(id),
+			validator1_id INTEGER REFERENCES teachers(id),
+			validator2_id INTEGER REFERENCES teachers(id),
 			validator1_decision TEXT CHECK(validator1_decision IN ('valide','accepte_sous_reserve','refuse')),
 			validator2_decision TEXT CHECK(validator2_decision IN ('valide','accepte_sous_reserve','refuse')),
 			validator1_comment TEXT,
 			validator2_comment TEXT,
 			status TEXT DEFAULT 'en_attente' CHECK(status IN ('en_attente','valide','accepte_sous_reserve','refuse','expire')),
-			co_supervisor_id TEXT REFERENCES teachers(id),
+			co_supervisor_id INTEGER REFERENCES teachers(id),
 			pre_assigned_student_ids TEXT,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS subject_domains (
-			subject_id TEXT NOT NULL REFERENCES pfe_subjects(id),
-			domain_id TEXT NOT NULL REFERENCES domains(id),
+			subject_id INTEGER NOT NULL REFERENCES pfe_subjects(id),
+			domain_id INTEGER NOT NULL REFERENCES domains(id),
 			PRIMARY KEY (subject_id, domain_id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS wishes (
-			id TEXT PRIMARY KEY,
-			student_id TEXT NOT NULL REFERENCES students(id),
-			subject_id TEXT NOT NULL REFERENCES pfe_subjects(id),
-			academic_year_id TEXT NOT NULL REFERENCES academic_years(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			student_id INTEGER NOT NULL REFERENCES students(id),
+			subject_id INTEGER NOT NULL REFERENCES pfe_subjects(id),
+			academic_year_id INTEGER NOT NULL REFERENCES academic_years(id),
 			status TEXT DEFAULT 'en_attente' CHECK(status IN ('en_attente','accepte','refuse')),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS pfe_assignments (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			pfe_code TEXT UNIQUE NOT NULL,
-			subject_id TEXT NOT NULL REFERENCES pfe_subjects(id),
-			academic_year_id TEXT NOT NULL REFERENCES academic_years(id),
-			student_id TEXT NOT NULL REFERENCES students(id),
-			student2_id TEXT REFERENCES students(id),
-			student3_id TEXT REFERENCES students(id),
-			supervisor_id TEXT NOT NULL REFERENCES teachers(id),
-			co_supervisor_id TEXT REFERENCES teachers(id),
+			subject_id INTEGER NOT NULL REFERENCES pfe_subjects(id),
+			academic_year_id INTEGER NOT NULL REFERENCES academic_years(id),
+			student_id INTEGER NOT NULL REFERENCES students(id),
+			student2_id INTEGER REFERENCES students(id),
+			student3_id INTEGER REFERENCES students(id),
+			supervisor_id INTEGER NOT NULL REFERENCES teachers(id),
+			co_supervisor_id INTEGER REFERENCES teachers(id),
 			memoire_url TEXT,
 			status TEXT DEFAULT 'en_cours' CHECK(status IN ('en_cours','memoire_soumis','soutenance_planifiee','valide','refuse')),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS pfe_progress_reports (
-			id TEXT PRIMARY KEY,
-			assignment_id TEXT NOT NULL REFERENCES pfe_assignments(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			assignment_id INTEGER NOT NULL REFERENCES pfe_assignments(id),
 			meeting_date DATETIME NOT NULL,
 			duration INTEGER NOT NULL,
 			meeting_type TEXT NOT NULL CHECK(meeting_type IN ('presentiel','visio')),
@@ -540,10 +569,10 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS defense_juries (
-			id TEXT PRIMARY KEY,
-			assignment_id TEXT NOT NULL REFERENCES pfe_assignments(id),
-			president_id TEXT NOT NULL REFERENCES teachers(id),
-			member_id TEXT NOT NULL REFERENCES teachers(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			assignment_id INTEGER NOT NULL REFERENCES pfe_assignments(id),
+			president_id INTEGER NOT NULL REFERENCES teachers(id),
+			member_id INTEGER NOT NULL REFERENCES teachers(id),
 			president_confirmed BOOLEAN DEFAULT 0,
 			member_confirmed BOOLEAN DEFAULT 0,
 			president_wants_printed BOOLEAN DEFAULT 0,
@@ -552,9 +581,9 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS defenses (
-			id TEXT PRIMARY KEY,
-			assignment_id TEXT NOT NULL REFERENCES pfe_assignments(id),
-			jury_id TEXT NOT NULL REFERENCES defense_juries(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			assignment_id INTEGER NOT NULL REFERENCES pfe_assignments(id),
+			jury_id INTEGER NOT NULL REFERENCES defense_juries(id),
 			scheduled_at DATETIME,
 			room TEXT,
 			defense_deadline DATETIME,
@@ -565,9 +594,9 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS jury_grades (
-			id TEXT PRIMARY KEY,
-			defense_id TEXT NOT NULL REFERENCES defenses(id),
-			jury_member_id TEXT NOT NULL REFERENCES teachers(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			defense_id INTEGER NOT NULL REFERENCES defenses(id),
+			jury_member_id INTEGER NOT NULL REFERENCES teachers(id),
 			criterion1 REAL,
 			criterion2 REAL,
 			criterion3 REAL,
@@ -576,17 +605,17 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS supervisor_evaluations (
-			id TEXT PRIMARY KEY,
-			pfe_assignment_id TEXT UNIQUE NOT NULL REFERENCES pfe_assignments(id),
-			evaluator_id TEXT NOT NULL REFERENCES teachers(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			pfe_assignment_id INTEGER UNIQUE NOT NULL REFERENCES pfe_assignments(id),
+			evaluator_id INTEGER NOT NULL REFERENCES teachers(id),
 			criterion5 REAL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS company_reports (
-			id TEXT PRIMARY KEY,
-			company_id TEXT NOT NULL REFERENCES companies(id),
-			submitted_by TEXT NOT NULL,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			company_id INTEGER NOT NULL REFERENCES companies(id),
+			submitted_by INTEGER NOT NULL,
 			correction_type TEXT NOT NULL,
 			description TEXT,
 			requested_value TEXT,
@@ -596,19 +625,19 @@ func runTestMigrations(db *sql.DB) error {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS notifications (
-			id TEXT PRIMARY KEY,
-			recipient_id TEXT NOT NULL REFERENCES profiles(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			recipient_id INTEGER NOT NULL REFERENCES profiles(id),
 			type TEXT NOT NULL,
 			payload TEXT DEFAULT '{}',
 			read_at DATETIME,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS audit_logs (
-			id TEXT PRIMARY KEY,
-			actor_id TEXT NOT NULL REFERENCES profiles(id),
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			actor_id INTEGER NOT NULL REFERENCES profiles(id),
 			action TEXT NOT NULL,
 			entity TEXT NOT NULL,
-			entity_id TEXT,
+			entity_id INTEGER,
 			metadata TEXT DEFAULT '{}',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
@@ -623,111 +652,122 @@ func runTestMigrations(db *sql.DB) error {
 }
 
 func runTestSeed(db *sql.DB) error {
+	// Use explicit integer IDs for predictability in tests.
+	// Profile IDs match the Seed*ID constants above.
 	seeds := []string{
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-ia', 'Intelligence Artificielle')`,
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-web', 'Développement Web')`,
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-reseau', 'Réseaux et Sécurité')`,
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-data', 'Data Science')`,
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-emb', 'Systèmes Embarqués')`,
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-mobile', 'Développement Mobile')`,
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-cloud', 'Cloud Computing')`,
-		`INSERT OR IGNORE INTO domains (id, name) VALUES ('seed-domain-biologie', 'Bio-Informatique')`,
+		// Domains (IDs: 1-8)
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (1, 'Intelligence Artificielle')`,
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (2, 'Développement Web')`,
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (3, 'Réseaux et Sécurité')`,
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (4, 'Data Science')`,
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (5, 'Systèmes Embarqués')`,
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (6, 'Développement Mobile')`,
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (7, 'Cloud Computing')`,
+		`INSERT OR IGNORE INTO domains (id, name) VALUES (8, 'Bio-Informatique')`,
 
-		`INSERT OR IGNORE INTO specialities (id, name, code, year_type) VALUES ('seed-spec-isil', 'ISIL', 'ISIL', 'master')`,
-		`INSERT OR IGNORE INTO specialities (id, name, code, year_type) VALUES ('seed-spec-chim', 'Chimie', 'CHIM', 'licence')`,
-		`INSERT OR IGNORE INTO specialities (id, name, code, year_type) VALUES ('seed-spec-elec', 'Électrotechnique', 'ELEC', 'master')`,
+		// Departments (IDs: 1-2)
+		`INSERT OR IGNORE INTO departments (id, name) VALUES (1, 'Informatique')`,
+		`INSERT OR IGNORE INTO departments (id, name) VALUES (2, 'Chimie')`,
 
-		`INSERT OR IGNORE INTO academic_years (id, label, status) VALUES ('seed-ay-2324', '2023-2024', 'cloturee')`,
-		`INSERT OR IGNORE INTO academic_years (id, label, status, submission_open_at, submission_close_at, max_wishes) 
-		 VALUES ('seed-ay-2425', '2024-2025', 'active', datetime('now', '-30 days'), datetime('now', '+30 days'), 5)`,
+		// Specialities (IDs: 1-3)
+		`INSERT OR IGNORE INTO specialities (id, name, code, year_type, department_id) VALUES (1, 'ISIL', 'ISIL', 'master', 1)`,
+		`INSERT OR IGNORE INTO specialities (id, name, code, year_type, department_id) VALUES (2, 'Chimie', 'CHIM', 'licence', 2)`,
+		`INSERT OR IGNORE INTO specialities (id, name, code, year_type, department_id) VALUES (3, 'Électrotechnique', 'ELEC', 'master', 1)`,
 
-		`INSERT OR IGNORE INTO promotions (id, label, academic_year_id) VALUES ('seed-promo-isil', 'ISIL 2024-2025', 'seed-ay-2425')`,
-		`INSERT OR IGNORE INTO promotions (id, label, academic_year_id) VALUES ('seed-promo-chim', 'CHIM 2024-2025', 'seed-ay-2425')`,
+		// Academic years (IDs: 1-2)
+		`INSERT OR IGNORE INTO academic_years (id, label, status) VALUES (1, '2023-2024', 'cloturee')`,
+		`INSERT OR IGNORE INTO academic_years (id, label, status, submission_open_at, submission_close_at, max_wishes)
+		 VALUES (2, '2024-2025', 'active', datetime('now', '-30 days'), datetime('now', '+30 days'), 5)`,
 
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-admin-001', 'admin', 'Admin Test', 'admin@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-teacher-isil-001', 'teacher', 'Dr. ISIL Teacher', 'teacher.isil@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-teacher-isil-002', 'teacher', 'Pr. ISIL Validator', 'teacher.isil2@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-teacher-chim-001', 'teacher', 'Dr. CHIM Teacher', 'teacher.chim@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-student-isil-001', 'student', 'Étudiant ISIL 1', 'student.isil1@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-student-isil-002', 'student', 'Étudiant ISIL 2', 'student.isil2@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-student-chim-001', 'student', 'Étudiant CHIM 1', 'student.chim1@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-student-isil-004', 'student', 'Étudiant ISIL 4', 'student.isil4@test.dz', 1)`,
-		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES ('seed-company-001', 'company', 'TechCorp Algérie', 'contact@techcorp.dz', 1)`,
+		// Promotions (IDs: 1-2)
+		`INSERT OR IGNORE INTO promotions (id, label, academic_year_id) VALUES (1, 'ISIL 2024-2025', 2)`,
+		`INSERT OR IGNORE INTO promotions (id, label, academic_year_id) VALUES (2, 'CHIM 2024-2025', 2)`,
 
-		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department, availability_status) 
-		 VALUES ('seed-teacher-isil-001', 'seed-teacher-isil-001', 'mca', 'Informatique', 'disponible')`,
-		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department, availability_status) 
-		 VALUES ('seed-teacher-isil-002', 'seed-teacher-isil-002', 'professeur', 'Informatique', 'disponible')`,
-		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department, availability_status) 
-		 VALUES ('seed-teacher-chim-001', 'seed-teacher-chim-001', 'mcb', 'Chimie', 'disponible')`,
+		// Profiles (IDs: 1-9, matching Seed*ID constants)
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (1, 'admin', 'Admin Test', 'admin@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (2, 'teacher', 'Dr. ISIL Teacher', 'teacher.isil@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (3, 'teacher', 'Pr. ISIL Validator', 'teacher.isil2@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (4, 'teacher', 'Dr. CHIM Teacher', 'teacher.chim@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (5, 'student', 'Étudiant ISIL 1', 'student.isil1@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (6, 'student', 'Étudiant ISIL 2', 'student.isil2@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (7, 'student', 'Étudiant CHIM 1', 'student.chim1@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (8, 'student', 'Étudiant ISIL 4', 'student.isil4@test.dz', 1)`,
+		`INSERT OR IGNORE INTO profiles (id, role, full_name, email, is_active) VALUES (9, 'company', 'TechCorp Algérie', 'contact@techcorp.dz', 1)`,
 
-		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES ('seed-teacher-isil-001', 'seed-domain-ia')`,
-		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES ('seed-teacher-isil-001', 'seed-domain-web')`,
-		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES ('seed-teacher-isil-002', 'seed-domain-ia')`,
-		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES ('seed-teacher-chim-001', 'seed-domain-data')`,
+		// Teachers (IDs: 1-3, profile_id references profiles)
+		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department_id, availability_status) VALUES (1, 2, 'mca', 1, 'disponible')`,
+		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department_id, availability_status) VALUES (2, 3, 'professeur', 1, 'disponible')`,
+		`INSERT OR IGNORE INTO teachers (id, profile_id, grade, department_id, availability_status) VALUES (3, 4, 'mcb', 2, 'disponible')`,
 
-		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id)
-		 VALUES ('seed-student-isil-001', 'seed-student-isil-001', '2024001', 'seed-spec-isil', 'M2', 'seed-promo-isil')`,
-		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id)
-		 VALUES ('seed-student-isil-002', 'seed-student-isil-002', '2024002', 'seed-spec-isil', 'M2', 'seed-promo-isil')`,
-		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id)
-		 VALUES ('seed-student-chim-001', 'seed-student-chim-001', '2024003', 'seed-spec-chim', 'L3', 'seed-promo-chim')`,
-		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id)
-		 VALUES ('seed-student-isil-004', 'seed-student-isil-004', '2024004', 'seed-spec-isil', 'M2', 'seed-promo-isil')`,
+		// Teacher domains
+		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (1, 1)`,
+		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (1, 2)`,
+		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (2, 1)`,
+		`INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (3, 4)`,
 
-		`INSERT OR IGNORE INTO companies (id, profile_id, company_name, sector, description, is_verified) 
-		 VALUES ('seed-company-001', 'seed-company-001', 'TechCorp Algérie', 'Technologie', 'Entreprise tech', 1)`,
+		// Students (IDs: 1-4, profile_id references profiles)
+		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (1, 5, '2024001', 1, 'M2', 1)`,
+		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (2, 6, '2024002', 1, 'M2', 1)`,
+		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (3, 7, '2024003', 2, 'L3', 2)`,
+		`INSERT OR IGNORE INTO students (id, profile_id, student_number, speciality_id, level, promotion_id) VALUES (4, 8, '2024004', 1, 'M2', 1)`,
 
+		// Companies (ID: 1)
+		`INSERT OR IGNORE INTO companies (id, profile_id, company_name, sector, description, is_verified) VALUES (1, 9, 'TechCorp Algérie', 'Technologie', 'Entreprise tech', 1)`,
+
+		// PFE Subjects (IDs: 1-6)
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status)
-		 VALUES ('seed-subject-001', 'IA pour la santé', 'Sujet IA santé', 'binome', 'seed-teacher-isil-001', 'teacher', 'seed-ay-2425', 'en_attente')`,
+		 VALUES (1, 'IA pour la santé', 'Sujet IA santé', 'binome', 2, 'teacher', 2, 'en_attente')`,
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status)
-		 VALUES ('seed-subject-002', 'Web App Sécurité', 'Sujet web sécurité', 'monome', 'seed-teacher-isil-001', 'teacher', 'seed-ay-2425', 'valide')`,
+		 VALUES (2, 'Web App Sécurité', 'Sujet web sécurité', 'monome', 2, 'teacher', 2, 'valide')`,
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status,
 		    validator1_id, validator2_id, validator1_decision, validator2_decision)
-		 VALUES ('seed-subject-003', 'Cloud Computing Avancé', 'Sujet cloud', 'binome', 'seed-teacher-isil-001', 'teacher', 'seed-ay-2425', 'valide',
-		    'seed-teacher-isil-002', 'seed-teacher-chim-001', 'valide', 'valide')`,
+		 VALUES (3, 'Cloud Computing Avancé', 'Sujet cloud', 'binome', 2, 'teacher', 2, 'valide',
+		    2, 3, 'valide', 'valide')`,
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status,
 		    validator1_id, validator1_decision)
-		 VALUES ('seed-subject-004', 'Data Mining', 'Sujet data', 'binome', 'seed-teacher-chim-001', 'teacher', 'seed-ay-2425', 'accepte_sous_reserve',
-		    'seed-teacher-isil-002', 'accepte_sous_reserve')`,
+		 VALUES (4, 'Data Mining', 'Sujet data', 'binome', 4, 'teacher', 2, 'accepte_sous_reserve',
+		    2, 'accepte_sous_reserve')`,
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id, status)
-		 VALUES ('seed-subject-005', 'IoT Industriel', 'Sujet IoT', 'trinome', 'seed-company-001', 'company', 'seed-company-001', 'seed-ay-2425', 'valide')`,
+		 VALUES (5, 'IoT Industriel', 'Sujet IoT', 'trinome', 9, 'company', 1, 2, 'valide')`,
 		`INSERT OR IGNORE INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, academic_year_id, status)
-		 VALUES ('seed-subject-006', 'Blockchain', 'Sujet blockchain', 'monome', 'seed-teacher-isil-001', 'teacher', 'seed-ay-2425', 'refuse')`,
+		 VALUES (6, 'Blockchain', 'Sujet blockchain', 'monome', 2, 'teacher', 2, 'refuse')`,
 
-		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES ('seed-subject-001', 'seed-domain-ia')`,
-		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES ('seed-subject-002', 'seed-domain-web')`,
-		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES ('seed-subject-003', 'seed-domain-cloud')`,
+		// Subject domains
+		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES (1, 1)`,
+		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES (2, 2)`,
+		`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES (3, 7)`,
 
-		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status)
-		 VALUES ('seed-wish-001', 'seed-student-isil-001', 'seed-subject-002', 'seed-ay-2425', 'en_attente')`,
-		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status)
-		 VALUES ('seed-wish-002', 'seed-student-isil-001', 'seed-subject-003', 'seed-ay-2425', 'en_attente')`,
-		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status)
-		 VALUES ('seed-wish-003', 'seed-student-isil-002', 'seed-subject-003', 'seed-ay-2425', 'accepte')`,
+		// Wishes (IDs: 1-3)
+		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status) VALUES (1, 1, 2, 2, 'en_attente')`,
+		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status) VALUES (2, 1, 3, 2, 'en_attente')`,
+		`INSERT OR IGNORE INTO wishes (id, student_id, subject_id, academic_year_id, status) VALUES (3, 2, 3, 2, 'accepte')`,
 
-`INSERT OR IGNORE INTO pfe_assignments (id, pfe_code, subject_id, academic_year_id, student_id, student2_id, supervisor_id, status)
-		 VALUES ('seed-assignment-001', 'PFE-ISIL-2025-001', 'seed-subject-003', 'seed-ay-2425', 'seed-student-isil-001', 'seed-student-isil-002', 'seed-teacher-isil-001', 'en_cours')`,
+		// Assignments (IDs: 1-2)
+		`INSERT OR IGNORE INTO pfe_assignments (id, pfe_code, subject_id, academic_year_id, student_id, student2_id, supervisor_id, status)
+		 VALUES (1, 'PFE-ISIL-2025-001', 3, 2, 1, 2, 1, 'en_cours')`,
 		`INSERT OR IGNORE INTO pfe_assignments (id, pfe_code, subject_id, academic_year_id, student_id, supervisor_id, status)
-		 VALUES ('seed-assignment-002', 'PFE-ISIL-2025-002', 'seed-subject-005', 'seed-ay-2425', 'seed-student-isil-004', 'seed-teacher-isil-001', 'en_cours')`,
+		 VALUES (2, 'PFE-ISIL-2025-002', 5, 2, 4, 1, 'en_cours')`,
 
+		// Progress reports (IDs: 1-2)
 		`INSERT OR IGNORE INTO pfe_progress_reports (id, assignment_id, meeting_date, duration, meeting_type, topics, status)
-		 VALUES ('seed-meeting-001', 'seed-assignment-001', datetime('now', '-14 days'), 60, 'presentiel', 'Introduction, planification', 'termine')`,
+		 VALUES (1, 1, datetime('now', '-14 days'), 60, 'presentiel', 'Introduction, planification', 'termine')`,
 		`INSERT OR IGNORE INTO pfe_progress_reports (id, assignment_id, meeting_date, duration, meeting_type, topics, status)
-		 VALUES ('seed-meeting-002', 'seed-assignment-001', datetime('now', '-7 days'), 45, 'visio', 'État d''avancement', 'termine')`,
+		 VALUES (2, 1, datetime('now', '-7 days'), 45, 'visio', 'État d''avancement', 'termine')`,
 
-		`INSERT OR IGNORE INTO supervisor_evaluations (id, pfe_assignment_id, evaluator_id, criterion5)
-		 VALUES ('seed-sup-eval-001', 'seed-assignment-001', 'seed-teacher-isil-001', 3.5)`,
+		// Supervisor evaluation (ID: 1)
+		`INSERT OR IGNORE INTO supervisor_evaluations (id, pfe_assignment_id, evaluator_id, criterion5) VALUES (1, 1, 1, 3.5)`,
 
+		// Defense jury (ID: 1)
 		`INSERT OR IGNORE INTO defense_juries (id, assignment_id, president_id, member_id, president_confirmed, member_confirmed)
-		 VALUES ('seed-jury-001', 'seed-assignment-001', 'seed-teacher-isil-002', 'seed-teacher-chim-001', 1, 1)`,
-		`INSERT OR IGNORE INTO defenses (id, assignment_id, jury_id, scheduled_at, room, status)
-		 VALUES ('seed-defense-001', 'seed-assignment-001', 'seed-jury-001', datetime('now', '+14 days'), 'Salle A', 'scheduled')`,
+		 VALUES (1, 1, 2, 3, 1, 1)`,
 
-		`INSERT OR IGNORE INTO notifications (id, recipient_id, type, payload)
-		 VALUES ('seed-notif-001', 'seed-admin-001', 'nouveau_sujet', '{"subject_id":"seed-subject-001"}')`,
-		`INSERT OR IGNORE INTO notifications (id, recipient_id, type, payload)
-		 VALUES ('seed-notif-002', 'seed-teacher-isil-001', 'sujet_valide', '{"subject_id":"seed-subject-003"}')`,
+		// Defense (ID: 1)
+		`INSERT OR IGNORE INTO defenses (id, assignment_id, jury_id, scheduled_at, room, status)
+		 VALUES (1, 1, 1, datetime('now', '+14 days'), 'Salle A', 'scheduled')`,
+
+		// Notifications (IDs: 1-2)
+		`INSERT OR IGNORE INTO notifications (id, recipient_id, type, payload) VALUES (1, 1, 'nouveau_sujet', '{"subject_id":1}')`,
+		`INSERT OR IGNORE INTO notifications (id, recipient_id, type, payload) VALUES (2, 2, 'sujet_valide', '{"subject_id":3}')`,
 	}
 
 	for _, s := range seeds {

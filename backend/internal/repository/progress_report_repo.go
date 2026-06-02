@@ -5,18 +5,15 @@ import (
 	"pfe-backend/internal/entity"
 )
 
-// ProgressReportRepository gère les opérations base de données pour les comptes rendus d'avancement.
 type ProgressReportRepository struct {
 	db *sql.DB
 }
 
-// NewProgressReportRepository crée un nouveau ProgressReportRepository.
 func NewProgressReportRepository(db *sql.DB) *ProgressReportRepository {
 	return &ProgressReportRepository{db: db}
 }
 
-// FindByID cherche un compte rendu par son ID.
-func (r *ProgressReportRepository) FindByID(id string) (*entity.PfeProgressReport, error) {
+func (r *ProgressReportRepository) FindByID(id int64) (*entity.PfeProgressReport, error) {
 	row := r.db.QueryRow(`SELECT id, assignment_id, meeting_date, duration, meeting_type, topics, status, observation, created_at, updated_at
 		FROM pfe_progress_reports WHERE id = ?`, id)
 	p := &entity.PfeProgressReport{}
@@ -30,15 +27,13 @@ func (r *ProgressReportRepository) FindByID(id string) (*entity.PfeProgressRepor
 	return p, nil
 }
 
-// FindByAssignment retourne les comptes rendus d'une assignation.
-func (r *ProgressReportRepository) FindByAssignment(assignmentID string) ([]*entity.PfeProgressReport, error) {
+func (r *ProgressReportRepository) FindByAssignment(assignmentID int64) ([]*entity.PfeProgressReport, error) {
 	rows, err := r.db.Query(`SELECT id, assignment_id, meeting_date, duration, meeting_type, topics, status, observation, created_at, updated_at
 		FROM pfe_progress_reports WHERE assignment_id = ? ORDER BY meeting_date DESC`, assignmentID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var reports []*entity.PfeProgressReport
 	for rows.Next() {
 		p := &entity.PfeProgressReport{}
@@ -50,14 +45,20 @@ func (r *ProgressReportRepository) FindByAssignment(assignmentID string) ([]*ent
 	return reports, rows.Err()
 }
 
-// Insert crée un nouveau compte rendu.
 func (r *ProgressReportRepository) Insert(p *entity.PfeProgressReport) error {
-	_, err := r.db.Exec(`INSERT INTO pfe_progress_reports (id, assignment_id, meeting_date, duration, meeting_type, topics, status, observation)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, p.ID, p.AssignmentID, p.MeetingDate, p.Duration, p.MeetingType, p.Topics, p.Status, p.Observation)
-	return err
+	result, err := r.db.Exec(`INSERT INTO pfe_progress_reports (assignment_id, meeting_date, duration, meeting_type, topics, status, observation)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`, p.AssignmentID, p.MeetingDate, p.Duration, p.MeetingType, p.Topics, p.Status, p.Observation)
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	p.ID = id
+	return nil
 }
 
-// Update met à jour un compte rendu.
 func (r *ProgressReportRepository) Update(p *entity.PfeProgressReport) error {
 	_, err := r.db.Exec(`UPDATE pfe_progress_reports SET meeting_date = ?, duration = ?, meeting_type = ?, topics = ?, status = ?, observation = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
 		p.MeetingDate, p.Duration, p.MeetingType, p.Topics, p.Status, p.Observation, p.ID)

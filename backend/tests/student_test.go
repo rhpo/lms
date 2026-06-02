@@ -8,7 +8,7 @@ func TestStudentDashboard(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/dashboard", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/dashboard", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestStudentDashboardWrongRole(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/dashboard", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/dashboard", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestStudentCatalogue(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/catalogue", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/catalogue", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestStudentGetCatalogueSubject(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/catalogue/seed-subject-003", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/catalogue/3", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestStudentGetCatalogueSubjectNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/catalogue/invalid", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/catalogue/99999", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -87,7 +87,7 @@ func TestStudentListWishes(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/wishes", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/wishes", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -99,8 +99,8 @@ func TestStudentCreateWish(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"subject_id": "seed-subject-005"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/wishes", body, h.AuthHeader("seed-student-isil-001", "student")))
+	body := map[string]any{"subject_id": 5}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/wishes", body, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -112,8 +112,8 @@ func TestStudentCreateWishDuplicate(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"subject_id": "seed-subject-003"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/wishes", body, h.AuthHeader("seed-student-isil-001", "student")))
+	body := map[string]any{"subject_id": 3}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/wishes", body, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -125,8 +125,8 @@ func TestStudentCreateWishInvalidSubject(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"subject_id": "invalid"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/wishes", body, h.AuthHeader("seed-student-isil-001", "student")))
+	body := map[string]any{"subject_id": 99999}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/wishes", body, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestStudentDeleteWish(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/student/wishes/seed-wish-001", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/student/wishes/1", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -150,7 +150,7 @@ func TestStudentDeleteWishNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/student/wishes/invalid", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/student/wishes/99999", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestStudentDeleteWishOtherStudent(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/student/wishes/seed-wish-003", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/student/wishes/3", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestStudentMyPfe(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/my-pfe", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/my-pfe", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -193,7 +193,7 @@ func TestStudentMyPfeNoAssignment(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/my-pfe", nil, h.AuthHeader("seed-student-isil-003", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/my-pfe", nil, h.AuthHeader(SeedStudentCHIM1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -205,7 +205,7 @@ func TestStudentListMeetings(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/my-pfe/meetings", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/my-pfe/meetings", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -223,7 +223,7 @@ func TestStudentCreateMeeting(t *testing.T) {
 		"meeting_type": "presentiel",
 		"topics":       "Discussion sur l'avancement",
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/meetings", body, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/meetings", body, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestStudentCreateMeetingValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/meetings", map[string]string{}, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/meetings", map[string]string{}, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -248,7 +248,7 @@ func TestStudentSubmitMemoire(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"memoire_url": "https://storage.supabase.co/memoires/test-memoire.pdf"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/memoire", body, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/memoire", body, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -260,7 +260,7 @@ func TestStudentSubmitMemoireValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/memoire", map[string]string{}, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/memoire", map[string]string{}, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -273,7 +273,7 @@ func TestStudentSubmitMemoireNoAssignment(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"memoire_url": "https://storage.supabase.co/memoires/test.pdf"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/memoire", body, h.AuthHeader("seed-student-isil-005", "student")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/student/my-pfe/memoire", body, h.AuthHeader(99999, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -285,7 +285,7 @@ func TestStudentSoutenance(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/soutenance", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/soutenance", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -297,7 +297,7 @@ func TestStudentNotifications(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/notifications", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/student/notifications", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}

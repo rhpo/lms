@@ -5,18 +5,15 @@ import (
 	"pfe-backend/internal/entity"
 )
 
-// PfeSubjectRepository gère les opérations base de données pour les sujets PFE.
 type PfeSubjectRepository struct {
 	db *sql.DB
 }
 
-// NewPfeSubjectRepository crée un nouveau PfeSubjectRepository.
 func NewPfeSubjectRepository(db *sql.DB) *PfeSubjectRepository {
 	return &PfeSubjectRepository{db: db}
 }
 
-// FindByID cherche un sujet par son ID.
-func (r *PfeSubjectRepository) FindByID(id string) (*entity.PfeSubject, error) {
+func (r *PfeSubjectRepository) FindByID(id int64) (*entity.PfeSubject, error) {
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids, created_at, updated_at
@@ -37,7 +34,6 @@ func (r *PfeSubjectRepository) FindByID(id string) (*entity.PfeSubject, error) {
 	return s, nil
 }
 
-// FindAll retourne tous les sujets PFE.
 func (r *PfeSubjectRepository) FindAll() ([]*entity.PfeSubject, error) {
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
@@ -48,12 +44,10 @@ func (r *PfeSubjectRepository) FindAll() ([]*entity.PfeSubject, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanSubjects(rows)
 }
 
-// FindByProposer retourne les sujets proposés par un utilisateur.
-func (r *PfeSubjectRepository) FindByProposer(proposerID string) ([]*entity.PfeSubject, error) {
+func (r *PfeSubjectRepository) FindByProposer(proposerID int64) ([]*entity.PfeSubject, error) {
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids, created_at, updated_at
@@ -63,11 +57,9 @@ func (r *PfeSubjectRepository) FindByProposer(proposerID string) ([]*entity.PfeS
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanSubjects(rows)
 }
 
-// FindByStatus retourne les sujets filtrés par statut.
 func (r *PfeSubjectRepository) FindByStatus(status string) ([]*entity.PfeSubject, error) {
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
@@ -78,27 +70,32 @@ func (r *PfeSubjectRepository) FindByStatus(status string) ([]*entity.PfeSubject
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanSubjects(rows)
 }
 
-// FindPendingValidation retourne les sujets en attente de validation.
-func (r *PfeSubjectRepository) FindPendingValidation(validatorID string) ([]*entity.PfeSubject, error) {
+func (r *PfeSubjectRepository) FindPendingValidation(validatorID int64) ([]*entity.PfeSubject, error) {
+	// Only return subjects where this validator's own slot has no decision yet.
+	// validator1: assigned but validator1_decision is still NULL
+	// validator2: assigned but validator2_decision is still NULL
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids, created_at, updated_at
-		FROM pfe_subjects WHERE (validator1_id = ? OR validator2_id = ?) AND status = 'en_attente' ORDER BY created_at DESC`
+		FROM pfe_subjects
+		WHERE status = 'en_attente'
+		  AND (
+		    (validator1_id = ? AND validator1_decision IS NULL) OR
+		    (validator2_id = ? AND validator2_decision IS NULL)
+		  )
+		ORDER BY created_at DESC`
 	rows, err := r.db.Query(query, validatorID, validatorID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanSubjects(rows)
 }
 
-// FindByAcademicYear retourne les sujets d'une année universitaire.
-func (r *PfeSubjectRepository) FindByAcademicYear(academicYearID string) ([]*entity.PfeSubject, error) {
+func (r *PfeSubjectRepository) FindByAcademicYear(academicYearID int64) ([]*entity.PfeSubject, error) {
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids, created_at, updated_at
@@ -108,12 +105,10 @@ func (r *PfeSubjectRepository) FindByAcademicYear(academicYearID string) ([]*ent
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanSubjects(rows)
 }
 
-// FindByCompany retourne les sujets proposés par une entreprise.
-func (r *PfeSubjectRepository) FindByCompany(companyID string) ([]*entity.PfeSubject, error) {
+func (r *PfeSubjectRepository) FindByCompany(companyID int64) ([]*entity.PfeSubject, error) {
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids, created_at, updated_at
@@ -123,12 +118,10 @@ func (r *PfeSubjectRepository) FindByCompany(companyID string) ([]*entity.PfeSub
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanSubjects(rows)
 }
 
-// FindAvailable retourne les sujets disponibles (validés) pour les étudiants.
-func (r *PfeSubjectRepository) FindAvailable(academicYearID string) ([]*entity.PfeSubject, error) {
+func (r *PfeSubjectRepository) FindAvailable(academicYearID int64) ([]*entity.PfeSubject, error) {
 	query := `SELECT id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids, created_at, updated_at
@@ -138,37 +131,55 @@ func (r *PfeSubjectRepository) FindAvailable(academicYearID string) ([]*entity.P
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanSubjects(rows)
 }
 
-// Insert crée un nouveau sujet PFE.
 func (r *PfeSubjectRepository) Insert(s *entity.PfeSubject) error {
-	query := `INSERT INTO pfe_subjects (id, title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
+	query := `INSERT INTO pfe_subjects (title, description, group_type, proposer_id, proposer_role, company_id, academic_year_id,
 		validator1_id, validator2_id, validator1_decision, validator2_decision,
 		validator1_comment, validator2_comment, status, co_supervisor_id, pre_assigned_student_ids)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := r.db.Exec(query, s.ID, s.Title, s.Description, s.GroupType, s.ProposerID, s.ProposerRole, s.CompanyID,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	result, err := r.db.Exec(query, s.Title, s.Description, s.GroupType, s.ProposerID, s.ProposerRole, s.CompanyID,
 		s.AcademicYearID, s.Validator1ID, s.Validator2ID, s.Validator1Decision, s.Validator2Decision,
 		s.Validator1Comment, s.Validator2Comment, s.Status, s.CoSupervisorID, s.PreAssignedStudentIDs)
-	return err
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	s.ID = id
+	return nil
 }
 
-// Update met à jour un sujet PFE (sans le statut, utiliser UpdateStatus pour changer le statut).
 func (r *PfeSubjectRepository) Update(s *entity.PfeSubject) error {
 	query := `UPDATE pfe_subjects SET title = ?, description = ?, group_type = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 	_, err := r.db.Exec(query, s.Title, s.Description, s.GroupType, s.ID)
 	return err
 }
 
-// UpdateStatus met à jour le statut d'un sujet.
-func (r *PfeSubjectRepository) UpdateStatus(id, status string) error {
+// Resubmit met à jour le contenu d'un sujet et le remet en attente de validation.
+// Efface toutes les décisions et affectations de validateurs précédentes.
+func (r *PfeSubjectRepository) Resubmit(id int64, title, description, groupType string) error {
+	query := `UPDATE pfe_subjects SET
+		title = ?, description = ?, group_type = ?,
+		status = 'en_attente',
+		validator1_id = NULL, validator2_id = NULL,
+		validator1_decision = NULL, validator2_decision = NULL,
+		validator1_comment = NULL, validator2_comment = NULL,
+		updated_at = CURRENT_TIMESTAMP
+	WHERE id = ?`
+	_, err := r.db.Exec(query, title, description, groupType, id)
+	return err
+}
+
+func (r *PfeSubjectRepository) UpdateStatus(id int64, status string) error {
 	_, err := r.db.Exec(`UPDATE pfe_subjects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, status, id)
 	return err
 }
 
-// UpdateValidation met à jour la décision d'un validateur.
-func (r *PfeSubjectRepository) UpdateValidation(id, validatorField, decision, comment string) error {
+func (r *PfeSubjectRepository) UpdateValidation(id int64, validatorField, decision, comment string) error {
 	var query string
 	if validatorField == "validator1" {
 		query = `UPDATE pfe_subjects SET validator1_decision = ?, validator1_comment = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
@@ -179,34 +190,35 @@ func (r *PfeSubjectRepository) UpdateValidation(id, validatorField, decision, co
 	return err
 }
 
-// AssignValidators assigne les validateurs à un sujet.
-func (r *PfeSubjectRepository) AssignValidators(id, validator1ID, validator2ID string) error {
-	_, err := r.db.Exec(`UPDATE pfe_subjects SET validator1_id = ?, validator2_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+func (r *PfeSubjectRepository) AssignValidators(id, validator1ID, validator2ID int64) error {
+	_, err := r.db.Exec(`UPDATE pfe_subjects
+		SET validator1_id = ?, validator2_id = ?,
+		    validator1_decision = NULL, validator2_decision = NULL,
+		    validator1_comment = NULL, validator2_comment = NULL,
+		    status = 'en_attente',
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?`,
 		validator1ID, validator2ID, id)
 	return err
 }
 
-// AssignCoSupervisor assigne un co-encadrant.
-func (r *PfeSubjectRepository) AssignCoSupervisor(id, coSupervisorID string) error {
+func (r *PfeSubjectRepository) AssignCoSupervisor(id, coSupervisorID int64) error {
 	_, err := r.db.Exec(`UPDATE pfe_subjects SET co_supervisor_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
 		coSupervisorID, id)
 	return err
 }
 
-// AddDomain ajoute un domaine à un sujet.
-func (r *PfeSubjectRepository) AddDomain(subjectID, domainID string) error {
+func (r *PfeSubjectRepository) AddDomain(subjectID, domainID int64) error {
 	_, err := r.db.Exec(`INSERT OR IGNORE INTO subject_domains (subject_id, domain_id) VALUES (?, ?)`, subjectID, domainID)
 	return err
 }
 
-// RemoveDomain retire un domaine d'un sujet.
-func (r *PfeSubjectRepository) RemoveDomain(subjectID, domainID string) error {
+func (r *PfeSubjectRepository) RemoveDomain(subjectID, domainID int64) error {
 	_, err := r.db.Exec(`DELETE FROM subject_domains WHERE subject_id = ? AND domain_id = ?`, subjectID, domainID)
 	return err
 }
 
-// GetDomains retourne les domaines d'un sujet.
-func (r *PfeSubjectRepository) GetDomains(subjectID string) ([]*entity.Domain, error) {
+func (r *PfeSubjectRepository) GetDomains(subjectID int64) ([]*entity.Domain, error) {
 	query := `SELECT d.id, d.name, d.created_at, d.updated_at
 		FROM domains d INNER JOIN subject_domains sd ON sd.domain_id = d.id WHERE sd.subject_id = ?`
 	rows, err := r.db.Query(query, subjectID)
@@ -214,7 +226,6 @@ func (r *PfeSubjectRepository) GetDomains(subjectID string) ([]*entity.Domain, e
 		return nil, err
 	}
 	defer rows.Close()
-
 	var domains []*entity.Domain
 	for rows.Next() {
 		d := &entity.Domain{}
@@ -226,7 +237,6 @@ func (r *PfeSubjectRepository) GetDomains(subjectID string) ([]*entity.Domain, e
 	return domains, rows.Err()
 }
 
-// scanSubjects scanne les résultats d'une requête de sujets.
 func (r *PfeSubjectRepository) scanSubjects(rows *sql.Rows) ([]*entity.PfeSubject, error) {
 	var subjects []*entity.PfeSubject
 	for rows.Next() {

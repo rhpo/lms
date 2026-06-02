@@ -39,7 +39,8 @@ func AuthRequired(cfg *config.Config) fiber.Handler {
 			return response.Unauthorized(c, "Token invalide")
 		}
 
-		profileID, _ := claims["sub"].(string)
+		profileIDFloat, _ := claims["sub"].(float64)
+		profileID := int64(profileIDFloat)
 		role, _ := claims["role"].(string)
 
 		c.Locals("profile_id", profileID)
@@ -63,8 +64,8 @@ func RequireRole(allowedRoles ...string) fiber.Handler {
 }
 
 // GetProfileID extrait l'ID du profil connecté depuis le contexte.
-func GetProfileID(c fiber.Ctx) string {
-	id, _ := c.Locals("profile_id").(string)
+func GetProfileID(c fiber.Ctx) int64 {
+	id, _ := c.Locals("profile_id").(int64)
 	return id
 }
 

@@ -1,15 +1,16 @@
-/**
- * Centralized API client for the Go backend.
- * All requests go through /api (proxied to http://localhost:8080 by Vite in dev).
- */
 import type {
-  PFESubject, Wish, PFEAssignment, PFEProgressReport, Notification, SessionUser
+  Profile, Teacher, Student, Company, Department, Domain, Speciality, AcademicYear,
+  Promotion, PfeSubject, Wish, PfeAssignment, PfeProgressReport,
+  DefenseJury, Defense, JuryGrade, SupervisorEvaluation, CompanyReport,
+  Notification, AuditLog, SessionUser, AuthResult, AdminDashboard,
+  ValidatorRecommendation,
+  TeacherGrade, ReviewDecision, GroupType, MeetingType,
 } from './types';
 
-const API_BASE = '/api';
-const TOKEN_KEY = 'pfe_token';
-
 // ─── Token management ────────────────────────────────────────────────────────
+
+const TOKEN_KEY = 'pfe_token';
+const API_URL = '';
 
 export function getToken(): string | null {
   if (typeof localStorage === 'undefined') return null;
@@ -25,6 +26,8 @@ export function clearToken(): void {
 }
 
 // ─── Core fetch wrapper ──────────────────────────────────────────────────────
+
+const API_BASE = '/api';
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -45,21 +48,18 @@ async function request<T = unknown>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Don't set Content-Type for FormData (browser sets it with boundary)
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = headers['Content-Type'] ?? 'application/json';
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_URL}${API_BASE}${path}`, { ...options, headers });
 
   if (!res.ok) {
     let errMsg = `HTTP ${res.status}`;
     try {
       const json: ApiResponse = await res.json();
       errMsg = json.error ?? errMsg;
-    } catch {
-      // ignore parse error
-    }
+    } catch { /* ignore parse error */ }
     throw new Error(errMsg);
   }
 
@@ -67,31 +67,18 @@ async function request<T = unknown>(
   return json.data as T;
 }
 
-export async function downloadBlob(path: string): Promise<Blob> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  const res = await fetch(`${API_BASE}${path}`, { headers });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
-  return await res.blob();
-}
-
-function get<T = any>(path: string) {
+function get<T>(path: string) {
   return request<T>(path, { method: 'GET' });
 }
 
-function post<T = any>(path: string, body?: unknown) {
+function post<T>(path: string, body?: unknown) {
   return request<T>(path, {
     method: 'POST',
     body: body instanceof FormData ? body : JSON.stringify(body),
   });
 }
 
-function patch<T = any>(path: string, body?: unknown) {
+function patch<T>(path: string, body?: unknown) {
   return request<T>(path, { method: 'PATCH', body: JSON.stringify(body) });
 }
 
@@ -99,170 +86,333 @@ function del<T = void>(path: string) {
   return request<T>(path, { method: 'DELETE' });
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-
-export interface AuthResult {
-  token: string;
-  profile: SessionUser;
+export async function downloadBlob(path: string): Promise<Blob> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${path}`, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.blob();
 }
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
 
 export const auth = {
   devLogin: (email: string) => post<AuthResult>('/auth/dev-login', { email }),
-  me: () => get<SessionUser>('/auth/me'),
-  logout: () => post('/auth/logout'),
+  me: () => get<Profile>('/auth/me'),
+  logout: () => post<void>('/auth/logout'),
+  listVerifiedCompanies: () => get<Company[]>('/auth/companies'),
+  registerCompany: (body: {
+    full_name: string;
+    email: string;
+    position: string;
+    phone: string;
+    company_id?: number;
+    company_name?: string;
+    sector?: string;
+    description?: string;
+    contact_email?: string;
+    contact_phone?: string;
+  }) => post<AuthResult>('/auth/register-company', body),
+};
+
+// ─── Reference data (all authenticated roles) ───────────────────────────────
+
+export const ref = {
+  domains: () => get<Domain[]>('/ref/domains'),
+  specialities: () => get<Speciality[]>('/ref/specialities'),
+  departments: () => get<Department[]>('/ref/departments'),
+  allUsers: () => get<Profile[]>('/accounts/users'),
 };
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
 
 export const admin = {
-  dashboard: () => get('/admin/dashboard'),
-  listUsers: (params?: Record<string, string>) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return get(`/admin/accounts/users${qs}`);
-  },
-  createUser: (body: unknown) => post('/admin/accounts/users', body),
-  getUser: (id: string) => get(`/admin/accounts/users/${id}`),
-  updateUser: (id: string, body: unknown) => patch(`/admin/accounts/users/${id}`, body),
-  userAction: (id: string, action: string, payload?: any) =>
-    post(`/admin/accounts/users/${id}/action`, { action, ...payload }),
-  importUsersCSV: (formData: FormData) =>
-    request('/admin/accounts/users/import-csv', { method: 'POST', body: formData }),
-  listCompanies: () => get('/admin/accounts/companies'),
-  companyAction: (id: string, action: string) =>
-    post(`/admin/accounts/companies/${id}/action`, { action }),
-  listReports: () => get('/admin/reports'),
-  reportAction: (id: string, action: string) =>
-    post(`/admin/reports/${id}/action`, { action }),
-  listSubjects: (params?: Record<string, string>) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return get(`/admin/subjects${qs}`);
-  },
-  getSubject: (id: string) => get(`/admin/subjects/${id}`),
-  subjectAction: (id: string, action: string, payload?: any) =>
-    post(`/admin/subjects/${id}/action`, { action, ...payload }),
-  listAssignments: () => get('/admin/pfe'),
-  getAssignment: (id: string) => get(`/admin/pfe/${id}`),
-  listDefenses: () => get('/admin/defenses'),
-  createDefense: (body: unknown) => post('/admin/defenses', body),
-  recommendJury: (assignmentId: string) =>
-    get(`/admin/defenses/recommend-jury?assignment_id=${assignmentId}`),
-  getDefense: (id: string) => get(`/admin/defenses/${id}`),
-  submitGrade: (id: string, body: unknown) => post(`/admin/defenses/${id}/submit-grade`, body),
-  resolveGrade: (id: string, body: unknown) => post(`/admin/defenses/${id}/resolve-grade`, body),
-  confirmJury: (id: string) => post(`/admin/defenses/${id}/confirm-jury`),
-  declineJury: (id: string) => post(`/admin/defenses/${id}/decline-jury`),
-  listDeadlines: () => get('/admin/settings/deadlines'),
-  updateDeadlines: (body: unknown) => post('/admin/settings/deadlines', body),
-  listSpecialities: () => get('/admin/settings/specialities'),
-  createSpeciality: (body: unknown) => post('/admin/settings/specialities', body),
-  deleteSpeciality: (id: string) => del(`/admin/settings/specialities/${id}`),
-  listDomains: () => get('/admin/settings/domains'),
-  createDomain: (body: unknown) => post('/admin/settings/domains', body),
-  deleteDomain: (id: string) => del(`/admin/settings/domains/${id}`),
-  listPromotions: () => get('/admin/settings/promotions'),
-  createPromotion: (body: unknown) => post('/admin/settings/promotions', body),
-  deletePromotion: (id: string) => del(`/admin/settings/promotions/${id}`),
-  listAcademicYears: () => get('/admin/settings/academic-years'),
-  createAcademicYear: (body: unknown) => post('/admin/settings/academic-years', body),
-  closeAcademicYear: (id: string) => post(`/admin/settings/academic-years/${id}/close`),
-  statistics: () => get('/admin/statistics'),
-  auditLog: () => get('/admin/audit-log'),
-  exportAffectations: () => get('/admin/exports/affectations'),
-  exportPlannings: () => get('/admin/exports/plannings'),
-  exportStatistics: () => get('/admin/exports/statistiques'),
-  sendEmail: (body: unknown) => post('/admin/send-email', body),
+  // Dashboard
+  dashboard: () => get<AdminDashboard>('/admin/dashboard'),
+
+  // Users
+  listUsers: () => get<Profile[]>('/admin/accounts/users'),
+  createUser: (body: { role: string; full_name: string; email: string }) =>
+    post<Profile>('/admin/accounts/users', body),
+  createTeacher: (body: { full_name: string; email: string; grade: string; department_id: number }) =>
+    post<Profile>('/admin/accounts/users/enseignant', body),
+  createStudent: (body: { full_name: string; email: string; student_number: string; speciality_id?: number; level?: string; promotion_id?: number }) =>
+    post<Profile>('/admin/accounts/users/etudiant', body),
+  getUser: (id: number) => get<Profile>(`/admin/accounts/users/${id}`),
+  updateUser: (id: number, body: {
+    full_name?: string; email?: string;
+    grade?: string; department_id?: number | null;
+    domain_ids?: number[];
+    student_number?: string; level?: string;
+    speciality_id?: number | null; promotion_id?: number | null;
+  }) => patch<Profile>(`/admin/accounts/users/${id}`, body),
+  updateUserAvatar: (id: number, formData: FormData) =>
+    request<{ url: string }>(`/admin/accounts/users/${id}/avatar`, { method: 'POST', body: formData }),
+  userAction: (id: number, action: string) =>
+    post<{ message: string }>(`/admin/accounts/users/${id}/action`, { action }),
+  importUsersCSV: (csvData: string, csvType: string, replaceMode: boolean) =>
+    post<{ message: string }>('/admin/accounts/users/import-csv', { csv_data: csvData, csv_type: csvType, replace: replaceMode }),
+
+  // Companies
+  listCompanies: () => get<Company[]>('/admin/accounts/companies'),
+  companyAction: (id: number, action: string, payload?: Record<string, unknown>) =>
+    post<{ message: string }>(`/admin/accounts/companies/${id}/action`, { action, ...payload }),
+
+  // Reports
+  listReports: () => get<CompanyReport[]>('/admin/reports'),
+  reportAction: (id: number, action: string) =>
+    post<{ message: string }>(`/admin/reports/${id}/action`, { action }),
+
+  // Subjects
+  listSubjects: () => get<PfeSubject[]>('/admin/subjects'),
+  getSubject: (id: number) => get<PfeSubject>(`/admin/subjects/${id}`),
+  subjectAction: (id: number, action: string, payload?: Record<string, unknown>) =>
+    post<{ message: string }>(`/admin/subjects/${id}/action`, { action, ...payload }),
+
+  // PFE Assignments
+  listAssignments: () => get<PfeAssignment[]>('/admin/pfe'),
+  getAssignment: (id: number) => get<PfeAssignment>(`/admin/pfe/${id}`),
+  assignmentAction: (id: number, action: string, body?: Record<string, unknown>) =>
+    post<{ message: string }>(`/admin/pfe/${id}/action`, { action, ...body }),
+  recommendCoSupervisor: (assignmentId: number) =>
+    get<{ recommended: ValidatorRecommendation[]; assignment_id: number; subject_domains: Domain[] }>(
+      `/admin/pfe/recommend-co-supervisor?assignment_id=${assignmentId}`
+    ),
+
+  // Defenses
+  listDefenses: () => get<Defense[]>('/admin/defenses'),
+  createDefense: (body: {
+    assignment_id: number;
+    president_id: number;
+    member_id: number;
+    scheduled_at: string;
+    room: string;
+  }) => post<Defense>('/admin/defenses', body),
+  getDefense: (id: number) => get<Defense>(`/admin/defenses/${id}`),
+  recommendJury: (pfeId: number) =>
+    get<{ recommended: ValidatorRecommendation[]; pfe_id: number; subject_domains: Domain[] }>(`/admin/defenses/recommend-jury?pfe_id=${pfeId}`),
+  submitGrade: (defenseId: number, body: {
+    criterion1: number; criterion2: number; criterion3: number; criterion4: number;
+  }) => post<{ message: string }>(`/admin/defenses/${defenseId}/submit-grade`, body),
+  resolveGrade: (defenseId: number, body: {
+    choice: string;
+    criterion1?: number; criterion2?: number; criterion3?: number; criterion4?: number;
+    grades?: Record<string, number>;
+  }) => post<{ message: string }>(`/admin/defenses/${defenseId}/resolve-grade`, body),
+  confirmJury: (defenseId: number) =>
+    post<{ message: string }>(`/admin/defenses/${defenseId}/confirm-jury`),
+  declineJury: (defenseId: number) =>
+    post<{ message: string }>(`/admin/defenses/${defenseId}/decline-jury`),
+
+  // Settings — Deadlines
+  listDeadlines: () => get<AcademicYear[]>('/admin/settings/deadlines'),
+  updateDeadlines: (body: {
+    submission_open_at: string; submission_close_at: string; max_wishes: number;
+  }) => post<{ message: string }>('/admin/settings/deadlines', body),
+
+  // Settings — Specialities
+  listSpecialities: () => get<Speciality[]>('/admin/settings/specialities'),
+  createSpeciality: (body: { name: string; code: string; year_type: string; department_id?: number }) =>
+    post<Speciality>('/admin/settings/specialities', body),
+  deleteSpeciality: (id: number) => del(`/admin/settings/specialities/${id}`),
+
+  // Settings — Domains
+  listDomains: () => get<Domain[]>('/admin/settings/domains'),
+  createDomain: (body: { name: string }) =>
+    post<Domain>('/admin/settings/domains', body),
+  deleteDomain: (id: number) => del(`/admin/settings/domains/${id}`),
+
+  // Settings — Departments
+  listDepartments: () => get<Department[]>('/admin/settings/departments'),
+  createDepartment: (body: { name: string }) =>
+    post<Department>('/admin/settings/departments', body),
+  deleteDepartment: (id: number) => del(`/admin/settings/departments/${id}`),
+
+  // Settings — Promotions
+  listPromotions: () => get<Promotion[]>('/admin/settings/promotions'),
+  createPromotion: (body: { label: string; academic_year_id: number }) =>
+    post<Promotion>('/admin/settings/promotions', body),
+  deletePromotion: (id: number) => del(`/admin/settings/promotions/${id}`),
+
+  // Settings — Academic Years
+  listAcademicYears: () => get<AcademicYear[]>('/admin/settings/academic-years'),
+  createAcademicYear: (body: { label: string; status: string; max_wishes?: number }) =>
+    post<AcademicYear>('/admin/settings/academic-years', body),
+  closeAcademicYear: (id: number) =>
+    post<{ message: string }>(`/admin/settings/academic-years/${id}/close`),
+
+  // (Emails are sent client-side via $lib/email.ts — no backend hop.)
+
+  // Statistics & Audit
+  statistics: () => get<AdminDashboard>('/admin/statistics'),
+  auditLog: () => get<AuditLog[]>('/admin/audit-log'),
+
+  // Exports
+  exportAffectations: () => get<PfeAssignment[]>('/admin/exports/affectations'),
+  exportPlannings: () => get<Defense[]>('/admin/exports/plannings'),
+  exportStatistics: () => get<AdminDashboard>('/admin/exports/statistiques'),
 };
 
 // ─── Teacher ─────────────────────────────────────────────────────────────────
 
 export const teacher = {
-  dashboard: () => get('/teacher/dashboard'),
-  listProposedSubjects: () => get('/teacher/proposed-subjects'),
-  createProposedSubject: (body: unknown) => post('/teacher/proposed-subjects', body),
-  getProposedSubject: (id: string) => get(`/teacher/proposed-subjects/${id}`),
-  updateProposedSubject: (id: string, body: unknown) =>
-    patch(`/teacher/proposed-subjects/${id}`, body),
-  listCandidats: (subjectId: string) =>
-    get(`/teacher/proposed-subjects/${subjectId}/candidats`),
-  acceptCandidat: (subjectId: string, body: unknown) =>
-    post(`/teacher/proposed-subjects/${subjectId}/candidats`, body),
-  listSubjectsToValidate: () => get('/teacher/subjects-to-validate'),
-  getSubjectToValidate: (id: string) => get(`/teacher/subjects-to-validate/${id}`),
-  validateSubject: (id: string, body: unknown) =>
-    post(`/teacher/subjects-to-validate/${id}`, body),
-  listSupervisedPFEs: () => get('/teacher/supervised-pfes'),
-  getSupervisedPFE: (id: string) => get(`/teacher/supervised-pfes/${id}`),
-  addMeeting: (id: string, body: unknown) =>
-    post(`/teacher/supervised-pfes/${id}/meetings`, body),
-  submitEvaluation: (id: string, body: unknown) =>
-    post(`/teacher/supervised-pfes/${id}/evaluation`, body),
-  listJuryDuties: () => get('/teacher/jury-duties'),
-  getJuryDuty: (id: string) => get(`/teacher/jury-duties/${id}`),
-  updateAvailability: (body: unknown) => post('/teacher/availability', body),
-  listNotifications: () => get('/teacher/notifications'),
-  submitGrade: (defenseId: string, body: unknown) =>
-    post(`/admin/defenses/${defenseId}/submit-grade`, body),
+  dashboard: () => get<Record<string, unknown>>('/teacher/dashboard'),
+
+  // Proposed subjects
+  listProposedSubjects: () => get<PfeSubject[]>('/teacher/proposed-subjects'),
+  createProposedSubject: (body: {
+    title: string; description: string; group_type: GroupType;
+    domain_ids?: number[];
+  }) => post<PfeSubject>('/teacher/proposed-subjects', body),
+  getProposedSubject: (id: number) => get<PfeSubject>(`/teacher/proposed-subjects/${id}`),
+  updateProposedSubject: (id: number, body: Partial<PfeSubject>) =>
+    patch<PfeSubject>(`/teacher/proposed-subjects/${id}`, body),
+  resubmitProposedSubject: (id: number, body: {
+    title: string; description: string; group_type: GroupType; domain_ids?: number[];
+  }) => post<{ message: string }>(`/teacher/proposed-subjects/${id}/resubmit`, body),
+
+  // Candidates
+  listCandidats: (subjectId: number) =>
+    get<Wish[]>(`/teacher/proposed-subjects/${subjectId}/candidats`),
+  acceptCandidat: (subjectId: number, body: { student_ids: number[] }) =>
+    post<{ message: string }>(`/teacher/proposed-subjects/${subjectId}/candidats`, body),
+
+  // Validation
+  listSubjectsToValidate: () => get<PfeSubject[]>('/teacher/subjects-to-validate'),
+  getSubjectToValidate: (id: number) => get<PfeSubject>(`/teacher/subjects-to-validate/${id}`),
+  validateSubject: (id: number, body: { decision: ReviewDecision; comment?: string }) =>
+    post<{ message: string }>(`/teacher/subjects-to-validate/${id}`, body),
+
+  // Supervised PFEs
+  listSupervisedPFEs: () => get<PfeAssignment[]>('/teacher/supervised-pfes'),
+  getSupervisedPFE: (id: number) => get<PfeAssignment>(`/teacher/supervised-pfes/${id}`),
+  listMeetings: (id: number) => get<PfeProgressReport[]>(`/teacher/supervised-pfes/${id}/meetings`),
+  addMeeting: (id: number, body: {
+    meeting_date: string; duration: number; meeting_type: MeetingType;
+    topics: string; status?: string; observation?: string;
+  }) => post<PfeProgressReport>(`/teacher/supervised-pfes/${id}/meetings`, body),
+  getEvaluation: (id: number) => get<SupervisorEvaluation | null>(`/teacher/supervised-pfes/${id}/evaluation`),
+  submitEvaluation: (id: number, body: { criterion5: number }) =>
+    post<{ message: string }>(`/teacher/supervised-pfes/${id}/evaluation`, body),
+
+  // Jury duties
+  listJuryDuties: () => get<Defense[]>('/teacher/jury-duties'),
+  getJuryDuty: (id: number) => get<Defense>(`/teacher/jury-duties/${id}`),
+
+  // Availability
+  updateAvailability: (body: {
+    availability_status: string; unavailable_until?: string;
+  }) => post<{ message: string }>('/teacher/availability', body),
+
+  // Notifications
+  listNotifications: () => get<Notification[]>('/teacher/notifications'),
+
+  // Grading
+  getGradeContext: (defenseId: number) =>
+    get<{
+      my_role: 'president' | 'member';
+      my_grade: JuryGrade | null;
+      member_grade: JuryGrade | null;
+      supervisor_eval: SupervisorEvaluation | null;
+      member_submitted: boolean;
+      supervisor_submitted: boolean;
+      final_grade_set: boolean;
+    }>(`/teacher/jury-duties/${defenseId}/grade-context`),
+  submitGrade: (defenseId: number, body: {
+    criterion1: number; criterion2: number; criterion3: number; criterion4: number;
+    archive_decision: string;
+  }) => post<{ message: string }>(`/teacher/jury-duties/${defenseId}/grade`, body),
+  submitFinalGrade: (defenseId: number, body: {
+    choice: 'member' | 'new';
+    criterion1?: number; criterion2?: number; criterion3?: number; criterion4?: number;
+    archive_decision: string;
+  }) => post<{ message: string }>(`/teacher/jury-duties/${defenseId}/final-grade`, body),
 };
 
 // ─── Student ─────────────────────────────────────────────────────────────────
 
 export const student = {
-  dashboard: () => get<any>('/student/dashboard'),
-  listCatalogue: (params?: Record<string, string>) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return get<PFESubject[]>(`/student/catalogue${qs}`);
-  },
-  getCatalogueSubject: (id: string) => get<PFESubject>(`/student/catalogue/${id}`),
+  settings: () => get<{ max_wishes: number; submission_open_at: string | null; submission_close_at: string | null }>('/student/settings'),
+  dashboard: () => get<Record<string, unknown>>('/student/dashboard'),
+  listCatalogue: () => get<PfeSubject[]>('/student/catalogue'),
+  getCatalogueSubject: (id: number) => get<PfeSubject>(`/student/catalogue/${id}`),
   listWishes: () => get<Wish[]>('/student/wishes'),
-  createWish: (body: unknown) => post<Wish>('/student/wishes', body),
-  deleteWish: (id: string) => del<void>(`/student/wishes/${id}`),
-  getMyPFE: () => get<PFEAssignment | null>('/student/my-pfe'),
-  listMyMeetings: () => get<PFEProgressReport[]>('/student/my-pfe/meetings'),
-  addMyMeeting: (body: unknown) => post<PFEProgressReport>('/student/my-pfe/meetings', body),
-  submitMemoire: (formData: FormData) =>
-    request('/student/my-pfe/memoire', { method: 'POST', body: formData }),
-  getSoutenance: () => get('/student/soutenance'),
-  listNotifications: () => get('/student/notifications'),
+  createWish: (body: { subject_id: number }) => post<Wish>('/student/wishes', body),
+  deleteWish: (id: number) => del(`/student/wishes/${id}`),
+  getMyPFE: () => get<PfeAssignment | null>('/student/my-pfe'),
+  listMyMeetings: () => get<PfeProgressReport[]>('/student/my-pfe/meetings'),
+  addMyMeeting: (body: {
+    meeting_date: string; duration: number; meeting_type: MeetingType;
+    topics: string; status?: string; observation?: string;
+  }) => post<PfeProgressReport>('/student/my-pfe/meetings', body),
+  updateMyMeeting: (id: number, body: { status: string }) =>
+    patch<{ message: string }>(`/student/my-pfe/meetings/${id}`, body),
+  submitMemoire: (body: { memoire_url: string }) =>
+    post<{ message: string }>('/student/my-pfe/memoire', body),
+  getSoutenance: () => get<{ has_soutenance: boolean; defense?: Defense; jury?: DefenseJury } | null>('/student/soutenance'),
+  listNotifications: () => get<Notification[]>('/student/notifications'),
 };
 
 // ─── Company ─────────────────────────────────────────────────────────────────
 
 export const company = {
-  dashboard: () => get('/company/dashboard'),
-  listSubjects: () => get('/company/subjects'),
-  createSubject: (body: unknown) => post('/company/subjects', body),
-  getSubject: (id: string) => get(`/company/subjects/${id}`),
-  updateSubject: (id: string, body: unknown) => patch(`/company/subjects/${id}`, body),
-  listCandidats: (subjectId: string) => get(`/company/subjects/${subjectId}/candidats`),
-  acceptCandidat: (subjectId: string, body: unknown) =>
-    post(`/company/subjects/${subjectId}/candidats`, body),
-  listSupervisedPFEs: () => get('/company/supervised-pfes'),
-  getSupervisedPFE: (id: string) => get(`/company/supervised-pfes/${id}`),
-  addMeeting: (id: string, body: unknown) =>
-    post(`/company/supervised-pfes/${id}/meetings`, body),
-  submitEvaluation: (id: string, body: unknown) =>
-    post(`/company/supervised-pfes/${id}/evaluation`, body),
-  listReports: () => get('/company/reports'),
-  createReport: (body: unknown) => post('/company/reports', body),
-  listNotifications: () => get('/company/notifications'),
+  dashboard: () => get<Record<string, unknown>>('/company/dashboard'),
+  listSubjects: () => get<PfeSubject[]>('/company/subjects'),
+  createSubject: (body: {
+    title: string; description: string; group_type: GroupType;
+    domain_ids?: number[];
+  }) => post<PfeSubject>('/company/subjects', body),
+  getSubject: (id: number) => get<PfeSubject>(`/company/subjects/${id}`),
+  updateSubject: (id: number, body: Partial<PfeSubject>) =>
+    patch<PfeSubject>(`/company/subjects/${id}`, body),
+  listCandidats: (subjectId: number) =>
+    get<Wish[]>(`/company/subjects/${subjectId}/candidats`),
+  acceptCandidat: (subjectId: number, body: { student_ids: number[] }) =>
+    post<{ message: string }>(`/company/subjects/${subjectId}/candidats`, body),
+  listSupervisedPFEs: () => get<PfeAssignment[]>('/company/supervised-pfes'),
+  getSupervisedPFE: (id: number) => get<PfeAssignment>(`/company/supervised-pfes/${id}`),
+  listMeetings: (id: number) => get<PfeProgressReport[]>(`/company/supervised-pfes/${id}/meetings`),
+  addMeeting: (id: number, body: {
+    meeting_date: string; duration: number; meeting_type: MeetingType;
+    topics: string; status?: string; observation?: string;
+  }) => post<PfeProgressReport>(`/company/supervised-pfes/${id}/meetings`, body),
+  getEvaluation: (id: number) => get<SupervisorEvaluation | null>(`/company/supervised-pfes/${id}/evaluation`),
+  submitEvaluation: (id: number, body: { criterion5: number }) =>
+    post<{ message: string }>(`/company/supervised-pfes/${id}/evaluation`, body),
+  listReports: () => get<CompanyReport[]>('/company/reports'),
+  createReport: (body: {
+    correction_type: string; description: string; requested_value: string;
+  }) => post<CompanyReport>('/company/reports', body),
+  listNotifications: () => get<Notification[]>('/company/notifications'),
 };
 
-// ─── Shared (all authenticated roles) ────────────────────────────────────────
+// ─── Notifications (shared) ──────────────────────────────────────────────────
 
-export const shared = {
-  domains: () => get('/ref/domains'),
-  specialities: () => get('/ref/specialities'),
-  markNotificationRead: (id: string) => post(`/notifications/${id}/read`),
-  markAllNotificationsRead: () => post('/notifications/read-all'),
+export const notifications = {
+  list: () => get<Notification[]>('/notifications'),
+  unreadCount: () => get<number>('/notifications/unread-count'),
+  markRead: (id: number) => post<{ message: string }>(`/notifications/${id}/read`),
+  markAllRead: () => post<{ message: string }>('/notifications/read-all'),
 };
 
 // ─── Upload ──────────────────────────────────────────────────────────────────
 
 export const upload = {
   avatar: (formData: FormData) =>
-    request('/upload/avatar', { method: 'POST', body: formData }),
+    request<{ url: string }>('/upload/avatar', { method: 'POST', body: formData }),
   companyLogo: (formData: FormData) =>
-    request('/upload/company-logo', { method: 'POST', body: formData }),
+    request<{ url: string }>('/upload/company-logo', { method: 'POST', body: formData }),
   memoire: (formData: FormData) =>
-    request('/upload/memoire', { method: 'POST', body: formData }),
+    request<{ url: string }>('/upload/memoire', { method: 'POST', body: formData }),
+};
+
+// ─── Backward-compat alias ───────────────────────────────────────────────────
+
+export const shared = {
+  domains: ref.domains,
+  specialities: ref.specialities,
+  accounts: ref.allUsers,
+  markNotificationRead: notifications.markRead,
+  markAllNotificationsRead: notifications.markAllRead,
 };

@@ -10,12 +10,16 @@ import (
 type StudentService struct {
 	profileRepo       *repository.ProfileRepository
 	studentRepo       *repository.StudentRepository
+	teacherRepo       *repository.TeacherRepository
+	companyRepo       *repository.CompanyRepository
+	specialityRepo    *repository.SpecialityRepository
 	pfeSubjectRepo    *repository.PfeSubjectRepository
 	wishRepo          *repository.WishRepository
 	pfeAssignmentRepo *repository.PfeAssignmentRepository
 	progressRepo      *repository.ProgressReportRepository
 	defenseRepo       *repository.DefenseRepository
 	defenseJuryRepo   *repository.DefenseJuryRepository
+	supEvalRepo       *repository.SupervisorEvaluationRepository
 	notificationRepo  *repository.NotificationRepository
 	academicYearRepo  *repository.AcademicYearRepository
 }
@@ -24,50 +28,95 @@ type StudentService struct {
 func NewStudentService(
 	profileRepo *repository.ProfileRepository,
 	studentRepo *repository.StudentRepository,
+	teacherRepo *repository.TeacherRepository,
+	companyRepo *repository.CompanyRepository,
+	specialityRepo *repository.SpecialityRepository,
 	pfeSubjectRepo *repository.PfeSubjectRepository,
 	wishRepo *repository.WishRepository,
 	pfeAssignmentRepo *repository.PfeAssignmentRepository,
 	progressRepo *repository.ProgressReportRepository,
 	defenseRepo *repository.DefenseRepository,
 	defenseJuryRepo *repository.DefenseJuryRepository,
+	supEvalRepo *repository.SupervisorEvaluationRepository,
 	notificationRepo *repository.NotificationRepository,
 	academicYearRepo *repository.AcademicYearRepository,
 ) *StudentService {
 	return &StudentService{
 		profileRepo:       profileRepo,
 		studentRepo:       studentRepo,
+		teacherRepo:       teacherRepo,
+		companyRepo:       companyRepo,
+		specialityRepo:    specialityRepo,
 		pfeSubjectRepo:    pfeSubjectRepo,
 		wishRepo:          wishRepo,
 		pfeAssignmentRepo: pfeAssignmentRepo,
 		progressRepo:      progressRepo,
 		defenseRepo:       defenseRepo,
 		defenseJuryRepo:   defenseJuryRepo,
+		supEvalRepo:       supEvalRepo,
 		notificationRepo:  notificationRepo,
 		academicYearRepo:  academicYearRepo,
 	}
 }
 
 // getActiveAcademicYear récupère l'année académique active.
-func (s *StudentService) getActiveAcademicYear() (string, error) {
+func (s *StudentService) getActiveAcademicYear() (int64, error) {
 	year, err := s.academicYearRepo.FindActive()
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if year == nil {
-		return "", apperror.Internal("Aucune année académique active")
+		return 0, apperror.BadRequest("Les soumissions de vœux ne sont pas encore ouvertes. Contactez l'administration.")
 	}
 	return year.ID, nil
 }
 
-// Dashboard retourne les statistiques du tableau de bord étudiant.
-func (s *StudentService) Dashboard(userID string) (map[string]any, error) {
-	academicYearID, err := s.getActiveAcademicYear()
+// getStudent récupère l'étudiant à partir de son profileID.
+func (s *StudentService) getStudent(profileID int64) (*entity.Student, error) {
+	st, err := s.studentRepo.FindByProfileID(profileID)
 	if err != nil {
 		return nil, err
 	}
+	if st == nil {
+		return nil, apperror.NotFound("Profil étudiant introuvable")
+	}
+	return st, nil
+}
 
-	assignment, _ := s.pfeAssignmentRepo.FindByStudent(userID, academicYearID)
-	wishes, _ := s.wishRepo.FindByStudent(userID, academicYearID)
+// GetSettings retourne les paramètres publics de l'année active (max_wishes, fenêtre de soumission).
+func (s *StudentService) GetSettings() (map[string]any, error) {
+	year, err := s.academicYearRepo.FindActive()
+	if err != nil || year == nil {
+		// Defaults when no active year exists
+		return map[string]any{
+			"max_wishes":          5,
+			"submission_open_at":  nil,
+			"submission_close_at": nil,
+		}, nil
+	}
+	return map[string]any{
+		"max_wishes":          year.MaxWishes,
+		"submission_open_at":  year.SubmissionOpenAt,
+		"submission_close_at": year.SubmissionCloseAt,
+	}, nil
+}
+
+// Dashboard retourne les statistiques du tableau de bord étudiant.
+func (s *StudentService) Dashboard(userID int64) (map[string]any, error) {
+	academicYearID, err := s.getActiveAcademicYear()
+	if err != nil {
+		// No active year → return empty dashboard
+		return map[string]any{"wishes_count": 0, "has_pfe": false}, nil
+	}
+
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return nil, err
+	}
+	studentID := st.ID
+
+	assignment, _ := s.pfeAssignmentRepo.FindByStudent(studentID, academicYearID)
+	wishes, _ := s.wishRepo.FindByStudent(studentID, academicYearID)
 
 	result := map[string]any{
 		"wishes_count": len(wishes),
@@ -83,25 +132,57 @@ func (s *StudentService) Dashboard(userID string) (map[string]any, error) {
 
 // ListCatalogue liste tous les sujets disponibles (validés) pour l'étudiant.
 func (s *StudentService) ListCatalogue() ([]*entity.PfeSubject, error) {
-	return s.pfeSubjectRepo.FindByStatus("valide")
-}
-
-// GetCatalogueSubject retourne un sujet du catalogue.
-func (s *StudentService) GetCatalogueSubject(id string) (*entity.PfeSubject, error) {
-	return s.pfeSubjectRepo.FindByID(id)
-}
-
-// ListWishes liste les voeux de l'étudiant.
-func (s *StudentService) ListWishes(userID string) ([]*entity.Wish, error) {
-	academicYearID, err := s.getActiveAcademicYear()
+	subjects, err := s.pfeSubjectRepo.FindByStatus("valide")
 	if err != nil {
 		return nil, err
 	}
-	return s.wishRepo.FindByStudent(userID, academicYearID)
+	for _, sub := range subjects {
+		s.hydrateSubject(sub)
+		a, _ := s.pfeAssignmentRepo.FindBySubjectID(sub.ID)
+		sub.IsAssigned = a != nil
+	}
+	return subjects, nil
+}
+
+// GetCatalogueSubject retourne un sujet du catalogue.
+func (s *StudentService) GetCatalogueSubject(id int64) (*entity.PfeSubject, error) {
+	sub, err := s.pfeSubjectRepo.FindByID(id)
+	if err != nil || sub == nil {
+		return sub, err
+	}
+	s.hydrateSubject(sub)
+	a, _ := s.pfeAssignmentRepo.FindBySubjectID(sub.ID)
+	sub.IsAssigned = a != nil
+	return sub, nil
+}
+
+// ListWishes liste les voeux de l'étudiant avec relations.
+func (s *StudentService) ListWishes(userID int64) ([]*entity.Wish, error) {
+	academicYearID, err := s.getActiveAcademicYear()
+	if err != nil {
+		// No active year → no wishes, not an error
+		return []*entity.Wish{}, nil
+	}
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return nil, err
+	}
+	wishes, err := s.wishRepo.FindByStudent(st.ID, academicYearID)
+	if err != nil {
+		return nil, err
+	}
+	for _, w := range wishes {
+		sub, _ := s.pfeSubjectRepo.FindByID(w.SubjectID)
+		if sub != nil {
+			s.hydrateSubject(sub)
+			w.Subject = sub
+		}
+	}
+	return wishes, nil
 }
 
 // CreateWish crée un voeu pour l'étudiant.
-func (s *StudentService) CreateWish(userID, subjectID string) error {
+func (s *StudentService) CreateWish(userID, subjectID int64) error {
 	// Vérifier que le sujet existe
 	subject, err := s.pfeSubjectRepo.FindByID(subjectID)
 	if err != nil {
@@ -120,7 +201,13 @@ func (s *StudentService) CreateWish(userID, subjectID string) error {
 		return err
 	}
 
-	wishes, err := s.wishRepo.FindByStudent(userID, academicYearID)
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return err
+	}
+	studentID := st.ID
+
+	wishes, err := s.wishRepo.FindByStudent(studentID, academicYearID)
 	if err != nil {
 		return err
 	}
@@ -131,8 +218,7 @@ func (s *StudentService) CreateWish(userID, subjectID string) error {
 	}
 
 	wish := &entity.Wish{
-		ID:             generateID(),
-		StudentID:      userID,
+		StudentID:      studentID,
 		SubjectID:      subjectID,
 		AcademicYearID: academicYearID,
 		Status:         "en_attente",
@@ -141,7 +227,7 @@ func (s *StudentService) CreateWish(userID, subjectID string) error {
 }
 
 // DeleteWish supprime un voeu.
-func (s *StudentService) DeleteWish(userID, wishID string) error {
+func (s *StudentService) DeleteWish(userID, wishID int64) error {
 	wish, err := s.wishRepo.FindByID(wishID)
 	if err != nil {
 		return err
@@ -149,40 +235,56 @@ func (s *StudentService) DeleteWish(userID, wishID string) error {
 	if wish == nil {
 		return apperror.NotFound("Voeu introuvable")
 	}
-	if wish.StudentID != userID {
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return err
+	}
+	if wish.StudentID != st.ID {
 		return apperror.Forbidden("Accès non autorisé à ce voeu")
 	}
 	return s.wishRepo.Delete(wishID)
 }
 
-// GetMyPFE retourne le PFE de l'étudiant.
-func (s *StudentService) GetMyPFE(userID string) (*entity.PfeAssignment, error) {
+// GetMyPFE retourne le PFE de l'étudiant avec relations.
+func (s *StudentService) GetMyPFE(userID int64) (*entity.PfeAssignment, error) {
 	academicYearID, err := s.getActiveAcademicYear()
 	if err != nil {
 		return nil, err
 	}
-	return s.pfeAssignmentRepo.FindByStudent(userID, academicYearID)
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return nil, err
+	}
+	a, err := s.pfeAssignmentRepo.FindByStudent(st.ID, academicYearID)
+	if err != nil || a == nil {
+		return a, err
+	}
+	s.hydrateAssignment(a)
+	return a, nil
 }
 
 // ListMyMeetings liste les meetings de suivi du PFE de l'étudiant.
-func (s *StudentService) ListMyMeetings(assignmentID string) ([]*entity.PfeProgressReport, error) {
+func (s *StudentService) ListMyMeetings(assignmentID int64) ([]*entity.PfeProgressReport, error) {
 	return s.progressRepo.FindByAssignment(assignmentID)
 }
 
 // AddMyMeeting ajoute un meeting de suivi pour le PFE de l'étudiant.
-func (s *StudentService) AddMyMeeting(userID string, report *entity.PfeProgressReport) error {
+func (s *StudentService) AddMyMeeting(userID int64, report *entity.PfeProgressReport) error {
 	academicYearID, err := s.getActiveAcademicYear()
 	if err != nil {
 		return err
 	}
-	assignment, err := s.pfeAssignmentRepo.FindByStudent(userID, academicYearID)
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return err
+	}
+	assignment, err := s.pfeAssignmentRepo.FindByStudent(st.ID, academicYearID)
 	if err != nil {
 		return err
 	}
 	if assignment == nil {
 		return apperror.NotFound("aucun PFE assigné")
 	}
-	report.ID = generateID()
 	report.AssignmentID = assignment.ID
 	if report.Status == "" {
 		report.Status = "en_cours"
@@ -190,18 +292,54 @@ func (s *StudentService) AddMyMeeting(userID string, report *entity.PfeProgressR
 	return s.progressRepo.Insert(report)
 }
 
+// UpdateMyMeeting met à jour le statut d'un meeting de suivi.
+func (s *StudentService) UpdateMyMeeting(userID, meetingID int64, status string) error {
+	validStatuses := map[string]bool{"a_faire": true, "en_cours": true, "termine": true}
+	if !validStatuses[status] {
+		return apperror.BadRequest("Statut invalide (a_faire, en_cours, termine)")
+	}
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return err
+	}
+	academicYearID, err := s.getActiveAcademicYear()
+	if err != nil {
+		return err
+	}
+	assignment, err := s.pfeAssignmentRepo.FindByStudent(st.ID, academicYearID)
+	if err != nil {
+		return err
+	}
+	if assignment == nil {
+		return apperror.NotFound("aucun PFE assigné")
+	}
+	report, err := s.progressRepo.FindByID(meetingID)
+	if err != nil {
+		return err
+	}
+	if report == nil || report.AssignmentID != assignment.ID {
+		return apperror.NotFound("entrée de suivi introuvable")
+	}
+	report.Status = status
+	return s.progressRepo.Update(report)
+}
+
 // SubmitMemoire soumet le mémoire PDF.
-func (s *StudentService) SubmitMemoire(assignmentID, memoireURL string) error {
+func (s *StudentService) SubmitMemoire(assignmentID int64, memoireURL string) error {
 	return s.pfeAssignmentRepo.UpdateMemoire(assignmentID, memoireURL)
 }
 
 // GetSoutenance retourne les informations de soutenance de l'étudiant.
-func (s *StudentService) GetSoutenance(userID string) (map[string]any, error) {
+func (s *StudentService) GetSoutenance(userID int64) (map[string]any, error) {
 	academicYearID, err := s.getActiveAcademicYear()
 	if err != nil {
 		return nil, err
 	}
-	assignment, err := s.pfeAssignmentRepo.FindByStudent(userID, academicYearID)
+	st, err := s.getStudent(userID)
+	if err != nil {
+		return nil, err
+	}
+	assignment, err := s.pfeAssignmentRepo.FindByStudent(st.ID, academicYearID)
 	if err != nil {
 		return nil, err
 	}
@@ -217,20 +355,129 @@ func (s *StudentService) GetSoutenance(userID string) (map[string]any, error) {
 		return map[string]any{"has_soutenance": false}, nil
 	}
 
-	// Récupérer les infos du jury
+	// Récupérer les infos du jury et hydrater president/member
 	var jury *entity.DefenseJury
-	if defense.JuryID != "" {
+	if defense.JuryID != 0 {
 		jury, _ = s.defenseJuryRepo.FindByID(defense.JuryID)
+		if jury != nil {
+			if t, _ := s.teacherRepo.FindByID(jury.PresidentID); t != nil {
+				t.Profile, _ = s.profileRepo.FindByID(t.ProfileID)
+				jury.President = t
+			}
+			if t, _ := s.teacherRepo.FindByID(jury.MemberID); t != nil {
+				t.Profile, _ = s.profileRepo.FindByID(t.ProfileID)
+				jury.Member = t
+			}
+		}
 	}
 
+	// Note encadrant (criterion5)
+	supEval, _ := s.supEvalRepo.FindByAssignment(assignment.ID)
+
 	return map[string]any{
-		"has_soutenance": true,
-		"defense":        defense,
-		"jury":           jury,
+		"has_soutenance":      true,
+		"defense":             defense,
+		"jury":                jury,
+		"supervisor_note":     supEval,
 	}, nil
 }
 
 // ListNotifications liste les notifications de l'étudiant.
-func (s *StudentService) ListNotifications(userID string) ([]*entity.Notification, error) {
+func (s *StudentService) ListNotifications(userID int64) ([]*entity.Notification, error) {
 	return s.notificationRepo.FindByRecipient(userID)
+}
+
+// GetTeacherProfileID resolves a teacher entity ID to a profile ID (for notifications).
+func (s *StudentService) GetTeacherProfileID(teacherID int64) (int64, error) {
+	t, err := s.teacherRepo.FindByID(teacherID)
+	if err != nil {
+		return 0, err
+	}
+	if t == nil {
+		return 0, apperror.NotFound("Enseignant introuvable")
+	}
+	return t.ProfileID, nil
+}
+
+// GetSubjectProposerID returns the proposer profile ID for a subject (for notifications).
+func (s *StudentService) GetSubjectProposerID(subjectID int64) (int64, string) {
+	sub, err := s.pfeSubjectRepo.FindByID(subjectID)
+	if err != nil || sub == nil {
+		return 0, ""
+	}
+	return sub.ProposerID, sub.ProposerRole
+}
+
+// ── Hydration helpers ───────────────────────────────────────────────────────
+
+func (s *StudentService) hydrateTeacher(id int64) *entity.Teacher {
+	if id == 0 {
+		return nil
+	}
+	t, _ := s.teacherRepo.FindByID(id)
+	if t == nil {
+		t, _ = s.teacherRepo.FindByProfileID(id)
+	}
+	if t != nil {
+		t.Profile, _ = s.profileRepo.FindByID(t.ProfileID)
+	}
+	return t
+}
+
+func (s *StudentService) hydrateStudent(id int64) *entity.Student {
+	if id == 0 {
+		return nil
+	}
+	st, _ := s.studentRepo.FindByID(id)
+	if st == nil {
+		st, _ = s.studentRepo.FindByProfileID(id)
+	}
+	if st != nil {
+		st.Profile, _ = s.profileRepo.FindByID(st.ProfileID)
+		if st.SpecialityID != nil {
+			st.Speciality, _ = s.specialityRepo.FindByID(*st.SpecialityID)
+		}
+	}
+	return st
+}
+
+func (s *StudentService) hydrateSubject(sub *entity.PfeSubject) {
+	sub.Proposer, _ = s.profileRepo.FindByID(sub.ProposerID)
+	if sub.CompanyID.Valid {
+		sub.Company, _ = s.companyRepo.FindByID(sub.CompanyID.Int64)
+		if sub.Company == nil {
+			sub.Company, _ = s.companyRepo.FindByProfileID(sub.CompanyID.Int64)
+		}
+	}
+	if sub.Validator1ID.Valid {
+		sub.Validator1 = s.hydrateTeacher(sub.Validator1ID.Int64)
+	}
+	if sub.Validator2ID.Valid {
+		sub.Validator2 = s.hydrateTeacher(sub.Validator2ID.Int64)
+	}
+	if sub.CoSupervisorID.Valid {
+		sub.CoSupervisor = s.hydrateTeacher(sub.CoSupervisorID.Int64)
+	}
+	sub.Domains, _ = s.pfeSubjectRepo.GetDomains(sub.ID)
+}
+
+func (s *StudentService) hydrateAssignment(a *entity.PfeAssignment) {
+	sub, _ := s.pfeSubjectRepo.FindByID(a.SubjectID)
+	if sub != nil {
+		s.hydrateSubject(sub)
+		a.Subject = sub
+	}
+	a.Student = s.hydrateStudent(a.StudentID)
+	if a.Student2ID.Valid {
+		a.Student2 = s.hydrateStudent(a.Student2ID.Int64)
+	}
+	if a.Student3ID.Valid {
+		a.Student3 = s.hydrateStudent(a.Student3ID.Int64)
+	}
+	a.Supervisor = s.hydrateTeacher(a.SupervisorID)
+	if a.CoSupervisorID.Valid {
+		a.CoSupervisor = s.hydrateTeacher(a.CoSupervisorID.Int64)
+	}
+	ay, _ := s.academicYearRepo.FindByID(a.AcademicYearID)
+	a.AcademicYear = ay
 }

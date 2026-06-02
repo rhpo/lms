@@ -8,7 +8,7 @@ func TestCompanyDashboard(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/dashboard", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/dashboard", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
@@ -34,7 +34,7 @@ func TestCompanyDashboardWrongRole(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/dashboard", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/dashboard", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestCompanyListSubjects(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestCompanyCreateSubject(t *testing.T) {
 		"description": "Description du sujet proposé par l'entreprise",
 		"group_type":  "binome",
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/subjects", body, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/subjects", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestCompanyCreateSubjectValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/subjects", map[string]string{}, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/subjects", map[string]string{}, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -87,7 +87,7 @@ func TestCompanyGetSubject(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects/seed-subject-005", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects/5", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestCompanyGetSubjectNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects/invalid", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects/99999", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestCompanyUpdateSubject(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"title": "Sujet Entreprise Modifié"}
-	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/company/subjects/seed-subject-005", body, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/company/subjects/5", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestCompanyUpdateSubjectNotOwned(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"title": "Tentative modification"}
-	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/company/subjects/seed-subject-001", body, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/company/subjects/1", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -137,7 +137,7 @@ func TestCompanyListCandidats(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects/seed-subject-005/candidats", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/subjects/5/candidats", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -149,8 +149,8 @@ func TestCompanyAcceptCandidat(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"student_id": "seed-student-isil-002", "action": "accept"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/subjects/seed-subject-005/candidats", body, h.AuthHeader("seed-company-001", "company")))
+	body := map[string]any{"student_id": SeedStudentISIL2ID, "action": "accept"}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/subjects/5/candidats", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestCompanyListSupervisedPfes(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/supervised-pfes", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/supervised-pfes", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestCompanyGetSupervisedPfe(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/supervised-pfes/seed-assignment-002", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/supervised-pfes/2", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -186,7 +186,7 @@ func TestCompanyGetSupervisedPfeNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/supervised-pfes/invalid", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/supervised-pfes/99999", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestCompanyCreateMeeting(t *testing.T) {
 		"meeting_type": "visio",
 		"topics":       "Suivi du projet en entreprise",
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/seed-assignment-002/meetings", body, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/2/meetings", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -216,7 +216,7 @@ func TestCompanyCreateMeetingValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/seed-assignment-002/meetings", map[string]string{}, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/2/meetings", map[string]string{}, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -229,7 +229,7 @@ func TestCompanySubmitEvaluation(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]float64{"criterion5": 3.0}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/seed-assignment-002/evaluation", body, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/2/evaluation", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -242,7 +242,7 @@ func TestCompanySubmitEvaluationInvalidCriterion(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]float64{"criterion5": -1.0}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/seed-assignment-002/evaluation", body, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/supervised-pfes/2/evaluation", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -254,7 +254,7 @@ func TestCompanyListReports(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/reports", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/reports", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -271,7 +271,7 @@ func TestCompanyCreateReport(t *testing.T) {
 		"description":     "Le nom de l'entreprise est incorrect",
 		"requested_value": "TechCorp Algeria Updated",
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/reports", body, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/reports", body, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -283,7 +283,7 @@ func TestCompanyCreateReportValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/reports", map[string]string{}, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/company/reports", map[string]string{}, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -295,7 +295,7 @@ func TestCompanyNotifications(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/notifications", nil, h.AuthHeader("seed-company-001", "company")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/company/notifications", nil, h.AuthHeader(SeedCompany1ID, "company")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}

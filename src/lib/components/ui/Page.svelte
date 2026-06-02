@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import PageMeta from "./PageMeta.svelte";
 
   let {
     children,
     title,
     subtitle,
-    description,
+    description = subtitle,
     actions,
   }: {
     children: Snippet;
@@ -16,29 +17,27 @@
   } = $props();
 </script>
 
-<svelte:head>
-  <title>{title} | PFE Manager</title>
-</svelte:head>
-
-<main>
-  <header>
-    {#if description}
-      <div class="header-info">
+<PageMeta {title} description={description || "Welcome!"}>
+  <main>
+    <header>
+      {#if description}
+        <div class="header-info">
+          <h1>{title}</h1>
+          <p class="description">{description}</p>
+        </div>
+      {:else}
         <h1>{title}</h1>
-        <p class="description">{description}</p>
-      </div>
-    {:else}
-      <h1>{title}</h1>
-    {/if}
-    {#if actions}
-      <div class="actions">
-        {@render actions()}
-      </div>
-    {/if}
-  </header>
+      {/if}
+      {#if actions}
+        <div class="actions">
+          {@render actions()}
+        </div>
+      {/if}
+    </header>
 
-  {@render children()}
-</main>
+    {@render children()}
+  </main>
+</PageMeta>
 
 <style>
   main {

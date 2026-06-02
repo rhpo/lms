@@ -137,6 +137,8 @@
         display: flex;
         gap: 1rem;
 
+        font-family: var(--font-serif);
+
         align-items: center;
         text-decoration: none;
 

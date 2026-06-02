@@ -10,7 +10,7 @@ func TestAdminDashboard(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/dashboard", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/dashboard", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -41,7 +41,7 @@ func TestAdminListUsers(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/users", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/users", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -60,8 +60,8 @@ func TestAdminCreateUser(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"id": "test-new-user", "role": "teacher", "full_name": "Nouvel Enseignant", "email": "new.teacher@test.dz"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users", body, h.AuthHeader("seed-admin-001", "admin")))
+	body := map[string]string{"role": "teacher", "full_name": "Nouvel Enseignant", "email": "new.teacher@test.dz"}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestAdminCreateUserValidation(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"id": "", "role": "", "full_name": "", "email": ""}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestAdminGetUser(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/users/seed-admin-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/users/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestAdminGetUserNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/users/invalid-id", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/users/99999", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestAdminUpdateUser(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"full_name": "Admin Modifié", "email": "admin.modified@test.dz"}
-	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/admin/accounts/users/seed-admin-001", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/admin/accounts/users/1", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestAdminUserActionDeactivate(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"action": "deactivate"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users/seed-teacher-isil-001/action", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users/2/action", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestAdminUserActionInvalid(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"action": "invalid_action"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users/seed-admin-001/action", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users/1/action", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -163,7 +163,7 @@ func TestAdminListCompanies(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/companies", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/accounts/companies", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -176,7 +176,7 @@ func TestAdminCompanyAction(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"action": "validate"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/companies/seed-company-001/action", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/companies/1/action", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -188,7 +188,7 @@ func TestAdminListReports(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/reports", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/reports", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -200,7 +200,7 @@ func TestAdminListSubjects(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/subjects", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/subjects", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -219,7 +219,7 @@ func TestAdminGetSubject(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/subjects/seed-subject-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/subjects/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -231,7 +231,7 @@ func TestAdminGetSubjectNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/subjects/invalid-subject", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/subjects/99999", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -243,8 +243,8 @@ func TestAdminSubjectActionAssignValidators(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"action": "assign-validators", "validator_id": "seed-teacher-isil-002"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/subjects/seed-subject-001/action", body, h.AuthHeader("seed-admin-001", "admin")))
+	body := map[string]any{"action": "assign-validators", "validator_id": 2}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/subjects/1/action", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -256,7 +256,7 @@ func TestAdminSubjectActionInvalid(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/subjects/seed-subject-001/action", map[string]string{}, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/subjects/1/action", map[string]string{}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -268,7 +268,7 @@ func TestAdminListAssignments(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/pfe", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/pfe", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -280,7 +280,7 @@ func TestAdminGetAssignment(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/pfe/seed-assignment-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/pfe/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -299,7 +299,7 @@ func TestAdminGetAssignmentNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/pfe/invalid", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/pfe/invalid", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -311,7 +311,7 @@ func TestAdminListDefenses(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -323,14 +323,14 @@ func TestAdminCreateDefense(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{
-		"assignment_id": "seed-assignment-001",
-		"president_id":  "seed-teacher-isil-002",
-		"member_id":     "seed-teacher-chim-001",
+	body := map[string]any{
+		"assignment_id": 1,
+		"president_id":  2,
+		"member_id":     3,
 		"scheduled_at":  "2025-07-01T10:00:00Z",
 		"room":          "Salle B",
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -342,7 +342,7 @@ func TestAdminCreateDefenseValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses", map[string]string{}, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses", map[string]string{}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -354,7 +354,7 @@ func TestAdminGetDefense(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/seed-defense-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -366,7 +366,7 @@ func TestAdminGetDefenseNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/invalid", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/invalid", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -378,7 +378,7 @@ func TestAdminRecommendJury(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury?pfe_id=seed-assignment-001", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury?pfe_id=1", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -390,7 +390,7 @@ func TestAdminRecommendJuryMissingParam(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/defenses/recommend-jury", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -403,7 +403,7 @@ func TestAdminSubmitGrade(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]float64{"criterion1": 3.0, "criterion2": 3.5, "criterion3": 2.5, "criterion4": 3.0}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/submit-grade", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/submit-grade", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -416,7 +416,7 @@ func TestAdminResolveGrade(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]float64{"criterion1": 3.5, "criterion2": 3.0, "criterion3": 3.5, "criterion4": 3.0}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-defense-001/resolve-grade", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/resolve-grade", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -428,7 +428,7 @@ func TestAdminConfirmJury(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-jury-001/confirm-jury", map[string]string{}, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/confirm-jury", map[string]string{}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -440,7 +440,7 @@ func TestAdminDeclineJury(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/seed-jury-001/decline-jury", map[string]string{}, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/defenses/1/decline-jury", map[string]string{}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -452,7 +452,7 @@ func TestAdminListDeadlines(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/deadlines", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/deadlines", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -465,7 +465,7 @@ func TestAdminUpdateDeadlines(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]any{"submission_open_at": "2025-01-01", "submission_close_at": "2025-06-30", "max_wishes": 3}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/deadlines", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/deadlines", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -477,7 +477,7 @@ func TestAdminListSpecialities(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/specialities", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/specialities", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -489,8 +489,8 @@ func TestAdminCreateSpeciality(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"id": "test-spec", "name": "Test Spec", "code": "TEST", "year_type": "master"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/specialities", body, h.AuthHeader("seed-admin-001", "admin")))
+	body := map[string]string{"name": "Test Spec", "code": "TEST", "year_type": "master"}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/specialities", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -502,7 +502,7 @@ func TestAdminDeleteSpeciality(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/admin/settings/specialities/test-spec", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/admin/settings/specialities/3", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -514,7 +514,7 @@ func TestAdminListDomains(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/domains", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/domains", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -526,8 +526,8 @@ func TestAdminCreateDomain(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"id": "test-domain", "name": "Test Domain"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/domains", body, h.AuthHeader("seed-admin-001", "admin")))
+	body := map[string]string{"name": "Test Domain"}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/domains", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -539,7 +539,7 @@ func TestAdminDeleteDomain(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/admin/settings/domains/test-domain", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/admin/settings/domains/8", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -551,7 +551,7 @@ func TestAdminListPromotions(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/promotions", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/promotions", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -563,8 +563,8 @@ func TestAdminCreatePromotion(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"id": "test-promo", "label": "Test Promotion", "academic_year_id": "seed-ay-2425"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/promotions", body, h.AuthHeader("seed-admin-001", "admin")))
+	body := map[string]any{"label": "Test Promotion", "academic_year_id": 2}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/promotions", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -576,7 +576,7 @@ func TestAdminDeletePromotion(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/admin/settings/promotions/test-promo", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("DELETE", "/api/admin/settings/promotions/2", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -588,7 +588,7 @@ func TestAdminListAcademicYears(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/academic-years", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/settings/academic-years", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -600,8 +600,8 @@ func TestAdminCreateAcademicYear(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"id": "test-ay", "label": "2025-2026", "status": "active"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/academic-years", body, h.AuthHeader("seed-admin-001", "admin")))
+	body := map[string]string{"label": "2025-2026", "status": "active"}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/academic-years", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -613,7 +613,7 @@ func TestAdminCloseAcademicYear(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/academic-years/seed-ay-2324/close", map[string]string{}, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/settings/academic-years/1/close", map[string]string{}, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -625,7 +625,7 @@ func TestAdminStatistics(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/statistics", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/statistics", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -637,7 +637,7 @@ func TestAdminAuditLog(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/audit-log", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/audit-log", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -652,7 +652,7 @@ func TestAdminExports(t *testing.T) {
 	exports := []string{"/api/admin/exports/affectations", "/api/admin/exports/plannings", "/api/admin/exports/statistiques"}
 	for _, endpoint := range exports {
 		t.Run(endpoint, func(t *testing.T) {
-			resp, err := h.App.Test(newHTTPRequest("GET", endpoint, nil, h.AuthHeader("seed-admin-001", "admin")))
+			resp, err := h.App.Test(newHTTPRequest("GET", endpoint, nil, h.AuthHeader(SeedAdminID, "admin")))
 			if err != nil {
 				t.Fatalf("❌ Erreur requête: %v", err)
 			}
@@ -666,7 +666,7 @@ func TestAdminRoleProtection(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	token := h.AuthHeader("seed-student-isil-001", "student")
+	token := h.AuthHeader(SeedStudentISIL1ID, "student")
 	resp, err := h.App.Test(newHTTPRequest("GET", "/api/admin/dashboard", nil, token))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
@@ -681,7 +681,7 @@ func TestAdminImportCSV(t *testing.T) {
 
 	csvData := "role,full_name,email\nteacher,CSV Teacher 1,csv.teacher1@test.dz\nstudent,CSV Student 1,csv.student1@test.dz\n"
 	body := map[string]string{"csv_data": csvData}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users/import-csv", body, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/admin/accounts/users/import-csv", body, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}

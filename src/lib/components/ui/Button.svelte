@@ -26,7 +26,14 @@
         ...rest
     }: {
         href?: string;
-        variant?: "primary" | "secondary" | "third" | "cta" | "error" | "ghost";
+        variant?:
+            | "primary"
+            | "secondary"
+            | "third"
+            | "cta"
+            | "error"
+            | "ghost"
+            | "success";
         type?: string;
         label?: string;
         Icon?: any;
@@ -261,6 +268,17 @@
         color: var(--color-text);
         filter: none;
         box-shadow: var(--shadow-sm);
+    }
+
+    /* success */
+    .success {
+        background: var(--color-success);
+        color: var(--color-background);
+    }
+    .success:hover {
+        filter: brightness(1.1);
+        box-shadow: 0 6px 16px
+            color-mix(in srgb, var(--color-success) 40%, transparent);
     }
 
     /* square — equal dimensions for icon-only buttons */

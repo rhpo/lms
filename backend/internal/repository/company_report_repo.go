@@ -5,18 +5,15 @@ import (
 	"pfe-backend/internal/entity"
 )
 
-// CompanyReportRepository gère les opérations base de données pour les signalements d'entreprises.
 type CompanyReportRepository struct {
 	db *sql.DB
 }
 
-// NewCompanyReportRepository crée un nouveau CompanyReportRepository.
 func NewCompanyReportRepository(db *sql.DB) *CompanyReportRepository {
 	return &CompanyReportRepository{db: db}
 }
 
-// FindByID cherche un signalement par son ID.
-func (r *CompanyReportRepository) FindByID(id string) (*entity.CompanyReport, error) {
+func (r *CompanyReportRepository) FindByID(id int64) (*entity.CompanyReport, error) {
 	row := r.db.QueryRow(`SELECT id, company_id, submitted_by, correction_type, description, requested_value, status, resolved_at, created_at, updated_at
 		FROM company_reports WHERE id = ?`, id)
 	cr := &entity.CompanyReport{}
@@ -30,19 +27,16 @@ func (r *CompanyReportRepository) FindByID(id string) (*entity.CompanyReport, er
 	return cr, nil
 }
 
-// FindByCompany retourne les signalements d'une entreprise.
-func (r *CompanyReportRepository) FindByCompany(companyID string) ([]*entity.CompanyReport, error) {
+func (r *CompanyReportRepository) FindByCompany(companyID int64) ([]*entity.CompanyReport, error) {
 	rows, err := r.db.Query(`SELECT id, company_id, submitted_by, correction_type, description, requested_value, status, resolved_at, created_at, updated_at
 		FROM company_reports WHERE company_id = ? ORDER BY created_at DESC`, companyID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanReports(rows)
 }
 
-// FindAll retourne tous les signalements.
 func (r *CompanyReportRepository) FindAll() ([]*entity.CompanyReport, error) {
 	rows, err := r.db.Query(`SELECT id, company_id, submitted_by, correction_type, description, requested_value, status, resolved_at, created_at, updated_at
 		FROM company_reports ORDER BY created_at DESC`)
@@ -50,11 +44,9 @@ func (r *CompanyReportRepository) FindAll() ([]*entity.CompanyReport, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanReports(rows)
 }
 
-// FindByStatus retourne les signalements filtrés par statut.
 func (r *CompanyReportRepository) FindByStatus(status string) ([]*entity.CompanyReport, error) {
 	rows, err := r.db.Query(`SELECT id, company_id, submitted_by, correction_type, description, requested_value, status, resolved_at, created_at, updated_at
 		FROM company_reports WHERE status = ? ORDER BY created_at DESC`, status)
@@ -62,19 +54,24 @@ func (r *CompanyReportRepository) FindByStatus(status string) ([]*entity.Company
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanReports(rows)
 }
 
-// Insert crée un nouveau signalement.
 func (r *CompanyReportRepository) Insert(cr *entity.CompanyReport) error {
-	_, err := r.db.Exec(`INSERT INTO company_reports (id, company_id, submitted_by, correction_type, description, requested_value, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		cr.ID, cr.CompanyID, cr.SubmittedBy, cr.CorrectionType, cr.Description, cr.RequestedValue, cr.Status)
-	return err
+	result, err := r.db.Exec(`INSERT INTO company_reports (company_id, submitted_by, correction_type, description, requested_value, status) VALUES (?, ?, ?, ?, ?, ?)`,
+		cr.CompanyID, cr.SubmittedBy, cr.CorrectionType, cr.Description, cr.RequestedValue, cr.Status)
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	cr.ID = id
+	return nil
 }
 
-// UpdateStatus met à jour le statut d'un signalement.
-func (r *CompanyReportRepository) UpdateStatus(id, status string) error {
+func (r *CompanyReportRepository) UpdateStatus(id int64, status string) error {
 	if status == "resolu" {
 		_, err := r.db.Exec(`UPDATE company_reports SET status = ?, resolved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, status, id)
 		return err

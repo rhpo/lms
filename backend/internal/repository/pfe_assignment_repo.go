@@ -2,21 +2,20 @@ package repository
 
 import (
 	"database/sql"
+	"time"
+
 	"pfe-backend/internal/entity"
 )
 
-// PfeAssignmentRepository gère les opérations base de données pour les assignations PFE.
 type PfeAssignmentRepository struct {
 	db *sql.DB
 }
 
-// NewPfeAssignmentRepository crée un nouveau PfeAssignmentRepository.
 func NewPfeAssignmentRepository(db *sql.DB) *PfeAssignmentRepository {
 	return &PfeAssignmentRepository{db: db}
 }
 
-// FindByID cherche une assignation par son ID.
-func (r *PfeAssignmentRepository) FindByID(id string) (*entity.PfeAssignment, error) {
+func (r *PfeAssignmentRepository) FindByID(id int64) (*entity.PfeAssignment, error) {
 	query := `SELECT id, pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
 		supervisor_id, co_supervisor_id, memoire_url, status, created_at, updated_at
 		FROM pfe_assignments WHERE id = ?`
@@ -33,8 +32,7 @@ func (r *PfeAssignmentRepository) FindByID(id string) (*entity.PfeAssignment, er
 	return a, nil
 }
 
-// FindByStudent retourne l'assignation d'un étudiant pour une année universitaire.
-func (r *PfeAssignmentRepository) FindByStudent(studentID, academicYearID string) (*entity.PfeAssignment, error) {
+func (r *PfeAssignmentRepository) FindByStudent(studentID, academicYearID int64) (*entity.PfeAssignment, error) {
 	query := `SELECT id, pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
 		supervisor_id, co_supervisor_id, memoire_url, status, created_at, updated_at
 		FROM pfe_assignments WHERE (student_id = ? OR student2_id = ? OR student3_id = ?) AND academic_year_id = ? LIMIT 1`
@@ -51,8 +49,7 @@ func (r *PfeAssignmentRepository) FindByStudent(studentID, academicYearID string
 	return a, nil
 }
 
-// FindBySupervisor retourne les assignations supervisées par un enseignant.
-func (r *PfeAssignmentRepository) FindBySupervisor(supervisorID string) ([]*entity.PfeAssignment, error) {
+func (r *PfeAssignmentRepository) FindBySupervisor(supervisorID int64) ([]*entity.PfeAssignment, error) {
 	query := `SELECT id, pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
 		supervisor_id, co_supervisor_id, memoire_url, status, created_at, updated_at
 		FROM pfe_assignments WHERE supervisor_id = ? OR co_supervisor_id = ? ORDER BY created_at DESC`
@@ -61,11 +58,67 @@ func (r *PfeAssignmentRepository) FindBySupervisor(supervisorID string) ([]*enti
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanAssignments(rows)
 }
 
-// FindAll retourne toutes les assignations.
+// MonthlyTimelineStat holds one month's cumulative assignment counts.
+type MonthlyTimelineStat struct {
+	Label         string
+	WithSubject   int
+	MemoireSubmit int
+}
+
+// MonthlyTimelineStats returns, for each of the last `months` calendar months,
+// the cumulative count of assignments created by month-end and the count of
+// those that already have a mémoire submitted (memoire_url IS NOT NULL).
+// Results are ordered oldest-month first.
+func (r *PfeAssignmentRepository) MonthlyTimelineStats(months int) ([]MonthlyTimelineStat, error) {
+	results := make([]MonthlyTimelineStat, months)
+	now := time.Now()
+
+	for i := months - 1; i >= 0; i-- {
+		// end of the (i months ago) month
+		target := now.AddDate(0, -i, 0)
+		// first day of next month → exclusive upper bound
+		endOfMonth := time.Date(target.Year(), target.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+
+		monthNames := []string{"Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"}
+		label := monthNames[target.Month()-1]
+
+		var withSubject, memoireSubmit int
+		_ = r.db.QueryRow(
+			`SELECT COUNT(*), COALESCE(SUM(CASE WHEN memoire_url IS NOT NULL THEN 1 ELSE 0 END), 0)
+			 FROM pfe_assignments WHERE created_at < ?`,
+			endOfMonth.Format("2006-01-02T15:04:05"),
+		).Scan(&withSubject, &memoireSubmit)
+
+		results[months-1-i] = MonthlyTimelineStat{
+			Label:         label,
+			WithSubject:   withSubject,
+			MemoireSubmit: memoireSubmit,
+		}
+	}
+	return results, nil
+}
+
+// FindBySubjectID retourne l'affectation existante pour un sujet donné (nil si aucune).
+func (r *PfeAssignmentRepository) FindBySubjectID(subjectID int64) (*entity.PfeAssignment, error) {
+	query := `SELECT id, pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
+		supervisor_id, co_supervisor_id, memoire_url, status, created_at, updated_at
+		FROM pfe_assignments WHERE subject_id = ? LIMIT 1`
+	row := r.db.QueryRow(query, subjectID)
+	a := &entity.PfeAssignment{}
+	err := row.Scan(&a.ID, &a.PfeCode, &a.SubjectID, &a.AcademicYearID, &a.StudentID, &a.Student2ID, &a.Student3ID,
+		&a.SupervisorID, &a.CoSupervisorID, &a.MemoireURL, &a.Status, &a.CreatedAt, &a.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return a, nil
+}
+
 func (r *PfeAssignmentRepository) FindAll() ([]*entity.PfeAssignment, error) {
 	rows, err := r.db.Query(`SELECT id, pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
 		supervisor_id, co_supervisor_id, memoire_url, status, created_at, updated_at
@@ -74,12 +127,10 @@ func (r *PfeAssignmentRepository) FindAll() ([]*entity.PfeAssignment, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanAssignments(rows)
 }
 
-// FindByAcademicYear retourne les assignations d'une année universitaire.
-func (r *PfeAssignmentRepository) FindByAcademicYear(academicYearID string) ([]*entity.PfeAssignment, error) {
+func (r *PfeAssignmentRepository) FindByAcademicYear(academicYearID int64) ([]*entity.PfeAssignment, error) {
 	query := `SELECT id, pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
 		supervisor_id, co_supervisor_id, memoire_url, status, created_at, updated_at
 		FROM pfe_assignments WHERE academic_year_id = ? ORDER BY created_at DESC`
@@ -88,12 +139,10 @@ func (r *PfeAssignmentRepository) FindByAcademicYear(academicYearID string) ([]*
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanAssignments(rows)
 }
 
-// FindByCompanySubject retourne les assignations dont le sujet appartient à une entreprise.
-func (r *PfeAssignmentRepository) FindByCompanySubject(companyID string) ([]*entity.PfeAssignment, error) {
+func (r *PfeAssignmentRepository) FindByCompanySubject(companyID int64) ([]*entity.PfeAssignment, error) {
 	query := `SELECT pa.id, pa.pfe_code, pa.subject_id, pa.academic_year_id, pa.student_id, pa.student2_id, pa.student3_id,
 		pa.supervisor_id, pa.co_supervisor_id, pa.memoire_url, pa.status, pa.created_at, pa.updated_at
 		FROM pfe_assignments pa
@@ -105,33 +154,59 @@ func (r *PfeAssignmentRepository) FindByCompanySubject(companyID string) ([]*ent
 		return nil, err
 	}
 	defer rows.Close()
-
 	return r.scanAssignments(rows)
 }
 
-// Insert crée une nouvelle assignation.
 func (r *PfeAssignmentRepository) Insert(a *entity.PfeAssignment) error {
-	query := `INSERT INTO pfe_assignments (id, pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
+	query := `INSERT INTO pfe_assignments (pfe_code, subject_id, academic_year_id, student_id, student2_id, student3_id,
 		supervisor_id, co_supervisor_id, memoire_url, status)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := r.db.Exec(query, a.ID, a.PfeCode, a.SubjectID, a.AcademicYearID, a.StudentID, a.Student2ID, a.Student3ID,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	result, err := r.db.Exec(query, a.PfeCode, a.SubjectID, a.AcademicYearID, a.StudentID, a.Student2ID, a.Student3ID,
 		a.SupervisorID, a.CoSupervisorID, a.MemoireURL, a.Status)
-	return err
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	a.ID = id
+	return nil
 }
 
-// UpdateStatus met à jour le statut d'une assignation.
-func (r *PfeAssignmentRepository) UpdateStatus(id, status string) error {
+func (r *PfeAssignmentRepository) UpdateStatus(id int64, status string) error {
 	_, err := r.db.Exec(`UPDATE pfe_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, status, id)
 	return err
 }
 
-// UpdateMemoire met à jour l'URL du mémoire.
-func (r *PfeAssignmentRepository) UpdateMemoire(id, memoireURL string) error {
+func (r *PfeAssignmentRepository) UpdateCoSupervisor(id int64, teacherID int64) error {
+	_, err := r.db.Exec(`UPDATE pfe_assignments SET co_supervisor_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, teacherID, id)
+	return err
+}
+
+func (r *PfeAssignmentRepository) RemoveCoSupervisor(id int64) error {
+	_, err := r.db.Exec(`UPDATE pfe_assignments SET co_supervisor_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, id)
+	return err
+}
+
+func (r *PfeAssignmentRepository) UpdateMemoire(id int64, memoireURL string) error {
 	_, err := r.db.Exec(`UPDATE pfe_assignments SET memoire_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, memoireURL, id)
 	return err
 }
 
-// Update met à jour une assignation complète.
+// CountBySpecialityAndYear compte les affectations pour une spécialité et une année académique données.
+// Utilisé pour générer le numéro de séquence du code PFE (PFE-SPEC-YEAR-NNN).
+func (r *PfeAssignmentRepository) CountBySpecialityAndYear(academicYearID int64, specialityCode string) (int, error) {
+	var count int
+	err := r.db.QueryRow(`
+		SELECT COUNT(*) FROM pfe_assignments pa
+		JOIN students s ON s.id = pa.student_id
+		JOIN specialities sp ON sp.id = s.speciality_id
+		WHERE pa.academic_year_id = ? AND sp.code = ?
+	`, academicYearID, specialityCode).Scan(&count)
+	return count, err
+}
+
 func (r *PfeAssignmentRepository) Update(a *entity.PfeAssignment) error {
 	query := `UPDATE pfe_assignments SET pfe_code = ?, subject_id = ?, student_id = ?, student2_id = ?, student3_id = ?,
 		supervisor_id = ?, co_supervisor_id = ?, memoire_url = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`

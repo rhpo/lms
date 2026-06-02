@@ -8,7 +8,7 @@ func TestTeacherDashboard(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/dashboard", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/dashboard", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestTeacherDashboardWrongRole(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/dashboard", nil, h.AuthHeader("seed-student-isil-001", "student")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/dashboard", nil, h.AuthHeader(SeedStudentISIL1ID, "student")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestTeacherListProposedSubjects(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestTeacherCreateProposedSubject(t *testing.T) {
 		"description": "Description du nouveau sujet",
 		"group_type":  "monome",
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/proposed-subjects", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/proposed-subjects", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestTeacherCreateProposedSubjectValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/proposed-subjects", map[string]string{}, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/proposed-subjects", map[string]string{}, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestTeacherGetProposedSubject(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects/seed-subject-001", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects/1", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestTeacherGetProposedSubjectNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects/invalid", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects/99999", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestTeacherUpdateProposedSubject(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"title": "Sujet Modifié"}
-	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/teacher/proposed-subjects/seed-subject-001", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("PATCH", "/api/teacher/proposed-subjects/1", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -122,7 +122,7 @@ func TestTeacherListCandidats(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects/seed-subject-001/candidats", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/proposed-subjects/1/candidats", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -134,8 +134,8 @@ func TestTeacherAcceptCandidat(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	body := map[string]string{"student_id": "seed-student-isil-001", "action": "accept"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/proposed-subjects/seed-subject-005/candidats", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	body := map[string]any{"student_id": SeedStudentISIL1ID, "action": "accept"}
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/proposed-subjects/5/candidats", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestTeacherListSubjectsToValidate(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/subjects-to-validate", nil, h.AuthHeader("seed-teacher-isil-002", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/subjects-to-validate", nil, h.AuthHeader(SeedTeacherISIL2ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestTeacherGetSubjectToValidate(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/subjects-to-validate/seed-subject-003", nil, h.AuthHeader("seed-teacher-isil-002", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/subjects-to-validate/3", nil, h.AuthHeader(SeedTeacherISIL2ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestTeacherValidateSubject(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"decision": "valide", "comment": "Sujet intéressant"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/subjects-to-validate/seed-subject-003", body, h.AuthHeader("seed-teacher-isil-002", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/subjects-to-validate/3", body, h.AuthHeader(SeedTeacherISIL2ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestTeacherValidateSubjectInvalidDecision(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"decision": "invalid"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/subjects-to-validate/seed-subject-003", body, h.AuthHeader("seed-teacher-isil-002", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/subjects-to-validate/3", body, h.AuthHeader(SeedTeacherISIL2ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -197,7 +197,7 @@ func TestTeacherListSupervisedPfes(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/supervised-pfes", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/supervised-pfes", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -209,7 +209,7 @@ func TestTeacherGetSupervisedPfe(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/supervised-pfes/seed-assignment-001", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/supervised-pfes/1", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -228,7 +228,7 @@ func TestTeacherGetSupervisedPfeNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/supervised-pfes/invalid", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/supervised-pfes/99999", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -246,7 +246,7 @@ func TestTeacherCreateMeeting(t *testing.T) {
 		"meeting_type": "visio",
 		"topics":       "Avancement du projet",
 	}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/seed-assignment-001/meetings", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/1/meetings", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -258,7 +258,7 @@ func TestTeacherCreateMeetingValidation(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/seed-assignment-001/meetings", map[string]string{}, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/1/meetings", map[string]string{}, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -271,7 +271,7 @@ func TestTeacherSubmitEvaluation(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]float64{"criterion5": 3.5}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/seed-assignment-001/evaluation", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/1/evaluation", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -284,7 +284,7 @@ func TestTeacherSubmitEvaluationInvalidCriterion(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]float64{"criterion5": 5.0}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/seed-assignment-001/evaluation", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/supervised-pfes/1/evaluation", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -296,7 +296,7 @@ func TestTeacherListJuryDuties(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/jury-duties", nil, h.AuthHeader("seed-teacher-isil-002", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/jury-duties", nil, h.AuthHeader(SeedTeacherISIL2ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -308,7 +308,7 @@ func TestTeacherGetJuryDuty(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/jury-duties/seed-defense-001", nil, h.AuthHeader("seed-teacher-isil-002", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/jury-duties/1", nil, h.AuthHeader(SeedTeacherISIL2ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -320,7 +320,7 @@ func TestTeacherGetJuryDutyNotFound(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/jury-duties/invalid", nil, h.AuthHeader("seed-teacher-isil-002", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/jury-duties/99999", nil, h.AuthHeader(SeedTeacherISIL2ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -333,7 +333,7 @@ func TestTeacherUpdateAvailability(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"availability_status": "indisponible_jusqu_au", "unavailable_until": "2025-06-30"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/availability", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/availability", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -346,7 +346,7 @@ func TestTeacherUpdateAvailabilityInvalid(t *testing.T) {
 	defer h.Close()
 
 	body := map[string]string{"availability_status": "invalid"}
-	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/availability", body, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("POST", "/api/teacher/availability", body, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -358,7 +358,7 @@ func TestTeacherNotifications(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/notifications", nil, h.AuthHeader("seed-teacher-isil-001", "teacher")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/notifications", nil, h.AuthHeader(SeedTeacherISIL1ID, "teacher")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}
@@ -370,7 +370,7 @@ func TestAdminCanAccessTeacherEndpoints(t *testing.T) {
 	h := NewTestHelper()
 	defer h.Close()
 
-	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/dashboard", nil, h.AuthHeader("seed-admin-001", "admin")))
+	resp, err := h.App.Test(newHTTPRequest("GET", "/api/teacher/dashboard", nil, h.AuthHeader(SeedAdminID, "admin")))
 	if err != nil {
 		t.Fatalf("❌ Erreur requête: %v", err)
 	}

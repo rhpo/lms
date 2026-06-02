@@ -50,7 +50,6 @@ picture {
 }
 
 /* == Forms == */
-
 input,
 button,
 textarea,
@@ -61,7 +60,6 @@ optgroup {
     background: none;
     border: none;
     outline: none;
-    appearance: none;
 
     &:hover {
         cursor: pointer;
@@ -93,17 +91,28 @@ table {
     border-spacing: 0;
 }
 
+td {
+    /* Acts as min-height in table layout — ensures rows with conditional buttons
+       (present in some rows, absent in others) don't collapse to different heights. */
+    height: 3.5rem;
+    vertical-align: middle;
+}
+
 /* == Misc == */
 
 a {
     color: inherit;
     text-decoration: none;
+
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 p,
-a,
 label {
-    font-size: 1.2rem;
+    font-size: inherit;
 }
 
 blockquote,

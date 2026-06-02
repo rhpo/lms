@@ -1,34 +1,64 @@
 <script lang="ts">
-  import "$lib/styles/app.css";
+    import "$lib/styles/app.css";
+    import "aos/dist/aos.css";
 
-  import AOS from "aos";
-  import "aos/dist/aos.css";
+    import AOS from "aos";
+    import { onMount } from "svelte";
+    import { toast, Toaster } from "svelte-sonner";
+    import { navigating } from "$app/stores";
+    import { Loader2 } from "lucide-svelte";
 
-  import { onMount } from "svelte";
+    onMount(() => {
+        AOS.init({
+            disable: "mobile",
+            once: true,
+        });
+    });
 
-  import favicon from "$lib/assets/favicon.svg";
-  import { Toaster } from "svelte-sonner";
-
-  let { children } = $props();
-
-  onMount(() => {
-    AOS.init();
-  });
+    let { children } = $props();
 </script>
 
-<svelte:head>
-  <link rel="icon" href={favicon} />
-</svelte:head>
+<Toaster />
 
-<!-- Global toast container — placed once here so every route can trigger toasts -->
-<Toaster
-  theme="dark"
-  richColors
-  position="bottom-right"
-  closeButton
-  toastOptions={{
-    style: "font-family: var(--font-sans, sans-serif); font-size: 0.9rem;",
-  }}
-/>
+{#if $navigating}
+    <div class="global-loading-overlay">
+        <Loader2 class="spinner" size={40} />
+    </div>
+{/if}
 
 {@render children()}
+
+<style>
+    :global([data-aos]) {
+        transition-duration: var(--transition-duration) !important;
+    }
+
+    .global-loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    :global(.dark) .global-loading-overlay {
+        background: rgba(15, 23, 42, 0.4);
+    }
+
+    .spinner {
+        color: var(--color-accent);
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>

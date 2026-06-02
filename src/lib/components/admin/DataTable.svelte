@@ -141,7 +141,7 @@
         font-size: var(--text-sm);
         font-family: var(--font-sans);
         color: var(--color-text);
-        padding: 1rem 1.5rem;
+        padding: 0.75rem 1.5rem;
         border-top: 1px solid var(--color-border);
         vertical-align: middle;
     }

@@ -4,7 +4,7 @@ import "time"
 
 // Profile représente un profil utilisateur.
 type Profile struct {
-	ID        string    `json:"id"`
+	ID        int64     `json:"id"`
 	Role      string    `json:"role"`
 	FullName  string    `json:"full_name"`
 	Email     string    `json:"email"`
@@ -12,4 +12,8 @@ type Profile struct {
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+
+	Teacher *Teacher `json:"teacher,omitempty"`
+	Student *Student `json:"student,omitempty"`
+	Company *Company `json:"company,omitempty"`
 }

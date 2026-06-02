@@ -20,21 +20,23 @@
     }: Props = $props();
 </script>
 
-<div class="stat-card">
-    <div class="card-head">
-        <div class="card-icon">
-            <Icon size={20} />
+<main data-aos="fade-up">
+    <div class="stat-card">
+        <div class="card-head">
+            <div class="card-icon">
+                <Icon size={20} />
+            </div>
+            {#if badge}
+                <span class="card-badge {badgeVariant}">{badge}</span>
+            {/if}
         </div>
-        {#if badge}
-            <span class="card-badge {badgeVariant}">{badge}</span>
-        {/if}
+        <div class="card-body">
+            <p class="card-label">{title}</p>
+            <p class="card-value">{value}</p>
+        </div>
+        <div class="card-bar" style:background={barColor}></div>
     </div>
-    <div class="card-body">
-        <p class="card-label">{title}</p>
-        <p class="card-value">{value}</p>
-    </div>
-    <div class="card-bar" style:background={barColor}></div>
-</div>
+</main>
 
 <style>
     .stat-card {

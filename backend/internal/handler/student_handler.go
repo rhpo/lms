@@ -1,9 +1,14 @@
 package handler
 
 import (
+	"database/sql"
+	"fmt"
+	"time"
+
 	"pfe-backend/internal/entity"
 	"pfe-backend/internal/service"
 	"pfe-backend/internal/shared/middleware"
+	"pfe-backend/internal/shared/notify"
 	"pfe-backend/internal/shared/response"
 
 	"github.com/gofiber/fiber/v3"
@@ -11,12 +16,13 @@ import (
 
 // StudentHandler gère les endpoints étudiant.
 type StudentHandler struct {
-	svc *service.StudentService
+	svc      *service.StudentService
+	notifier *notify.Notifier
 }
 
 // NewStudentHandler crée un nouveau StudentHandler.
-func NewStudentHandler(svc *service.StudentService) *StudentHandler {
-	return &StudentHandler{svc: svc}
+func NewStudentHandler(svc *service.StudentService, notifier *notify.Notifier) *StudentHandler {
+	return &StudentHandler{svc: svc, notifier: notifier}
 }
 
 // Dashboard retourne le tableau de bord étudiant.
@@ -43,7 +49,10 @@ func (h *StudentHandler) ListCatalogue(c fiber.Ctx) error {
 
 // GetCatalogueSubject retourne un sujet du catalogue.
 func (h *StudentHandler) GetCatalogueSubject(c fiber.Ctx) error {
-	id := c.Params("id")
+	id, err := parseID(c, "id")
+	if err != nil {
+		return response.ValidationError(c, "ID invalide")
+	}
 	subject, err := h.svc.GetCatalogueSubject(id)
 	if err != nil {
 		return response.Error(c, err)
@@ -71,24 +80,45 @@ func (h *StudentHandler) ListWishes(c fiber.Ctx) error {
 func (h *StudentHandler) CreateWish(c fiber.Ctx) error {
 	userID := middleware.GetProfileID(c)
 	var req struct {
-		SubjectID string `json:"subject_id"`
+		SubjectID int64 `json:"subject_id"`
 	}
 	if err := c.Bind().Body(&req); err != nil {
 		return response.ValidationError(c, "Données invalides")
 	}
-	if req.SubjectID == "" {
+	if req.SubjectID == 0 {
 		return response.ValidationError(c, "L'ID du sujet est requis")
 	}
 	if err := h.svc.CreateWish(userID, req.SubjectID); err != nil {
 		return response.Error(c, err)
 	}
+
+	// Notify admins and subject proposer
+	go func() {
+		subjectTitle := fmt.Sprintf("sujet #%d", req.SubjectID) // safe fallback
+		if sub, err := h.svc.GetCatalogueSubject(req.SubjectID); err == nil && sub != nil {
+			subjectTitle = sub.Title
+		}
+		h.notifier.NotifyAdmins(notify.TypeAffectation,
+			fmt.Sprintf("Un étudiant a postulé au sujet « %s ».", subjectTitle))
+
+		// Also notify the subject proposer (teacher or company)
+		proposerID, _ := h.svc.GetSubjectProposerID(req.SubjectID)
+		if proposerID != 0 {
+			h.notifier.Send(proposerID, notify.TypeSujet,
+				fmt.Sprintf("Un étudiant a postulé à votre sujet « %s ».", subjectTitle))
+		}
+	}()
+
 	return response.Created(c, map[string]string{"message": "Voeu créé"})
 }
 
 // DeleteWish supprime un voeu.
 func (h *StudentHandler) DeleteWish(c fiber.Ctx) error {
 	userID := middleware.GetProfileID(c)
-	id := c.Params("id")
+	id, err := parseID(c, "id")
+	if err != nil {
+		return response.ValidationError(c, "ID invalide")
+	}
 	if err := h.svc.DeleteWish(userID, id); err != nil {
 		return response.Error(c, err)
 	}
@@ -131,17 +161,101 @@ func (h *StudentHandler) ListMyMeetings(c fiber.Ctx) error {
 // AddMyMeeting ajoute un meeting de suivi.
 func (h *StudentHandler) AddMyMeeting(c fiber.Ctx) error {
 	userID := middleware.GetProfileID(c)
-	var req entity.PfeProgressReport
+
+	var req struct {
+		MeetingDate string `json:"meeting_date"`
+		Duration    int    `json:"duration"`
+		MeetingType string `json:"meeting_type"`
+		Topics      string `json:"topics"`
+		Status      string `json:"status"`
+		Observation string `json:"observation"`
+	}
 	if err := c.Bind().Body(&req); err != nil {
 		return response.ValidationError(c, "Données invalides")
 	}
-	if req.MeetingType == "" || req.Duration == 0 {
-		return response.ValidationError(c, "meeting_type et duration sont requis")
+	if req.MeetingDate == "" {
+		return response.ValidationError(c, "La date est requise")
 	}
-	if err := h.svc.AddMyMeeting(userID, &req); err != nil {
+	if req.MeetingType == "" {
+		return response.ValidationError(c, "Le type de réunion est requis")
+	}
+	if req.Duration == 0 {
+		return response.ValidationError(c, "La durée est requise")
+	}
+
+	// Parse the date — support date-only and datetime-local formats
+	var meetingDate time.Time
+	var parseErr error
+	for _, layout := range []string{time.RFC3339, "2006-01-02T15:04", "2006-01-02"} {
+		meetingDate, parseErr = time.Parse(layout, req.MeetingDate)
+		if parseErr == nil {
+			break
+		}
+	}
+	if parseErr != nil {
+		return response.ValidationError(c, "Format de date invalide (attendu YYYY-MM-DD)")
+	}
+
+	status := req.Status
+	if status == "" {
+		status = "en_cours"
+	}
+
+	report := &entity.PfeProgressReport{
+		MeetingDate: meetingDate,
+		Duration:    req.Duration,
+		MeetingType: req.MeetingType,
+		Topics:      req.Topics,
+		Status:      status,
+	}
+	if req.Observation != "" {
+		report.Observation = entity.NullString{NullString: sql.NullString{String: req.Observation, Valid: true}}
+	}
+
+	if err := h.svc.AddMyMeeting(userID, report); err != nil {
 		return response.Error(c, err)
 	}
-	return response.Created(c, req)
+
+	// Notify supervisor about the new meeting
+	go func() {
+		assignment, err := h.svc.GetMyPFE(userID)
+		if err != nil || assignment == nil {
+			return
+		}
+		subjectTitle := "un PFE"
+		if assignment.Subject != nil && assignment.Subject.Title != "" {
+			subjectTitle = fmt.Sprintf("« %s »", assignment.Subject.Title)
+		}
+		dateStr := meetingDate.Format("02/01/2006")
+		if assignment.Supervisor != nil {
+			h.notifier.Send(assignment.Supervisor.ProfileID, notify.TypeDisponibilite,
+				fmt.Sprintf("Un étudiant a ajouté une réunion de suivi pour le sujet %s le %s.", subjectTitle, dateStr))
+		}
+	}()
+
+	return response.Created(c, report)
+}
+
+// UpdateMyMeeting met à jour le statut d'une entrée de suivi.
+func (h *StudentHandler) UpdateMyMeeting(c fiber.Ctx) error {
+	userID := middleware.GetProfileID(c)
+	id, err := parseID(c, "id")
+	if err != nil {
+		return response.ValidationError(c, "ID invalide")
+	}
+	var req struct {
+		Status string `json:"status"`
+	}
+	if err := c.Bind().Body(&req); err != nil {
+		return response.ValidationError(c, "Données invalides")
+	}
+	if req.Status == "" {
+		return response.ValidationError(c, "Le statut est requis")
+	}
+	if err := h.svc.UpdateMyMeeting(userID, id, req.Status); err != nil {
+		return response.Error(c, err)
+	}
+	return response.OK(c, map[string]string{"message": "Statut mis à jour"})
 }
 
 // SubmitMemoire soumet le mémoire PDF.
@@ -167,6 +281,21 @@ func (h *StudentHandler) SubmitMemoire(c fiber.Ctx) error {
 	if err := h.svc.SubmitMemoire(assignment.ID, req.MemoireURL); err != nil {
 		return response.Error(c, err)
 	}
+
+	// Notify admins and supervisor — use subject title, never raw IDs
+	go func() {
+		subjectTitle := "un PFE" // safe fallback
+		if assignment.Subject != nil && assignment.Subject.Title != "" {
+			subjectTitle = fmt.Sprintf("« %s »", assignment.Subject.Title)
+		}
+		h.notifier.NotifyAdmins(notify.TypeValidationRequise,
+			fmt.Sprintf("Le mémoire pour le sujet %s a été déposé par l'étudiant.", subjectTitle))
+		if assignment.Supervisor != nil {
+			h.notifier.Send(assignment.Supervisor.ProfileID, notify.TypeValidationRequise,
+				fmt.Sprintf("Un étudiant que vous encadrez a déposé son mémoire pour le sujet %s.", subjectTitle))
+		}
+	}()
+
 	return response.OK(c, map[string]string{"message": "Mémoire soumis"})
 }
 
@@ -178,6 +307,15 @@ func (h *StudentHandler) GetSoutenance(c fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 	return response.OK(c, data)
+}
+
+// GetSettings retourne les paramètres publics de l'année académique active.
+func (h *StudentHandler) GetSettings(c fiber.Ctx) error {
+	settings, err := h.svc.GetSettings()
+	if err != nil {
+		return response.Error(c, err)
+	}
+	return response.OK(c, settings)
 }
 
 // ListNotifications liste les notifications de l'étudiant.

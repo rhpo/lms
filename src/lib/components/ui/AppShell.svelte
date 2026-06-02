@@ -3,12 +3,23 @@
 
     import { page } from "$app/stores";
     import { BRAND } from "$lib/constants/branding";
-    import { LogOut, Bell, User, Settings } from "lucide-svelte";
+    import {
+        LogOut,
+        Bell,
+        User,
+        Settings,
+        LogOutIcon,
+        GraduationCap,
+        School,
+        ShieldUser,
+        Building2,
+    } from "lucide-svelte";
 
     import Logo from "../Logo.svelte";
     import Profile from "./Profile.svelte";
-    import Button from "./Button.svelte";
     import ThemeToggle from "./ThemeToggle.svelte";
+    import { authStore } from "$lib/stores/auth";
+    import { notificationStore } from "$lib/stores/notifications";
 
     interface NavLink {
         href: string;
@@ -20,27 +31,43 @@
 
     interface Props {
         links: NavLink[];
+        quickAccess?: NavLink[];
         user: { full_name: string; role: string };
-        notificationsHref: string;
+        profileLinks?: ProfileLink[];
         children: Snippet;
     }
 
-    let { links, user, notificationsHref, children }: Props = $props();
+    interface ProfileLink {
+        href?: string;
+        label: string;
+        icon: any;
+        count?: number;
+        target?: string;
+        action?: () => void;
+    }
 
-    // Compute total count from sidebar nav links for the profile trigger
-    let sidebarTotalCount = $derived(
-        links.reduce((sum, link) => sum + (link.count ?? 0), 0) + 1,
-    );
+    let {
+        links,
+        user,
+        quickAccess = [],
+        profileLinks = [],
+        children,
+    }: Props = $props();
 
-    const profileLinks = $derived([
-        { href: "/status", label: "Statut", icon: User },
-        {
-            href: "/notifications",
-            label: "Notifications",
-            icon: Bell,
-            count: sidebarTotalCount,
-        },
+    let unreadCount = $state(0);
+    notificationStore.subscribe((n) => (unreadCount = n));
+
+    let currentUser = $derived($authStore ?? user);
+
+    let predefinedProfileLinks: ProfileLink[] = $derived([
+        { href: "/shared/profile", label: "Profil", icon: User },
+        ...profileLinks,
         { href: "/admin/settings", label: "Paramètres", icon: Settings },
+        {
+            label: "Déconnexion",
+            icon: LogOutIcon,
+            action: () => authStore.logout(),
+        },
     ]);
 
     function isActive(href: string) {
@@ -49,10 +76,25 @@
             $page.url.pathname.startsWith(href + "/")
         );
     }
+
+    let Icon = $derived.by(() => {
+        switch (currentUser.role) {
+            case "admin":
+                return ShieldUser;
+            case "teacher":
+                return School;
+            case "student":
+                return GraduationCap;
+            case "company":
+                return Building2;
+            default:
+                return User;
+        }
+    });
 </script>
 
 <div class="app-shell">
-    <!-- == Topnav ============= -->
+    <!-- Topnav --------------->
     <header class="topnav">
         <div class="topnav-left">
             <a class="brand" href={links[0]?.href ?? "/"}>
@@ -66,24 +108,45 @@
 
                 <h1>{BRAND.name}</h1>
             </a>
+
+            <div class="quick-access">
+                {#each quickAccess as item}
+                    <a
+                        href={item.href}
+                        class="quick-nav-item"
+                        class:active={isActive(item.href)}
+                        aria-current={isActive(item.href) ? "page" : undefined}
+                    >
+                        <div class="quick-icon">
+                            <item.icon size={18} />
+                        </div>
+
+                        <span class="quick-nav-label">{item.label}</span>
+                        {#if item.count && item.count > 0}
+                            <span class="quick-nav-badge"
+                                >{item.count > 99 ? "99+" : item.count}</span
+                            >
+                        {/if}
+                    </a>
+                {/each}
+            </div>
         </div>
 
         <div class="topnav-right">
             <ThemeToggle />
 
-            <Profile {user} links={profileLinks} />
+            <Profile user={currentUser} bind:links={predefinedProfileLinks} />
         </div>
     </header>
 
-    <!-- == Body: sidebar + main ============= -->
     <div class="app-body">
         <!-- == Sidebar ======== -->
         <aside class="sidebar">
             <main>
                 <div class="sidebar-brand">
-                    <span class="brand-title">PLATEFORME {BRAND.name}</span>
-                    <span class="brand-sub">
-                        PANNEAU {user.role.toUpperCase()}
+                    <span class="brand-title">
+                        <Icon size={18} />
+                        {currentUser.role}
                     </span>
                 </div>
 
@@ -111,15 +174,17 @@
                 </nav>
 
                 <div class="sidebar-footer">
-                    <a href="/auth/logout" class="nav-item logout-item">
+                    <button
+                        class="nav-item logout-item"
+                        onclick={() => authStore.logout()}
+                    >
                         <LogOut size={18} />
-                        <span class="nav-label">Deconnexion</span>
-                    </a>
+                        <span class="nav-label">Déconnexion</span>
+                    </button>
                 </div>
             </main>
         </aside>
 
-        <!-- == Main content ================= -->
         <main class="app-main">
             {@render children()}
         </main>
@@ -151,60 +216,93 @@
         position: sticky;
         top: 0;
         z-index: 50;
-    }
 
-    .topnav-left {
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-        height: 100%;
-    }
-
-    .brand {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-        text-decoration: none;
-        height: 100%;
-
-        .logo {
-            height: 100%;
+        .quick-access {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: all var(--transition-fast);
+            gap: 0.5rem;
+
+            * {
+                color: var(--color-gray-50);
+            }
+
+            .quick-nav-item {
+                font-size: 0.85rem;
+                font-weight: 400;
+                border-radius: 5px;
+
+                &,
+                &:hover {
+                    text-decoration: none;
+                }
+
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
+
+                .quick-icon {
+                    display: none;
+                }
+
+                padding: 0.5rem 0.5rem;
+            }
         }
 
-        h1 {
-            font-weight: 500;
-            font-family: var(--font-serif);
+        .topnav-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            height: 100%;
         }
 
-        &:hover .logo {
-            transform: scale(1.1);
+        .brand {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            text-decoration: none;
+            height: 100%;
+
+            .logo {
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all var(--transition-fast);
+            }
+
+            h1 {
+                font-weight: 500;
+                font-family: var(--font-serif) !important;
+
+                transform: translateY(2px);
+            }
+
+            &:hover .logo {
+                transform: scale(1.1);
+            }
+
+            &:active {
+                transform: scale(0.9);
+            }
+
+            &:active .logo {
+                transform: none;
+            }
         }
 
-        &:active {
-            transform: scale(0.9);
-        }
-
-        &:active .logo {
-            transform: none;
-        }
-    }
-
-    .brand * {
-        color: var(--color-gray-50);
-    }
-
-    .topnav-right {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: var(--color-gray-50);
-
-        :global(button) {
+        .brand * {
             color: var(--color-gray-50);
+        }
+
+        .topnav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--color-gray-50);
+
+            :global(button) {
+                color: var(--color-gray-50);
+            }
         }
     }
 
@@ -240,15 +338,21 @@
         border-bottom: 1px solid var(--color-border);
     }
     .brand-title {
-        display: block;
-        font-size: 0.65rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
         font-weight: 700;
         font-family: var(--font-sans);
+        text-transform: uppercase;
         color: var(--color-accent);
         letter-spacing: 0.1em;
     }
+
     .brand-sub {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         font-size: 0.6rem;
         font-family: var(--font-sans);
         color: var(--color-text-muted);
@@ -280,6 +384,7 @@
             color var(--transition-fast);
         cursor: pointer;
     }
+
     .nav-item:hover {
         background: var(--color-background-100);
         color: var(--color-text);
@@ -324,6 +429,10 @@
 
     .logout-item {
         color: var(--color-text-muted);
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
     }
 
     /* == Main content =========== */
@@ -338,6 +447,12 @@
     @media (max-width: 768px) {
         .sidebar {
             display: none;
+        }
+
+        .topnav {
+            .quick-access {
+                display: none;
+            }
         }
 
         .app-main {

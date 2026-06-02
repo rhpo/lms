@@ -6,10 +6,11 @@
     import Avatar from "./Avatar.svelte";
 
     interface Link {
-        href: string;
+        href?: string;
         label: string;
         icon: any;
         count?: number;
+        action?: () => void;
     }
 
     interface Props {
@@ -17,7 +18,7 @@
         links: Link[];
     }
 
-    let { user, links }: Props = $props();
+    let { user, links = $bindable() }: Props = $props();
 
     let totalCount = $derived(
         links.reduce((sum, link) => sum + (link.count ?? 0), 0),
@@ -87,15 +88,28 @@
             </div>
             <div class="dropdown-divider"></div>
             {#each links as link}
-                <a href={link.href} class="dropdown-item" onclick={close}>
-                    <link.icon size={16} />
-                    <span class="dropdown-item-label">{link.label}</span>
-                    {#if link.count && link.count > 0}
-                        <span class="dropdown-item-badge"
-                            >{link.count > 99 ? "99+" : link.count}</span
-                        >
-                    {/if}
-                </a>
+                {#if link.action}
+                    <button
+                        class="dropdown-item"
+                        onclick={() => {
+                            close();
+                            link.action!();
+                        }}
+                    >
+                        <link.icon size={16} />
+                        <span class="dropdown-item-label">{link.label}</span>
+                    </button>
+                {:else}
+                    <a href={link.href} class="dropdown-item" onclick={close}>
+                        <link.icon size={16} />
+                        <span class="dropdown-item-label">{link.label}</span>
+                        {#if link.count && link.count > 0}
+                            <span class="dropdown-item-badge"
+                                >{link.count > 99 ? "99+" : link.count}</span
+                            >
+                        {/if}
+                    </a>
+                {/if}
             {/each}
         </div>
     {/if}
@@ -224,9 +238,14 @@
         align-items: center;
         gap: 0.65rem;
         padding: 0.65rem 1rem;
-        color: var(--color-text);
         font-size: var(--text-sm);
+        font-family: var(--font-sans);
         text-decoration: none;
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
         transition:
             background 0.12s,
             transform 0.12s,
@@ -234,6 +253,11 @@
 
         margin: 0.25rem;
         border-radius: 0.5rem;
+
+        &,
+        & :global(*) {
+            color: var(--color-text);
+        }
 
         &:hover {
             background: var(--color-background-200);
