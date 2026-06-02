@@ -1,8 +1,6 @@
 
 <div align="center">
 
-  <br>
-
   <img src="static/logo-readme.svg" height="150" alt="ESST Logo" />
 
   <h1>PFE-LMS</h1>
