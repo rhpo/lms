@@ -3,7 +3,7 @@
 
   <img src="static/logo-readme.svg" height="150" alt="ESST Logo" />
 
-  <h1>PFE-LMS</h1>
+  <h1>PFELMS</h1>
   <p><strong>Academic Project Management Platform</strong></p>
 
   <p align="center">
