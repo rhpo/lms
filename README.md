@@ -3,7 +3,7 @@
 
   <br>
 
-  <img src="static/logo-dark.svg" height="200" alt="ESST Logo" />
+  <img src="static/logo-readme.svg" height="200" alt="ESST Logo" />
 
   <br><br>
 
