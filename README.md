@@ -6,8 +6,6 @@
   <h1>PFE-LMS</h1>
   <p><strong>Academic Project Management Platform</strong></p>
 
-  <br>
-
   <p align="center">
     A full-stack platform for managing the lifecycle of university graduation projects (PFE), built with <strong>Go</strong>, <strong>Fiber v3</strong>, <strong>SQLite</strong>, and <strong>SvelteKit 5</strong>.
   </p>
@@ -25,8 +23,6 @@
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg" height="45" alt="SQLite" />&nbsp;&nbsp;&nbsp;
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" height="45" alt="TypeScript" />
 
-  <br>
-
   ![Go](https://img.shields.io/badge/Go-1.23-00ADD8?style=for-the-badge&logo=go&logoColor=white)
   ![Fiber](https://img.shields.io/badge/Fiber-v3-00ACD7?style=for-the-badge)
   ![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
@@ -35,8 +31,6 @@
   ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 </div>
-
-<br>
 
 ---
 
