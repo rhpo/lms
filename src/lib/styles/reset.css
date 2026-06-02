@@ -1,6 +1,6 @@
 /* =============
    reset.css
-   Removes browser defaults. No design decisions here —
+   Removes browser defaults. No design decisions here -
    those live in semantic.css and component files.
    ============= */
 
@@ -92,7 +92,7 @@ table {
 }
 
 td {
-    /* Acts as min-height in table layout — ensures rows with conditional buttons
+    /* Acts as min-height in table layout - ensures rows with conditional buttons
        (present in some rows, absent in others) don't collapse to different heights. */
     height: 3.5rem;
     vertical-align: middle;

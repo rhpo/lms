@@ -2,7 +2,10 @@
     import { invalidateAll } from "$app/navigation";
     import { CheckCircle, XCircle } from "lucide-svelte";
     import { admin } from "$lib/api";
-    import { COMPANY_REPORT_STATUS_LABELS, formatDate } from "$lib/constants/labels";
+    import {
+        COMPANY_REPORT_STATUS_LABELS,
+        formatDate,
+    } from "$lib/constants/labels";
 
     import Badge from "$lib/components/ui/Badge.svelte";
     import Button from "$lib/components/ui/Button.svelte";
@@ -15,21 +18,20 @@
         try {
             await admin.reportAction(reportId, "resolve");
             await invalidateAll();
-        } catch {
-
-        }
+        } catch {}
     }
 
     async function rejectReport(reportId: number) {
         try {
             await admin.reportAction(reportId, "reject");
             await invalidateAll();
-        } catch {
-
-        }
+        } catch {}
     }
 
-    const variantMap: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+    const variantMap: Record<
+        string,
+        "success" | "warning" | "danger" | "neutral"
+    > = {
         en_attente: "warning",
         resolu: "success",
         rejete: "danger",
@@ -63,14 +65,19 @@
                 <tbody>
                     {#each reports as report (report.id)}
                         <tr>
-                            <td class="company-cell">{report.company?.company_name ?? "—"}</td>
+                            <td class="company-cell"
+                                >{report.company?.company_name ?? "-"}</td
+                            >
                             <td>{report.submitted_by}</td>
                             <td>{report.correction_type}</td>
                             <td class="desc-cell">{report.description}</td>
                             <td>
                                 <Badge
-                                    variant={variantMap[report.status] ?? "neutral"}
-                                    label={COMPANY_REPORT_STATUS_LABELS[report.status] ?? report.status}
+                                    variant={variantMap[report.status] ??
+                                        "neutral"}
+                                    label={COMPANY_REPORT_STATUS_LABELS[
+                                        report.status
+                                    ] ?? report.status}
                                 />
                             </td>
                             <td class="date-cell">

@@ -23,7 +23,6 @@
   const subject = $derived(data.subject);
   const teachers = $derived(data.teachers ?? []);
 
-
   let showAssignModal = $state(false);
   let validator1Id: number | null = $state(null);
   let validator2Id: number | null = $state(null);
@@ -50,7 +49,7 @@
         validator1_id: validator1Id,
         validator2_id: validator2Id ?? 0,
       });
-      showToast.success("Validateurs assignés — sujet repassé en attente");
+      showToast.success("Validateurs assignés - sujet repassé en attente");
       showAssignModal = false;
       validator1Id = null;
       validator2Id = null;
@@ -70,7 +69,11 @@
         <Button variant="ghost" Icon={ArrowLeft}>Retour</Button>
       </a>
       {#if subject.status === "en_attente" || subject.status === "accepte_sous_reserve"}
-        <Button variant="primary" Icon={UserCheck} onclick={() => (showAssignModal = true)}>
+        <Button
+          variant="primary"
+          Icon={UserCheck}
+          onclick={() => (showAssignModal = true)}
+        >
           Assigner des validateurs
         </Button>
       {/if}
@@ -120,8 +123,11 @@
               <h3>Validateur 1</h3>
               {#if subject.validator1_decision}
                 <Badge
-                  variant={REVIEW_DECISION_VARIANTS[subject.validator1_decision] ?? "info"}
-                  label={REVIEW_DECISION_LABELS[subject.validator1_decision] ?? "—"}
+                  variant={REVIEW_DECISION_VARIANTS[
+                    subject.validator1_decision
+                  ] ?? "info"}
+                  label={REVIEW_DECISION_LABELS[subject.validator1_decision] ??
+                    "-"}
                 />
                 {#if subject.validator1_comment}
                   <p class="comment">{subject.validator1_comment}</p>
@@ -135,8 +141,11 @@
               <h3>Validateur 2</h3>
               {#if subject.validator2_decision}
                 <Badge
-                  variant={REVIEW_DECISION_VARIANTS[subject.validator2_decision] ?? "info"}
-                  label={REVIEW_DECISION_LABELS[subject.validator2_decision] ?? "—"}
+                  variant={REVIEW_DECISION_VARIANTS[
+                    subject.validator2_decision
+                  ] ?? "info"}
+                  label={REVIEW_DECISION_LABELS[subject.validator2_decision] ??
+                    "-"}
                 />
                 {#if subject.validator2_comment}
                   <p class="comment">{subject.validator2_comment}</p>
@@ -155,11 +164,17 @@
 
   <!-- Assign Validators Modal -->
   {#if showAssignModal}
-    <Modal open={true} title="Assigner des validateurs" onClose={() => (showAssignModal = false)}>
+    <Modal
+      open={true}
+      title="Assigner des validateurs"
+      onClose={() => (showAssignModal = false)}
+    >
       <div class="modal-form">
         {#if subject.status === "accepte_sous_reserve"}
           <p class="info-note">
-            Ce sujet a été modifié par l'entreprise suite à une réserve. Les assigner repassera le sujet en <strong>En attente</strong> et effacera les décisions précédentes.
+            Ce sujet a été modifié par l'entreprise suite à une réserve. Les
+            assigner repassera le sujet en <strong>En attente</strong> et effacera
+            les décisions précédentes.
           </p>
         {/if}
         <div class="field">
@@ -167,30 +182,43 @@
           <select id="v1" class="input" bind:value={validator1Id}>
             <option value={null}>Sélectionner un enseignant</option>
             {#each teachers as t}
-              {@const isProposer = subject.proposer_role === "teacher" && t.id === subject.proposer_id}
+              {@const isProposer =
+                subject.proposer_role === "teacher" &&
+                t.id === subject.proposer_id}
               <option value={t.teacher?.id ?? t.id} disabled={isProposer}>
-                {t.full_name}{isProposer ? " — (Proposeur du sujet)" : ""}
+                {t.full_name}{isProposer ? " - (Proposeur du sujet)" : ""}
               </option>
             {/each}
           </select>
         </div>
         <div class="field">
-          <label for="v2">Validateur 2 <span class="optional">(optionnel)</span></label>
+          <label for="v2"
+            >Validateur 2 <span class="optional">(optionnel)</span></label
+          >
           <select id="v2" class="input" bind:value={validator2Id}>
             <option value={null}>Sélectionner un enseignant</option>
             {#each teachers as t}
-              {@const isProposer = subject.proposer_role === "teacher" && t.id === subject.proposer_id}
+              {@const isProposer =
+                subject.proposer_role === "teacher" &&
+                t.id === subject.proposer_id}
               <option value={t.teacher?.id ?? t.id} disabled={isProposer}>
-                {t.full_name}{isProposer ? " — (Proposeur du sujet)" : ""}
+                {t.full_name}{isProposer ? " - (Proposeur du sujet)" : ""}
               </option>
             {/each}
           </select>
         </div>
         <div class="modal-actions">
-          <Button variant="ghost" onclick={() => (showAssignModal = false)} disabled={assigning}>
+          <Button
+            variant="ghost"
+            onclick={() => (showAssignModal = false)}
+            disabled={assigning}
+          >
             Annuler
           </Button>
-          <Button onclick={assignValidators} disabled={assigning || !validator1Id}>
+          <Button
+            onclick={assignValidators}
+            disabled={assigning || !validator1Id}
+          >
             {assigning ? "Assignation..." : "Assigner"}
           </Button>
         </div>
@@ -297,7 +325,11 @@
     font-family: var(--font-sans);
     font-size: var(--text-sm);
     color: var(--color-text-muted);
-    background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
+    background: color-mix(
+      in srgb,
+      var(--color-warning) 8%,
+      var(--color-surface)
+    );
     border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent);
     border-radius: 8px;
     padding: var(--spacing-sm) var(--spacing-md);
@@ -323,8 +355,14 @@
     font-style: italic;
   }
 
-  .required { color: var(--color-danger); }
-  .optional { font-weight: 400; color: var(--color-text-muted); font-size: var(--text-xs); }
+  .required {
+    color: var(--color-danger);
+  }
+  .optional {
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
 
   .modal-actions {
     display: flex;

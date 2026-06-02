@@ -33,7 +33,6 @@
         refuse: "danger",
     };
 
-
     let showCoSupModal = $state(false);
     let selectedAssignment = $state<PfeAssignment | null>(null);
     let recommendations = $state<
@@ -85,17 +84,6 @@
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
     function selectRecommended(teacherId: number) {
         selectedTeacherId = teacherId;
     }
@@ -122,34 +110,34 @@
                     {#each assignments as a}
                         <tr>
                             <td class="code">{a.pfe_code}</td>
-                            <td>{a.subject?.title ?? "—"}</td>
+                            <td>{a.subject?.title ?? "-"}</td>
                             <td>
                                 {#if a.student}
                                     <ul class="student-list">
                                         <li>
                                             {a.student.profile?.full_name ??
-                                                "—"}
+                                                "-"}
                                         </li>
                                         {#if a.student2}<li>
                                                 {a.student2.profile
-                                                    ?.full_name ?? "—"}
+                                                    ?.full_name ?? "-"}
                                             </li>{/if}
                                         {#if a.student3}<li>
                                                 {a.student3.profile
-                                                    ?.full_name ?? "—"}
+                                                    ?.full_name ?? "-"}
                                             </li>{/if}
                                     </ul>
-                                {:else}—{/if}
+                                {:else}-{/if}
                             </td>
-                            <td>{a.supervisor?.profile?.full_name ?? "—"}</td>
+                            <td>{a.supervisor?.profile?.full_name ?? "-"}</td>
                             <td>
                                 {#if a.co_supervisor}
                                     <span class="co-sup-name"
                                         >{a.co_supervisor.profile?.full_name ??
-                                            "—"}</span
+                                            "-"}</span
                                     >
                                 {:else}
-                                    <span class="none">—</span>
+                                    <span class="none">-</span>
                                 {/if}
                             </td>
                             <td>
@@ -159,7 +147,7 @@
                                     a.student3?.speciality?.code,
                                 ]
                                     .filter(Boolean)
-                                    .join(", ") || "—"}
+                                    .join(", ") || "-"}
                             </td>
                             <td>
                                 <Badge
@@ -180,7 +168,7 @@
                                     >
                                         <FileText size={16} />Voir
                                     </a>
-                                {:else}—{/if}
+                                {:else}-{/if}
                             </td>
                             <td>
                                 <div class="action-btns">
@@ -260,7 +248,7 @@
                             <div class="rec-left">
                                 <span class="rec-name"
                                     >{rec.teacher.profile?.full_name ??
-                                        "—"}</span
+                                        "-"}</span
                                 >
                                 <span class="rec-grade"
                                     >{rec.teacher.grade ?? ""}</span
@@ -308,8 +296,8 @@
                         {@const isSupervisor =
                             rec.teacher.id === selectedAssignment.supervisor_id}
                         <option value={rec.teacher.id} disabled={isSupervisor}>
-                            {rec.teacher.profile?.full_name ?? "—"}{isSupervisor
-                                ? " — (Encadrant principal)"
+                            {rec.teacher.profile?.full_name ?? "-"}{isSupervisor
+                                ? " - (Encadrant principal)"
                                 : ""}
                         </option>
                     {/each}

@@ -11,13 +11,20 @@
 
     let { data } = $props();
 
-    const { subject, alreadyWished, alreadyAssigned, subjectTaken, wishesCount } =
-        $derived(data);
+    const {
+        subject,
+        alreadyWished,
+        alreadyAssigned,
+        subjectTaken,
+        wishesCount,
+    } = $derived(data);
 
     let addError = $state("");
 
     const groupTypeLabel = $derived(
-        subject ? (GROUP_TYPE_LABELS[subject.group_type] ?? subject.group_type) : "",
+        subject
+            ? (GROUP_TYPE_LABELS[subject.group_type] ?? subject.group_type)
+            : "",
     );
 
     async function addWishAction() {
@@ -33,91 +40,96 @@
 </script>
 
 {#if !subject}
-<Page title="Sujet introuvable" subtitle="Ce sujet n'existe pas ou a ete supprime.">
-    <p class="error-message">Impossible de charger le sujet.</p>
-</Page>
+    <Page
+        title="Sujet introuvable"
+        subtitle="Ce sujet n'existe pas ou a ete supprime."
+    >
+        <p class="error-message">Impossible de charger le sujet.</p>
+    </Page>
 {:else}
-<Page title={subject.title} subtitle="Detail complet du sujet PFE">
-    <div class="detail-layout">
-        <div class="detail-main">
-            <section>
-                <h2>Description</h2>
-                <p class="description">{subject.description}</p>
-            </section>
+    <Page title={subject.title} subtitle="Detail complet du sujet PFE">
+        <div class="detail-layout">
+            <div class="detail-main">
+                <section>
+                    <h2>Description</h2>
+                    <p class="description">{subject.description}</p>
+                </section>
 
-            <section>
-                <h2>Informations</h2>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Domaines</span>
-                        <span class="info-value">{subject.domains?.map(d => d.name).join(', ') || '—'}</span>
+                <section>
+                    <h2>Informations</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Domaines</span>
+                            <span class="info-value"
+                                >{subject.domains
+                                    ?.map((d) => d.name)
+                                    .join(", ") || "-"}</span
+                            >
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Type de groupe</span>
+                            <Badge variant="info" label={groupTypeLabel} />
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Encadreur</span>
+                            <span class="info-value">
+                                {#if subject.proposer_role === "company"}
+                                    <Building2 size={14} />
+                                {:else}
+                                    <Users size={14} />
+                                {/if}
+                                {subject.proposer?.full_name ??
+                                    subject.proposer_role}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Type de groupe</span>
+                            <span class="info-value">{groupTypeLabel}</span>
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Type de groupe</span>
-                        <Badge variant="info" label={groupTypeLabel} />
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Encadreur</span>
-                        <span class="info-value">
-                            {#if subject.proposer_role === "company"}
-                                <Building2 size={14} />
-                            {:else}
-                                <Users size={14} />
-                            {/if}
-                            {subject.proposer?.full_name ?? subject.proposer_role}
-                        </span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Type de groupe</span>
-                        <span class="info-value">{groupTypeLabel}</span>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <aside class="detail-sidebar">
-            <div class="sidebar-card">
-                <h3>Actions</h3>
-
-                {#if alreadyAssigned}
-                    <p class="info-message">
-                        Vous avez déjà un PFE affecté. La soumission de vœux
-                        est désactivée.
-                    </p>
-                    <Button variant="ghost" href="/student/my-pfe">
-                        Voir mon PFE
-                    </Button>
-                {:else if subjectTaken}
-                    <p class="info-message is-taken">
-                        Ce sujet est déjà pris.
-                    </p>
-                {:else if alreadyWished}
-                    <p class="info-message is-success">
-                        <Heart size={16} />
-                        Ce sujet est déjà dans vos vœux.
-                    </p>
-                    <Button
-                        variant="ghost"
-                        onclick={() => goto("/student/voeux")}
-                    >
-                        Voir mes vœux
-                    </Button>
-                {:else}
-                    <Button
-                        variant="primary"
-                        onclick={addWishAction}
-                    >
-                        Ajouter à mes vœux
-                    </Button>
-                {/if}
-
-                {#if addError}
-                    <p class="error-message">{addError}</p>
-                {/if}
+                </section>
             </div>
-        </aside>
-    </div>
-</Page>
+
+            <aside class="detail-sidebar">
+                <div class="sidebar-card">
+                    <h3>Actions</h3>
+
+                    {#if alreadyAssigned}
+                        <p class="info-message">
+                            Vous avez déjà un PFE affecté. La soumission de vœux
+                            est désactivée.
+                        </p>
+                        <Button variant="ghost" href="/student/my-pfe">
+                            Voir mon PFE
+                        </Button>
+                    {:else if subjectTaken}
+                        <p class="info-message is-taken">
+                            Ce sujet est déjà pris.
+                        </p>
+                    {:else if alreadyWished}
+                        <p class="info-message is-success">
+                            <Heart size={16} />
+                            Ce sujet est déjà dans vos vœux.
+                        </p>
+                        <Button
+                            variant="ghost"
+                            onclick={() => goto("/student/voeux")}
+                        >
+                            Voir mes vœux
+                        </Button>
+                    {:else}
+                        <Button variant="primary" onclick={addWishAction}>
+                            Ajouter à mes vœux
+                        </Button>
+                    {/if}
+
+                    {#if addError}
+                        <p class="error-message">{addError}</p>
+                    {/if}
+                </div>
+            </aside>
+        </div>
+    </Page>
 {/if}
 
 <style>

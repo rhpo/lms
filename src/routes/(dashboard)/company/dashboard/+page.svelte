@@ -144,7 +144,7 @@
                     <div class="pfe-row">
                         <div class="pfe-info">
                             <span class="pfe-title">
-                                {pfe.subject?.title ?? pfe.subject_title ?? "—"}
+                                {pfe.subject?.title ?? pfe.subject_title ?? "-"}
                             </span>
                             <Badge
                                 variant={pfeStatusVariant[pfe.status] ?? "info"}

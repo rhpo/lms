@@ -65,7 +65,10 @@
                 title,
                 description,
                 group_type: groupType as import("$lib/types").GroupType,
-                domain_ids: selectedDomainIds.length > 0 ? selectedDomainIds : undefined,
+                domain_ids:
+                    selectedDomainIds.length > 0
+                        ? selectedDomainIds
+                        : undefined,
             });
             success = true;
             title = "";
@@ -163,7 +166,7 @@
                     </option>
                     {#each filteredSpecialities as spec}
                         <option value={spec.id}
-                            >{spec.code} — {spec.name}</option
+                            >{spec.code} - {spec.name}</option
                         >
                     {/each}
                 </select>
@@ -182,10 +185,18 @@
             <p class="domains-label">
                 Domaines de spécialité
                 {#if selectedDomainIds.length > 0}
-                    <span class="domain-count">({selectedDomainIds.length} sélectionné{selectedDomainIds.length > 1 ? 's' : ''})</span>
+                    <span class="domain-count"
+                        >({selectedDomainIds.length} sélectionné{selectedDomainIds.length >
+                        1
+                            ? "s"
+                            : ""})</span
+                    >
                 {/if}
             </p>
-            <p class="domain-hint">Sélectionnez les domaines liés à votre sujet — ils servent à identifier les meilleurs validateurs.</p>
+            <p class="domain-hint">
+                Sélectionnez les domaines liés à votre sujet - ils servent à
+                identifier les meilleurs validateurs.
+            </p>
             <div class="domains-grid">
                 {#each atomic.domains as dom}
                     <label class="checkbox-label">
@@ -343,7 +354,11 @@
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 0.5rem;
         padding: 0.75rem 1rem;
-        background: color-mix(in srgb, var(--color-surface) 50%, var(--color-background));
+        background: color-mix(
+            in srgb,
+            var(--color-surface) 50%,
+            var(--color-background)
+        );
         border: 1px solid var(--color-border);
         border-radius: 8px;
     }
@@ -359,7 +374,7 @@
         font-weight: 400;
     }
 
-    .checkbox-label input[type='checkbox'] {
+    .checkbox-label input[type="checkbox"] {
         accent-color: var(--color-accent);
         cursor: pointer;
     }

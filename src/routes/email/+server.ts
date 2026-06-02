@@ -1,5 +1,5 @@
-// Server-side proxy to Resend. Keeps RESEND_KEY off the client bundle
-// and works around Resend's lack of browser CORS.
+
+
 
 import { json, error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';

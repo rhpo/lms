@@ -1,8 +1,8 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// Domain Types — single source of truth, 1:1 with Go backend entity JSON tags
-// ═══════════════════════════════════════════════════════════════════════════════
 
-// ── Union types (string unions, never TS enums) ─────────────────────────────
+
+
+
+
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'company';
 
@@ -38,7 +38,7 @@ export type CompanyReportStatus = 'en_attente' | 'resolu' | 'rejete';
 
 export type TiebreakChoice = 'president' | 'member' | 'average';
 
-// ── Entity interfaces (match Go JSON tags exactly) ──────────────────────────
+
 
 export interface Profile {
   id: number;
@@ -334,7 +334,7 @@ export interface AuditLog {
   created_at: string;
 }
 
-// ── Auth ────────────────────────────────────────────────────────────────────
+
 
 export interface SessionUser {
   id: number;
@@ -349,7 +349,7 @@ export interface AuthResult {
   profile: Profile;
 }
 
-// ── Dashboard ───────────────────────────────────────────────────────────────
+
 
 export interface AdminDashboard {
   total_users: number;
@@ -378,7 +378,7 @@ export interface AdminDashboard {
   };
 }
 
-// ── Recommendation ──────────────────────────────────────────────────────────
+
 
 export interface ValidatorRecommendation {
   teacher: Teacher;
@@ -386,7 +386,7 @@ export interface ValidatorRecommendation {
   matching_domains: Domain[];
 }
 
-// ── Utility type ────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+
 export type IconComponent = new (...args: any[]) => any;

@@ -18,13 +18,12 @@
   let scheduledAt = $state("");
   let room = $state("");
 
-
   const now = new Date();
   now.setMinutes(now.getMinutes() + 1, 0, 0);
   const minDatetime = now.toISOString().slice(0, 16);
 
   let disabled = $derived(
-    !presidentId || !memberId || !scheduledAt || !room || !assignment
+    !presidentId || !memberId || !scheduledAt || !room || !assignment,
   );
   let submitting = $state(false);
   let errorMsg = $state("");
@@ -35,13 +34,11 @@
     submitting = true;
     errorMsg = "";
 
-
     if (new Date(scheduledAt) <= new Date()) {
       errorMsg = "La date de soutenance doit être dans le futur";
       submitting = false;
       return;
     }
-
 
     if (room.trim().length < 1) {
       errorMsg = "La salle est obligatoire";
@@ -49,16 +46,16 @@
       return;
     }
 
-
     if (presidentId === memberId) {
-      errorMsg = "Le président et l'examinateur doivent être des personnes différentes";
+      errorMsg =
+        "Le président et l'examinateur doivent être des personnes différentes";
       submitting = false;
       return;
     }
 
     try {
-
-      const scheduledAtRFC3339 = scheduledAt.length === 16 ? `${scheduledAt}:00Z` : scheduledAt;
+      const scheduledAtRFC3339 =
+        scheduledAt.length === 16 ? `${scheduledAt}:00Z` : scheduledAt;
       await admin.createDefense({
         assignment_id: Number(assignment.id),
         president_id: Number(presidentId),
@@ -75,11 +72,13 @@
       submitting = false;
     }
   }
-
 </script>
 
 {#if assignment}
-  <Page title="Planifier une soutenance" subtitle="Programmer une nouvelle soutenance pour ce PFE">
+  <Page
+    title="Planifier une soutenance"
+    subtitle="Programmer une nouvelle soutenance pour ce PFE"
+  >
     {#snippet actions()}
       <a href="/admin/pfe">
         <Button variant="ghost" Icon={ArrowLeft}>Retour aux PFE</Button>
@@ -93,18 +92,22 @@
         {/if}
 
         <div class="assignment-info">
-            <div class="info-group">
-                <span class="label">PFE:</span>
-                <span class="value">[{assignment.pfe_code || "PFE"}] {assignment.subject?.title ?? "Sujet inconnu"}</span>
-            </div>
-            <div class="info-group">
-                <span class="label">Étudiant:</span>
-                <span class="value">{assignment.student?.profile?.full_name ?? "Inconnu"}</span>
-            </div>
+          <div class="info-group">
+            <span class="label">PFE:</span>
+            <span class="value"
+              >[{assignment.pfe_code || "PFE"}] {assignment.subject?.title ??
+                "Sujet inconnu"}</span
+            >
+          </div>
+          <div class="info-group">
+            <span class="label">Étudiant:</span>
+            <span class="value"
+              >{assignment.student?.profile?.full_name ?? "Inconnu"}</span
+            >
+          </div>
         </div>
 
         <form onsubmit={handleSubmit} class="form-grid">
-
           <div class="separator"></div>
 
           <div class="grid-2">
@@ -137,11 +140,20 @@
                 <option value="">Sélectionner l'enseignant</option>
                 {#each teachers as t}
                   {@const teacherEntityId = t.teacher?.id ?? null}
-                  {@const isSupervisor = t.id === assignment.supervisor?.profile_id}
-                  {@const isAlreadyMember = teacherEntityId !== null && teacherEntityId === memberId}
+                  {@const isSupervisor =
+                    t.id === assignment.supervisor?.profile_id}
+                  {@const isAlreadyMember =
+                    teacherEntityId !== null && teacherEntityId === memberId}
                   {#if teacherEntityId}
-                    <option value={teacherEntityId} disabled={isSupervisor || isAlreadyMember}>
-                      {t.full_name}{isSupervisor ? " — (Encadrant de ce PFE)" : isAlreadyMember ? " — (Déjà Membre)" : ""}
+                    <option
+                      value={teacherEntityId}
+                      disabled={isSupervisor || isAlreadyMember}
+                    >
+                      {t.full_name}{isSupervisor
+                        ? " - (Encadrant de ce PFE)"
+                        : isAlreadyMember
+                          ? " - (Déjà Membre)"
+                          : ""}
                     </option>
                   {/if}
                 {/each}
@@ -153,11 +165,20 @@
                 <option value="">Sélectionner l'enseignant</option>
                 {#each teachers as t}
                   {@const teacherEntityId = t.teacher?.id ?? null}
-                  {@const isSupervisor = t.id === assignment.supervisor?.profile_id}
-                  {@const isAlreadyPresident = teacherEntityId !== null && teacherEntityId === presidentId}
+                  {@const isSupervisor =
+                    t.id === assignment.supervisor?.profile_id}
+                  {@const isAlreadyPresident =
+                    teacherEntityId !== null && teacherEntityId === presidentId}
                   {#if teacherEntityId}
-                    <option value={teacherEntityId} disabled={isSupervisor || isAlreadyPresident}>
-                      {t.full_name}{isSupervisor ? " — (Encadrant de ce PFE)" : isAlreadyPresident ? " — (Déjà Président)" : ""}
+                    <option
+                      value={teacherEntityId}
+                      disabled={isSupervisor || isAlreadyPresident}
+                    >
+                      {t.full_name}{isSupervisor
+                        ? " - (Encadrant de ce PFE)"
+                        : isAlreadyPresident
+                          ? " - (Déjà Président)"
+                          : ""}
                     </option>
                   {/if}
                 {/each}
@@ -201,7 +222,9 @@
     border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: var(--spacing-xl);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 
   .assignment-info {

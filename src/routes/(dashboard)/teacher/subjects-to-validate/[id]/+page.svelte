@@ -55,7 +55,10 @@
     loading = true;
 
     try {
-      await teacher.validateSubject(subject!.id, { decision: decision as import('$lib/types').ReviewDecision, comment });
+      await teacher.validateSubject(subject!.id, {
+        decision: decision as import("$lib/types").ReviewDecision,
+        comment,
+      });
 
       await invalidateAll();
       goto("/teacher/subjects-to-validate");
@@ -103,7 +106,7 @@
       </div>
       <div class="meta-item">
         <span class="label">Domaines</span>
-        <span>{subject!.domains?.map(d => d.name).join(', ') || '—'}</span>
+        <span>{subject!.domains?.map((d) => d.name).join(", ") || "-"}</span>
       </div>
       <div class="meta-item">
         <span class="label">Type de groupe</span>
@@ -134,8 +137,14 @@
 
     {#if alreadyDecided}
       <div class="already-decided">
-        <p>Vous avez déjà soumis votre décision pour ce sujet. Elle est en cours de traitement.</p>
-        <Button variant="ghost" onclick={() => goto("/teacher/subjects-to-validate")}>
+        <p>
+          Vous avez déjà soumis votre décision pour ce sujet. Elle est en cours
+          de traitement.
+        </p>
+        <Button
+          variant="ghost"
+          onclick={() => goto("/teacher/subjects-to-validate")}
+        >
           Retour à la liste
         </Button>
       </div>

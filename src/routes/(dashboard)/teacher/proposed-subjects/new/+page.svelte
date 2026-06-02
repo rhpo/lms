@@ -157,7 +157,7 @@
               : "Choisissez d'abord un niveau"}
           </option>
           {#each filteredSpecialities as spec}
-            <option value={spec.id}>{spec.code} — {spec.name}</option>
+            <option value={spec.id}>{spec.code} - {spec.name}</option>
           {/each}
         </select>
       </div>
@@ -175,7 +175,7 @@
           {/if}
         </span>
         <p class="domain-hint">
-          Sélectionnez les domaines liés à votre sujet — ils servent à
+          Sélectionnez les domaines liés à votre sujet - ils servent à
           identifier les meilleurs validateurs.
         </p>
         <div class="domains-grid">

@@ -64,7 +64,7 @@
                                     {#if cell}
                                         {@render cell({ row, col })}
                                     {:else}
-                                        {row[col.key] ?? "—"}
+                                        {row[col.key] ?? "-"}
                                     {/if}
                                 </td>
                             {/each}

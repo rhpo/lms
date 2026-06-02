@@ -36,7 +36,8 @@
 
   let { data } = $props();
 
-  const { settings, specialities, domains, departments, academicYears } = $derived(data);
+  const { settings, specialities, domains, departments, academicYears } =
+    $derived(data);
 
   type Tab =
     | "general"
@@ -56,7 +57,6 @@
     { id: "domains", label: "Domaines", icon: Globe },
   ];
 
-
   let submissionOpen = $state("");
   let submissionClose = $state("");
   let maxWishes = $state(5);
@@ -71,8 +71,14 @@
   });
 
   async function saveDeadlines() {
-    if (submissionOpen && submissionClose && new Date(submissionClose) <= new Date(submissionOpen)) {
-      showToast.error("La date de clôture doit être après la date d'ouverture.");
+    if (
+      submissionOpen &&
+      submissionClose &&
+      new Date(submissionClose) <= new Date(submissionOpen)
+    ) {
+      showToast.error(
+        "La date de clôture doit être après la date d'ouverture.",
+      );
       return;
     }
     if (maxWishes < 1 || maxWishes > 20) {
@@ -95,7 +101,6 @@
     }
   }
 
-
   let showCreateDeptModal = $state(false);
   let showDeleteDeptModal = $state(false);
   let newDeptName = $state("");
@@ -103,7 +108,9 @@
 
   async function createDepartment() {
     if (newDeptName.trim().length < 2) {
-      showToast.error("Le nom du département doit contenir au moins 2 caractères.");
+      showToast.error(
+        "Le nom du département doit contenir au moins 2 caractères.",
+      );
       return;
     }
     try {
@@ -130,7 +137,6 @@
     }
   }
 
-
   let showCreateSpecModal = $state(false);
   let showDeleteSpecModal = $state(false);
   let newSpecName = $state("");
@@ -141,11 +147,15 @@
 
   async function createSpeciality() {
     if (newSpecName.trim().length < 2) {
-      showToast.error("Le nom de la spécialité doit contenir au moins 2 caractères.");
+      showToast.error(
+        "Le nom de la spécialité doit contenir au moins 2 caractères.",
+      );
       return;
     }
     if (newSpecCode.trim().length < 2) {
-      showToast.error("Le code de la spécialité doit contenir au moins 2 caractères.");
+      showToast.error(
+        "Le code de la spécialité doit contenir au moins 2 caractères.",
+      );
       return;
     }
     try {
@@ -179,7 +189,6 @@
       showToast.error(err instanceof Error ? err.message : "Erreur réseau");
     }
   }
-
 
   let showCreateDomainModal = $state(false);
   let showDeleteDomainModal = $state(false);
@@ -215,7 +224,6 @@
     }
   }
 
-
   let showCreateYearModal = $state(false);
   let showCloseYearModal = $state(false);
   let newYearLabel = $state("");
@@ -226,7 +234,9 @@
 
   async function createAcademicYear() {
     if (newYearLabel.trim().length < 4) {
-      showToast.error("Le label de l'année doit contenir au moins 4 caractères (ex: 2024-2025).");
+      showToast.error(
+        "Le label de l'année doit contenir au moins 4 caractères (ex: 2024-2025).",
+      );
       return;
     }
     if (newYearMaxWishes < 1 || newYearMaxWishes > 20) {
@@ -425,8 +435,16 @@
                   />
                 </td>
                 <td>{year.max_wishes}</td>
-                <td>{year.submission_open_at ? formatDate(year.submission_open_at) : "—"}</td>
-                <td>{year.submission_close_at ? formatDate(year.submission_close_at) : "—"}</td>
+                <td
+                  >{year.submission_open_at
+                    ? formatDate(year.submission_open_at)
+                    : "-"}</td
+                >
+                <td
+                  >{year.submission_close_at
+                    ? formatDate(year.submission_close_at)
+                    : "-"}</td
+                >
                 <td>{formatDate(year.created_at)}</td>
                 <td class="actions-cell">
                   {#if year.status === "active"}
@@ -554,7 +572,7 @@
               <td>{spec.name}</td>
               <td
                 >{departments.find((d) => d.id === spec.department_id)?.name ??
-                  "—"}</td
+                  "-"}</td
               >
               <td>
                 <Badge
@@ -657,8 +675,13 @@
       />
     </FormField>
     <FormField label="Département" required>
-      <select required class="input" value={newSpecDeptId} onchange={(e) => newSpecDeptId = Number(e.currentTarget.value)}>
-        <option value={0}>— Choisir —</option>
+      <select
+        required
+        class="input"
+        value={newSpecDeptId}
+        onchange={(e) => (newSpecDeptId = Number(e.currentTarget.value))}
+      >
+        <option value={0}>- Choisir -</option>
         {#each departments as dept}
           <option value={dept.id}>{dept.name}</option>
         {/each}
@@ -821,7 +844,11 @@
     <Button variant="ghost" onclick={() => (showCreateYearModal = false)}
       >Annuler</Button
     >
-    <Button variant="primary" onclick={createAcademicYear} disabled={yearSaving || !newYearLabel.trim()}>
+    <Button
+      variant="primary"
+      onclick={createAcademicYear}
+      disabled={yearSaving || !newYearLabel.trim()}
+    >
       {yearSaving ? "Création..." : "Créer"}
     </Button>
   </div>
@@ -834,8 +861,9 @@
   onClose={() => (showCloseYearModal = false)}
 >
   <p class="delete-warning">
-    Êtes-vous sûr de vouloir clôturer l'année <strong>{closingYearLabel}</strong> ?
-    Les étudiants ne pourront plus soumettre de vœux et aucune nouvelle affectation ne sera possible.
+    Êtes-vous sûr de vouloir clôturer l'année <strong>{closingYearLabel}</strong
+    > ? Les étudiants ne pourront plus soumettre de vœux et aucune nouvelle affectation
+    ne sera possible.
   </p>
   <div class="form-actions">
     <Button variant="ghost" onclick={() => (showCloseYearModal = false)}

@@ -16,7 +16,6 @@
         disabled = false,
         disabledLabel = "",
 
-
         large = false,
         uppercase = false,
         round = false,
@@ -256,7 +255,7 @@
         color: var(--color-background);
     }
 
-    /* ghost — surface background with border, neutral hover */
+    /* ghost - surface background with border, neutral hover */
     .ghost {
         background: var(--color-surface);
         color: var(--color-text);
@@ -281,7 +280,7 @@
             color-mix(in srgb, var(--color-success) 40%, transparent);
     }
 
-    /* square — equal dimensions for icon-only buttons */
+    /* square - equal dimensions for icon-only buttons */
     .button.square {
         padding: 0.5rem;
         width: 2.125rem;

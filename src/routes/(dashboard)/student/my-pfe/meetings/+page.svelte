@@ -25,9 +25,9 @@
   });
 
   const DURATION_OPTIONS = [
-    { value: 30,  label: "30 min" },
-    { value: 60,  label: "1 h" },
-    { value: 90,  label: "1 h 30" },
+    { value: 30, label: "30 min" },
+    { value: 60, label: "1 h" },
+    { value: 90, label: "1 h 30" },
     { value: 120, label: "2 h" },
     { value: 150, label: "2 h 30" },
     { value: 180, label: "3 h" },
@@ -52,7 +52,6 @@
       await student.updateMyMeeting(reportId, { status: newStatus });
       await invalidateAll();
     } catch {
-
     } finally {
       updatingStatusId = null;
     }
@@ -88,7 +87,8 @@
       return;
     }
     if (form.topics.trim().length < 5) {
-      submitError = "Les sujets abordés doivent contenir au moins 5 caractères.";
+      submitError =
+        "Les sujets abordés doivent contenir au moins 5 caractères.";
       return;
     }
     submitting = true;
@@ -116,7 +116,11 @@
 <Page title="Suivi / Réunions" subtitle="Journal de suivi de votre PFE.">
   {#snippet actions()}
     {#if pfe}
-      <Button variant="primary" Icon={Plus} onclick={() => (showForm = !showForm)}>
+      <Button
+        variant="primary"
+        Icon={Plus}
+        onclick={() => (showForm = !showForm)}
+      >
         {showForm ? "Annuler" : "Ajouter un suivi"}
       </Button>
     {/if}
@@ -139,7 +143,12 @@
         <form onsubmit={handleSubmit}>
           <div class="form-grid">
             <FormField label="Date" required>
-              <input type="date" bind:value={form.meeting_date} required class="input" />
+              <input
+                type="date"
+                bind:value={form.meeting_date}
+                required
+                class="input"
+              />
             </FormField>
 
             <FormField label="Durée" required>
@@ -185,7 +194,14 @@
           </FormField>
 
           <div class="form-actions">
-            <Button variant="ghost" type="button" onclick={() => { showForm = false; resetForm(); }}>
+            <Button
+              variant="ghost"
+              type="button"
+              onclick={() => {
+                showForm = false;
+                resetForm();
+              }}
+            >
               Annuler
             </Button>
             <Button variant="primary" type="submit" disabled={submitting}>
@@ -218,28 +234,37 @@
             {#each [...meetings].reverse() as report, i (report.id)}
               <tr>
                 <td class="center">{i + 1}</td>
-                <td>{new Date(report.meeting_date).toLocaleDateString("fr-FR")}</td>
+                <td
+                  >{new Date(report.meeting_date).toLocaleDateString(
+                    "fr-FR",
+                  )}</td
+                >
                 <td>{formatDuration(report.duration)}</td>
                 <td>
                   <Badge
                     variant="info"
-                    label={MEETING_TYPE_LABELS[report.meeting_type] ?? report.meeting_type}
+                    label={MEETING_TYPE_LABELS[report.meeting_type] ??
+                      report.meeting_type}
                   />
                 </td>
-                <td class="topics">{report.topics || "—"}</td>
+                <td class="topics">{report.topics || "-"}</td>
                 <td>
                   <select
                     class="status-select status-{report.status}"
                     value={report.status}
                     disabled={updatingStatusId === report.id}
-                    onchange={(e) => updateStatus(report.id, (e.target as HTMLSelectElement).value)}
+                    onchange={(e) =>
+                      updateStatus(
+                        report.id,
+                        (e.target as HTMLSelectElement).value,
+                      )}
                   >
                     <option value="a_faire">À faire</option>
                     <option value="en_cours">En cours</option>
                     <option value="termine">Terminé</option>
                   </select>
                 </td>
-                <td class="observation">{report.observation ?? "—"}</td>
+                <td class="observation">{report.observation ?? "-"}</td>
               </tr>
             {/each}
           </tbody>

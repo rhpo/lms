@@ -70,7 +70,10 @@
                                 {subject.title}
                             </a>
                         </td>
-                        <td>{subject.domains?.map(d => d.name).join(', ') ?? '—'}</td>
+                        <td
+                            >{subject.domains?.map((d) => d.name).join(", ") ??
+                                "-"}</td
+                        >
                         <td>{subject.group_type}</td>
                         <td>
                             <Badge

@@ -18,7 +18,10 @@
         refuse: "Refusé",
     };
 
-    const PFE_STATUS_VARIANTS: Record<string, "info" | "warning" | "success" | "danger"> = {
+    const PFE_STATUS_VARIANTS: Record<
+        string,
+        "info" | "warning" | "success" | "danger"
+    > = {
         en_cours: "info",
         soutenance_planifiee: "warning",
         valide: "success",
@@ -26,10 +29,10 @@
     };
 
     const DURATION_OPTIONS = [
-        { value: 30,  label: "30 min" },
-        { value: 45,  label: "45 min" },
-        { value: 60,  label: "1h" },
-        { value: 90,  label: "1h30" },
+        { value: 30, label: "30 min" },
+        { value: 45, label: "45 min" },
+        { value: 60, label: "1h" },
+        { value: 90, label: "1h30" },
         { value: 120, label: "2h" },
     ];
 
@@ -50,7 +53,6 @@
         const m = mins % 60;
         return m ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
     }
-
 
     let newMeeting = $state({
         date: new Date().toISOString().split("T")[0],
@@ -99,7 +101,6 @@
         }
     }
 
-
     let criterion5 = $state(0);
     let evalComment = $state("");
     let evalError = $state("");
@@ -147,7 +148,8 @@
             <div class="meta-item">
                 <User size={14} />
                 <span>
-                    Etudiant(s) : {pfe!.student?.profile?.full_name ?? "Non assigne"}
+                    Etudiant(s) : {pfe!.student?.profile?.full_name ??
+                        "Non assigne"}
                     {#if pfe!.student2_id}
                         , {pfe!.student2?.profile?.full_name ?? "Etudiant 2"}
                     {/if}
@@ -160,7 +162,8 @@
                 <div class="meta-item">
                     <Building2 size={14} />
                     <span>
-                        Co-promoteur : {pfe!.co_supervisor?.profile?.full_name ?? "Enseignant"}
+                        Co-promoteur : {pfe!.co_supervisor?.profile
+                            ?.full_name ?? "Enseignant"}
                     </span>
                 </div>
             {/if}
@@ -181,12 +184,21 @@
             <div class="form-grid">
                 <div class="field">
                     <label for="m-date">Date</label>
-                    <input id="m-date" type="date" class="input" bind:value={newMeeting.date} />
+                    <input
+                        id="m-date"
+                        type="date"
+                        class="input"
+                        bind:value={newMeeting.date}
+                    />
                 </div>
 
                 <div class="field">
                     <label for="m-duration">Durée</label>
-                    <select id="m-duration" class="input" bind:value={newMeeting.duration}>
+                    <select
+                        id="m-duration"
+                        class="input"
+                        bind:value={newMeeting.duration}
+                    >
                         {#each DURATION_OPTIONS as opt}
                             <option value={opt.value}>{opt.label}</option>
                         {/each}
@@ -195,7 +207,11 @@
 
                 <div class="field">
                     <label for="m-type">Type de réunion</label>
-                    <select id="m-type" class="input" bind:value={newMeeting.type}>
+                    <select
+                        id="m-type"
+                        class="input"
+                        bind:value={newMeeting.type}
+                    >
                         <option value="presentiel">Présentiel</option>
                         <option value="visio">Visioconférence</option>
                     </select>
@@ -203,7 +219,11 @@
 
                 <div class="field">
                     <label for="m-status">État</label>
-                    <select id="m-status" class="input" bind:value={newMeeting.status}>
+                    <select
+                        id="m-status"
+                        class="input"
+                        bind:value={newMeeting.status}
+                    >
                         <option value="a_faire">À faire</option>
                         <option value="en_cours">En cours</option>
                         <option value="termine">Terminé</option>
@@ -233,7 +253,11 @@
                 </div>
             </div>
 
-            <Button variant="primary" onclick={addMeetingAction} disabled={meetingLoading}>
+            <Button
+                variant="primary"
+                onclick={addMeetingAction}
+                disabled={meetingLoading}
+            >
                 {meetingLoading ? "Ajout..." : "Ajouter l'entrée"}
             </Button>
         </div>
@@ -259,17 +283,30 @@
                         {#each progressReports as report}
                             <tr>
                                 <td class="cell-date">
-                                    {new Date(report.meeting_date).toLocaleDateString("fr-FR")}
+                                    {new Date(
+                                        report.meeting_date,
+                                    ).toLocaleDateString("fr-FR")}
                                 </td>
-                                <td class="cell-meta">{formatDuration(report.duration)}</td>
-                                <td class="cell-meta">{MEETING_TYPE_LABELS[report.meeting_type] ?? report.meeting_type}</td>
+                                <td class="cell-meta"
+                                    >{formatDuration(report.duration)}</td
+                                >
+                                <td class="cell-meta"
+                                    >{MEETING_TYPE_LABELS[
+                                        report.meeting_type
+                                    ] ?? report.meeting_type}</td
+                                >
                                 <td>
-                                    <span class="status-badge status-{report.status}">
-                                        {MEETING_STATUS_LABELS[report.status] ?? report.status}
+                                    <span
+                                        class="status-badge status-{report.status}"
+                                    >
+                                        {MEETING_STATUS_LABELS[report.status] ??
+                                            report.status}
                                     </span>
                                 </td>
                                 <td class="cell-topics">{report.topics}</td>
-                                <td class="cell-obs">{report.observation ?? "—"}</td>
+                                <td class="cell-obs"
+                                    >{report.observation ?? "-"}</td
+                                >
                             </tr>
                         {/each}
                     </tbody>
@@ -294,14 +331,17 @@
             <div class="eval-submitted">
                 <p>Vous avez deja soumis votre evaluation.</p>
                 <p>
-                    Note attribuee : <strong>{supervisorEval.criterion5}/4</strong>
+                    Note attribuee : <strong
+                        >{supervisorEval.criterion5}/4</strong
+                    >
                 </p>
                 <!-- no comment field in SupervisorEvaluation type -->
             </div>
         {:else}
             <div class="eval-form">
                 <p class="eval-desc">
-                    Attribuez une note sur 4 points pour l'encadrement de ce PFE.
+                    Attribuez une note sur 4 points pour l'encadrement de ce
+                    PFE.
                 </p>
                 <label>
                     Note (/4)
@@ -464,9 +504,11 @@
         }
     }
 
-    .full-width { grid-column: 1 / -1; }
+    .full-width {
+        grid-column: 1 / -1;
+    }
 
-    /* Shared input style — matches teacher page */
+    /* Shared input style - matches teacher page */
     input.input,
     textarea.input,
     select.input {
@@ -496,7 +538,10 @@
     }
 
     /* ── Table ────────────────────────────────────── */
-    .table-wrapper { overflow-x: auto; margin-top: var(--spacing-sm); }
+    .table-wrapper {
+        overflow-x: auto;
+        margin-top: var(--spacing-sm);
+    }
 
     table {
         width: 100%;
@@ -524,12 +569,29 @@
         vertical-align: top;
     }
 
-    tr:last-child td { border-bottom: none; }
+    tr:last-child td {
+        border-bottom: none;
+    }
 
-    .cell-date  { white-space: nowrap; font-weight: 600; color: var(--color-text-muted); }
-    .cell-meta  { white-space: nowrap; color: var(--color-text-muted); }
-    .cell-topics { max-width: 260px; line-height: 1.5; }
-    .cell-obs   { max-width: 200px; line-height: 1.5; color: var(--color-text-muted); font-style: italic; }
+    .cell-date {
+        white-space: nowrap;
+        font-weight: 600;
+        color: var(--color-text-muted);
+    }
+    .cell-meta {
+        white-space: nowrap;
+        color: var(--color-text-muted);
+    }
+    .cell-topics {
+        max-width: 260px;
+        line-height: 1.5;
+    }
+    .cell-obs {
+        max-width: 200px;
+        line-height: 1.5;
+        color: var(--color-text-muted);
+        font-style: italic;
+    }
 
     .status-badge {
         display: inline-block;
@@ -541,17 +603,29 @@
     }
 
     .status-a_faire {
-        background: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
+        background: color-mix(
+            in srgb,
+            var(--color-text-muted) 12%,
+            transparent
+        );
         color: var(--color-text-muted);
     }
 
     .status-en_cours {
-        background: color-mix(in srgb, var(--color-warning, #f59e0b) 15%, transparent);
+        background: color-mix(
+            in srgb,
+            var(--color-warning, #f59e0b) 15%,
+            transparent
+        );
         color: var(--color-warning, #f59e0b);
     }
 
     .status-termine {
-        background: color-mix(in srgb, var(--color-success, #22c55e) 15%, transparent);
+        background: color-mix(
+            in srgb,
+            var(--color-success, #22c55e) 15%,
+            transparent
+        );
         color: var(--color-success, #22c55e);
     }
 

@@ -14,8 +14,8 @@
   const myProfileId = $derived(authStore.profile?.id);
   const isCoSupervisor = $derived(
     pfe != null &&
-    pfe.supervisor?.profile_id !== myProfileId &&
-    pfe.co_supervisor?.profile_id === myProfileId
+      pfe.supervisor?.profile_id !== myProfileId &&
+      pfe.co_supervisor?.profile_id === myProfileId,
   );
 
   const PFE_STATUS_LABELS: Record<string, string> = {
@@ -60,7 +60,6 @@
     const m = mins % 60;
     return m ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
   }
-
 
   let newMeeting = $state({
     date: new Date().toISOString().split("T")[0],
@@ -108,7 +107,6 @@
       meetingLoading = false;
     }
   }
-
 
   let criterion5 = $state(0);
   let evalComment = $state("");
@@ -183,7 +181,10 @@
       {#if pfe!.co_supervisor_id}
         <div class="meta-item">
           <span class="label">Co-encadrant</span>
-          <span>{pfe!.co_supervisor?.profile?.full_name ?? pfe!.co_supervisor_id}</span>
+          <span
+            >{pfe!.co_supervisor?.profile?.full_name ??
+              pfe!.co_supervisor_id}</span
+          >
         </div>
       {/if}
     </div>
@@ -294,7 +295,7 @@
                   </span>
                 </td>
                 <td class="cell-topics">{entry.topics}</td>
-                <td class="cell-obs">{entry.observation ?? "—"}</td>
+                <td class="cell-obs">{entry.observation ?? "-"}</td>
               </tr>
             {/each}
           </tbody>
@@ -308,7 +309,8 @@
 
     {#if isCoSupervisor}
       <p class="co-supervisor-note">
-        En tant que co-encadrant, vous ne pouvez pas soumettre l'évaluation. Cette action est réservée à l'encadrant principal.
+        En tant que co-encadrant, vous ne pouvez pas soumettre l'évaluation.
+        Cette action est réservée à l'encadrant principal.
       </p>
     {:else}
       {#if evalError}
@@ -626,7 +628,11 @@
     color: var(--color-text-muted);
     font-style: italic;
     padding: var(--spacing-md);
-    background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
+    background: color-mix(
+      in srgb,
+      var(--color-warning) 8%,
+      var(--color-surface)
+    );
     border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent);
     border-radius: 8px;
     margin: 0;

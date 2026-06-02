@@ -11,7 +11,6 @@ import (
 	pfe_code "pfe-backend/internal/shared/pfe_code"
 )
 
-// CompanyService gère la logique métier des entreprises.
 type CompanyService struct {
 	profileRepo       *repository.ProfileRepository
 	companyRepo       *repository.CompanyRepository
@@ -29,7 +28,6 @@ type CompanyService struct {
 	notifier          *notify.Notifier
 }
 
-// NewCompanyService crée un nouveau CompanyService.
 func NewCompanyService(
 	profileRepo *repository.ProfileRepository,
 	companyRepo *repository.CompanyRepository,
@@ -64,7 +62,6 @@ func NewCompanyService(
 	}
 }
 
-// getCompanyByProfile récupère l'entité Company liée au profil, ou erreur si introuvable.
 func (s *CompanyService) getCompanyByProfile(userID int64) (*entity.Company, error) {
 	company, err := s.companyRepo.FindByProfileID(userID)
 	if err != nil {
@@ -76,7 +73,6 @@ func (s *CompanyService) getCompanyByProfile(userID int64) (*entity.Company, err
 	return company, nil
 }
 
-// Dashboard retourne les statistiques du tableau de bord entreprise.
 func (s *CompanyService) Dashboard(userID int64) (map[string]any, error) {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -94,7 +90,6 @@ func (s *CompanyService) Dashboard(userID int64) (map[string]any, error) {
 	}, nil
 }
 
-// ListSubjects liste les sujets proposés par l'entreprise avec relations.
 func (s *CompanyService) ListSubjects(userID int64) ([]*entity.PfeSubject, error) {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -110,7 +105,6 @@ func (s *CompanyService) ListSubjects(userID int64) ([]*entity.PfeSubject, error
 	return subjects, nil
 }
 
-// CreateSubject crée un sujet proposé par l'entreprise.
 func (s *CompanyService) CreateSubject(userID int64, subject *entity.PfeSubject, domainIDs []int64) error {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -137,11 +131,9 @@ func (s *CompanyService) CreateSubject(userID int64, subject *entity.PfeSubject,
 		return err
 	}
 
-
 	for _, did := range domainIDs {
 		_ = s.pfeSubjectRepo.AddDomain(subject.ID, did)
 	}
-
 
 	go s.notifier.Send(company.ProfileID, notify.TypeSujet,
 		fmt.Sprintf("Votre sujet « %s » a bien été soumis et est en attente de validation.", subject.Title))
@@ -151,8 +143,6 @@ func (s *CompanyService) CreateSubject(userID int64, subject *entity.PfeSubject,
 	return nil
 }
 
-// isCompanySubject vérifie si un sujet appartient à l'entreprise.
-// companyID est l'ID entité (companies.id), companyProfileID est le profil associé (profiles.id).
 func isCompanySubject(subject *entity.PfeSubject, companyID, companyProfileID int64) bool {
 	if subject.CompanyID.Valid && subject.CompanyID.Int64 == companyID {
 		return true
@@ -161,7 +151,6 @@ func isCompanySubject(subject *entity.PfeSubject, companyID, companyProfileID in
 	return subject.ProposerID == companyProfileID && subject.ProposerRole == "company"
 }
 
-// GetSubject retourne un sujet de l'entreprise.
 func (s *CompanyService) GetSubject(userID, id int64) (*entity.PfeSubject, error) {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -181,7 +170,6 @@ func (s *CompanyService) GetSubject(userID, id int64) (*entity.PfeSubject, error
 	return subject, nil
 }
 
-// UpdateSubject met à jour un sujet de l'entreprise.
 func (s *CompanyService) UpdateSubject(userID int64, subject *entity.PfeSubject) error {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -211,7 +199,6 @@ func (s *CompanyService) UpdateSubject(userID int64, subject *entity.PfeSubject)
 	return s.pfeSubjectRepo.Update(existing)
 }
 
-// ListCandidats liste les candidats pour un sujet de l'entreprise avec relations.
 func (s *CompanyService) ListCandidats(subjectID int64) ([]*entity.Wish, error) {
 	wishes, err := s.wishRepo.FindBySubject(subjectID)
 	if err != nil {
@@ -227,7 +214,6 @@ func (s *CompanyService) ListCandidats(subjectID int64) ([]*entity.Wish, error) 
 	return wishes, nil
 }
 
-// AcceptCandidats accepte les étudiants sélectionnés pour un sujet et crée le PfeAssignment.
 func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) error {
 
 	existing, _ := s.pfeAssignmentRepo.FindBySubjectID(subjectID)
@@ -235,21 +221,18 @@ func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) er
 		return apperror.Conflict("Les étudiants ont déjà été affectés à ce sujet")
 	}
 
-
 	subject, err := s.pfeSubjectRepo.FindByID(subjectID)
 	if err != nil || subject == nil {
 		return apperror.NotFound("Sujet introuvable")
 	}
 	if !subject.Validator1ID.Valid {
-		return apperror.Conflict("Ce sujet n'a pas encore de validateur assigné — contactez l'administration")
+		return apperror.Conflict("Ce sujet n'a pas encore de validateur assigné - contactez l'administration")
 	}
-
 
 	ay, err := s.academicYearRepo.FindActive()
 	if err != nil || ay == nil {
 		return apperror.NotFound("Aucune année académique active")
 	}
-
 
 	wishes, err := s.wishRepo.FindBySubject(subjectID)
 	if err != nil {
@@ -269,7 +252,6 @@ func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) er
 		}
 	}
 
-
 	specialityCode := "GEN"
 	student1, err := s.studentRepo.FindByID(studentIDs[0])
 	if err == nil && student1 != nil && student1.SpecialityID != nil {
@@ -279,7 +261,6 @@ func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) er
 	}
 	seq, _ := s.pfeAssignmentRepo.CountBySpecialityAndYear(ay.ID, specialityCode)
 	code := pfe_code.Generate(specialityCode, ay.Label, seq+1)
-
 
 	assignment := &entity.PfeAssignment{
 		PfeCode:        code,
@@ -298,7 +279,6 @@ func (s *CompanyService) AcceptCandidats(subjectID int64, studentIDs []int64) er
 	return s.pfeAssignmentRepo.Insert(assignment)
 }
 
-// RejectCandidat refuse un étudiant pour un sujet.
 func (s *CompanyService) RejectCandidat(subjectID, studentID int64) error {
 	wishes, err := s.wishRepo.FindBySubject(subjectID)
 	if err != nil {
@@ -313,7 +293,6 @@ func (s *CompanyService) RejectCandidat(subjectID, studentID int64) error {
 	return apperror.NotFound("Candidature introuvable")
 }
 
-// ListSupervisedPFEs liste les PFE encadrés par l'entreprise avec relations.
 func (s *CompanyService) ListSupervisedPFEs(userID int64) ([]*entity.PfeAssignment, error) {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -329,7 +308,6 @@ func (s *CompanyService) ListSupervisedPFEs(userID int64) ([]*entity.PfeAssignme
 	return assignments, nil
 }
 
-// GetSupervisedPFE retourne un PFE encadré avec relations.
 func (s *CompanyService) GetSupervisedPFE(id int64) (*entity.PfeAssignment, error) {
 	a, err := s.pfeAssignmentRepo.FindByID(id)
 	if err != nil || a == nil {
@@ -339,12 +317,10 @@ func (s *CompanyService) GetSupervisedPFE(id int64) (*entity.PfeAssignment, erro
 	return a, nil
 }
 
-// AddMeeting ajoute un meeting de suivi à un PFE.
 func (s *CompanyService) AddMeeting(report *entity.PfeProgressReport) error {
 	return s.progressRepo.Insert(report)
 }
 
-// ListMeetings liste les réunions de suivi d'un PFE.
 func (s *CompanyService) ListMeetings(assignmentID int64) ([]*entity.PfeProgressReport, error) {
 	reports, err := s.progressRepo.FindByAssignment(assignmentID)
 	if err != nil {
@@ -356,13 +332,10 @@ func (s *CompanyService) ListMeetings(assignmentID int64) ([]*entity.PfeProgress
 	return reports, nil
 }
 
-// GetEvaluation retourne l'évaluation existante d'un PFE (nil si aucune).
 func (s *CompanyService) GetEvaluation(assignmentID int64) (*entity.SupervisorEvaluation, error) {
 	return s.supEvalRepo.FindByAssignment(assignmentID)
 }
 
-// SubmitEvaluation soumet l'évaluation de l'encadrant entreprise.
-// evaluatorID est le profile_id de l'entreprise (FK non enforced en SQLite).
 func (s *CompanyService) SubmitEvaluation(assignmentID, evaluatorID int64, criterion5 float64) error {
 	if criterion5 < 0 || criterion5 > 4 {
 		return apperror.BadRequest("Le critère 5 doit être entre 0 et 4")
@@ -389,7 +362,6 @@ func (s *CompanyService) SubmitEvaluation(assignmentID, evaluatorID int64, crite
 	return s.supEvalRepo.Insert(eval)
 }
 
-// ListReports liste les signalements de l'entreprise.
 func (s *CompanyService) ListReports(userID int64) ([]*entity.CompanyReport, error) {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -398,7 +370,6 @@ func (s *CompanyService) ListReports(userID int64) ([]*entity.CompanyReport, err
 	return s.companyReportRepo.FindByCompany(company.ID)
 }
 
-// CreateReport crée un signalement.
 func (s *CompanyService) CreateReport(userID int64, report *entity.CompanyReport) error {
 	company, err := s.getCompanyByProfile(userID)
 	if err != nil {
@@ -412,12 +383,10 @@ func (s *CompanyService) CreateReport(userID int64, report *entity.CompanyReport
 	return s.companyReportRepo.Insert(report)
 }
 
-// ListNotifications liste les notifications de l'entreprise.
 func (s *CompanyService) ListNotifications(userID int64) ([]*entity.Notification, error) {
 	return s.notificationRepo.FindByRecipient(userID)
 }
 
-// GetStudentProfileID retourne le profile_id d'un étudiant à partir de son entity ID.
 func (s *CompanyService) GetStudentProfileID(studentID int64) (int64, error) {
 	st, err := s.studentRepo.FindByID(studentID)
 	if err != nil {
@@ -429,7 +398,6 @@ func (s *CompanyService) GetStudentProfileID(studentID int64) (int64, error) {
 	return st.ProfileID, nil
 }
 
-// GetSubjectTitle returns the title of a subject by ID (for notifications).
 func (s *CompanyService) GetSubjectTitle(subjectID int64) string {
 	sub, err := s.pfeSubjectRepo.FindByID(subjectID)
 	if err != nil || sub == nil {
@@ -437,8 +405,6 @@ func (s *CompanyService) GetSubjectTitle(subjectID int64) string {
 	}
 	return sub.Title
 }
-
-// ── Hydration helpers ───────────────────────────────────────────────────────
 
 func (s *CompanyService) hydrateTeacher(id int64) *entity.Teacher {
 	if id == 0 {

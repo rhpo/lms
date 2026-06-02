@@ -1,6 +1,6 @@
-// Package notify provides a single entry-point for sending in-app
-// notifications.  Every call fans out to a list of Channels; today the
-// channels are the SQLite insert and Resend email delivery.
+
+
+
 package notify
 
 import (
@@ -14,9 +14,9 @@ import (
 	"pfe-backend/internal/repository"
 )
 
-// ──────────────────────────────────────────────────────────────────────
-// Types & notification kinds (keep in sync with the frontend constants)
-// ──────────────────────────────────────────────────────────────────────
+
+
+
 
 const (
 	TypeValidationRequise = "validation_requise"
@@ -26,29 +26,29 @@ const (
 	TypeSujet             = "sujet"
 )
 
-// Message is the payload written into each notification row.
+
 type Message struct {
 	Message string `json:"message"`
 }
 
-// Channel is any transport that can deliver a notification.
-// Implement this interface to add websockets, email, etc.
+
+
 type Channel interface {
 	Send(n *entity.Notification) error
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// Notifier — the only thing callers interact with
-// ──────────────────────────────────────────────────────────────────────
 
-// Notifier holds all channels and exposes high-level helpers.
+
+
+
+
 type Notifier struct {
 	channels    []Channel
 	profileRepo *repository.ProfileRepository
 }
 
-// New creates a Notifier that persists to SQLite, sends email via Resend,
-// and can resolve admin IDs for "notify all admins" helpers.
+
+
 func New(notifRepo *repository.NotificationRepository, profileRepo *repository.ProfileRepository, resendAPIKey string) *Notifier {
 	channels := []Channel{&dbChannel{repo: notifRepo}}
 
@@ -66,18 +66,18 @@ func New(notifRepo *repository.NotificationRepository, profileRepo *repository.P
 	}
 }
 
-// AddChannel registers an extra delivery channel (websocket, etc.).
+
 func (n *Notifier) AddChannel(ch Channel) {
 	n.channels = append(n.channels, ch)
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// Low-level send
-// ──────────────────────────────────────────────────────────────────────
 
-// Send dispatches a notification to every registered channel.
-// Errors are logged but never propagated — notifications must not
-// break the main request flow.
+
+
+
+
+-
+
 func (n *Notifier) Send(recipientID int64, notifType, message string) {
 	payload, _ := json.Marshal(Message{Message: message})
 	notif := &entity.Notification{
@@ -92,18 +92,18 @@ func (n *Notifier) Send(recipientID int64, notifType, message string) {
 	}
 }
 
-// SendMany sends the same notification to multiple recipients.
+
 func (n *Notifier) SendMany(recipientIDs []int64, notifType, message string) {
 	for _, id := range recipientIDs {
 		n.Send(id, notifType, message)
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// High-level helpers
-// ──────────────────────────────────────────────────────────────────────
 
-// AdminIDs returns the profile IDs of all admin users.
+
+
+
+
 func (n *Notifier) AdminIDs() []int64 {
 	profiles, err := n.profileRepo.FindAll()
 	if err != nil {
@@ -119,14 +119,14 @@ func (n *Notifier) AdminIDs() []int64 {
 	return ids
 }
 
-// NotifyAdmins sends a notification to every admin.
+
 func (n *Notifier) NotifyAdmins(notifType, message string) {
 	n.SendMany(n.AdminIDs(), notifType, message)
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// dbChannel — SQLite persistence (the default channel)
-// ──────────────────────────────────────────────────────────────────────
+
+-
+
 
 type dbChannel struct {
 	repo *repository.NotificationRepository
@@ -136,22 +136,22 @@ func (d *dbChannel) Send(n *entity.Notification) error {
 	return d.repo.Insert(n)
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// emailChannel — Resend email delivery
-// ──────────────────────────────────────────────────────────────────────
+
+-
+
 
 type emailChannel struct {
 	apiKey      string
 	profileRepo *repository.ProfileRepository
 }
 
-// notifTypeSubjects maps notification types to human-readable email subjects.
+
 var notifTypeSubjects = map[string]string{
-	TypeValidationRequise: "Action requise — Plateforme PFE",
+	TypeValidationRequise: "Action requise - Plateforme PFE",
 	TypeAffectation:       "Mise à jour de votre PFE",
-	TypeJury:              "Soutenance — Plateforme PFE",
-	TypeDisponibilite:     "Suivi PFE — Nouvelle information",
-	TypeSujet:             "Sujet PFE — Mise à jour",
+	TypeJury:              "Soutenance - Plateforme PFE",
+	TypeDisponibilite:     "Suivi PFE - Nouvelle information",
+	TypeSujet:             "Sujet PFE - Mise à jour",
 }
 
 func (e *emailChannel) Send(n *entity.Notification) error {
@@ -170,7 +170,7 @@ func (e *emailChannel) Send(n *entity.Notification) error {
 
 	subject := notifTypeSubjects[n.Type]
 	if subject == "" {
-		subject = "Notification — Plateforme PFE"
+		subject = "Notification - Plateforme PFE"
 	}
 
 

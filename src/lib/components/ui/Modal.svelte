@@ -1,5 +1,5 @@
 <!--
-  Modal.svelte — Reusable modal primitive.
+  Modal.svelte - Reusable modal primitive.
 
   The modern replacement for prompt()/alert()/confirm().
   Renders a centered overlay with backdrop blur, escape-to-close,

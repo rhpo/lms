@@ -3,39 +3,39 @@
  *
  * Loaded once on first authenticated page mount.  Every page inside (dashboard)
  * can import { atomic } and read .domains / .departments / .specialities / .niveaux
- * synchronously — the data is guaranteed to be present (the layout gate blocks
+ * synchronously - the data is guaranteed to be present (the layout gate blocks
  * rendering until all four are resolved, and throws if any fetch fails).
  */
 
 import { ref } from '$lib/api';
 import type { Domain, Department, Speciality, YearType } from '$lib/types';
 
-// ── internal reactive state (Svelte 5 module-level $state is fine in .ts) ──
 
-let _domains    = $state<Domain[]>([]);
+
+let _domains = $state<Domain[]>([]);
 let _departments = $state<Department[]>([]);
 let _specialities = $state<Speciality[]>([]);
-let _ready      = $state(false);
-let _error      = $state<string | null>(null);
+let _ready = $state(false);
+let _error = $state<string | null>(null);
 
-/** Static — never changes, but co-located here so every page grabs from one place. */
+/** Static - never changes, but co-located here so every page grabs from one place. */
 const NIVEAUX: YearType[] = ['licence', 'master'];
 
-// ── public API ──────────────────────────────────────────────────────────────
+
 
 export const atomic = {
   /* ── reactive getters ─────────────────────────────────────────────────── */
-  get domains()       { return _domains; },
-  get departments()   { return _departments; },
-  get specialities()  { return _specialities; },
-  get niveaux()       { return NIVEAUX; },
-  get ready()         { return _ready; },
-  get error()         { return _error; },
+  get domains() { return _domains; },
+  get departments() { return _departments; },
+  get specialities() { return _specialities; },
+  get niveaux() { return NIVEAUX; },
+  get ready() { return _ready; },
+  get error() { return _error; },
 
   /**
    * Fetch all reference data in parallel.
    * Throws (and sets .error) if ANY request fails.
-   * Safe to call multiple times — subsequent calls are no-ops once loaded.
+   * Safe to call multiple times - subsequent calls are no-ops once loaded.
    */
   async load() {
     if (_ready) return;
@@ -48,16 +48,16 @@ export const atomic = {
       ]);
 
       if (domains === null || domains === undefined ||
-          departments === null || departments === undefined ||
-          specialities === null || specialities === undefined) {
-        throw new Error('Données de référence manquantes — le serveur a renvoyé une réponse vide.');
+        departments === null || departments === undefined ||
+        specialities === null || specialities === undefined) {
+        throw new Error('Données de référence manquantes - le serveur a renvoyé une réponse vide.');
       }
 
-      _domains      = domains;
-      _departments  = departments;
+      _domains = domains;
+      _departments = departments;
       _specialities = specialities;
-      _ready        = true;
-      _error        = null;
+      _ready = true;
+      _error = null;
     } catch (err) {
       _error = err instanceof Error
         ? err.message

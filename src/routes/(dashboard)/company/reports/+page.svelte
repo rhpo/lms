@@ -5,7 +5,10 @@
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Page from "$lib/components/ui/Page.svelte";
-  import { COMPANY_REPORT_STATUS_LABELS, formatDate } from "$lib/constants/labels";
+  import {
+    COMPANY_REPORT_STATUS_LABELS,
+    formatDate,
+  } from "$lib/constants/labels";
   import type { CompanyReportStatus } from "$lib/types";
 
   let { data } = $props();
@@ -60,7 +63,9 @@
               <td>
                 <Badge
                   variant={variantMap[report.status] ?? "neutral"}
-                  label={COMPANY_REPORT_STATUS_LABELS[report.status as CompanyReportStatus] ?? report.status}
+                  label={COMPANY_REPORT_STATUS_LABELS[
+                    report.status as CompanyReportStatus
+                  ] ?? report.status}
                 />
               </td>
               <td class="date-cell">
@@ -72,7 +77,7 @@
                   </div>
                 {/if}
               </td>
-              <td class="desc-cell">{report.requested_value ?? "—"}</td>
+              <td class="desc-cell">{report.requested_value ?? "-"}</td>
             </tr>
           {/each}
         </tbody>

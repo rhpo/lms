@@ -5,7 +5,7 @@ import type {
   AcademicYearStatus, CompanyReportStatus,
 } from '$lib/types';
 
-// ── French labels for all union types ───────────────────────────────────────
+
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrateur',
@@ -108,7 +108,7 @@ export const COMPANY_REPORT_STATUS_LABELS: Record<CompanyReportStatus, string> =
   rejete: 'Rejeté',
 };
 
-// ── Badge variant mappings ──────────────────────────────────────────────────
+
 
 type BadgeVariant = 'info' | 'success' | 'warning' | 'danger';
 
@@ -157,7 +157,7 @@ export const YEAR_TYPE_VARIANTS: Record<YearType, BadgeVariant> = {
   master: 'warning',
 };
 
-// ── Select options (for dropdowns) ──────────────────────────────────────────
+
 
 export const YEAR_TYPE_OPTIONS = [
   { value: 'licence' as const, label: 'Licence' },
@@ -185,7 +185,7 @@ export const MEETING_TYPE_OPTIONS = [
 ] as const;
 
 
-// ── Notification ──────────────────────────────────────────────────────────────
+
 export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   validation_requise: "Validation requise",
   affectation: "Affectation",
@@ -194,10 +194,10 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
 };
 
 
-// ── Formatters ──────────────────────────────────────────────────────────────
+
 
 export function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'short',
@@ -206,7 +206,7 @@ export function formatDate(iso: string | null | undefined): string {
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'short',

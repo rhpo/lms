@@ -16,8 +16,6 @@
 
   const { subjects } = $derived(data);
 
-
-
   function otherValidatorDecision(subject: PfeSubject): string | null {
     const d1 = subject.validator1_decision;
     const d2 = subject.validator2_decision;
@@ -39,10 +37,7 @@
   };
 </script>
 
-<Page
-  title="Sujets à valider"
-  subtitle="Sujets en attente de votre décision."
->
+<Page title="Sujets à valider" subtitle="Sujets en attente de votre décision.">
   {#if subjects.length === 0}
     <div class="empty">
       <p>Aucun sujet en attente de votre décision pour le moment.</p>
@@ -66,9 +61,15 @@
             {@const other = otherValidatorDecision(subject)}
             <tr>
               <td class="title">{subject.title}</td>
-              <td>{ROLE_LABELS[subject.proposer_role] ?? subject.proposer_role}</td>
-              <td>{subject.domains?.map((d) => d.name).join(", ") || "—"}</td>
-              <td>{GROUP_TYPE_LABELS[subject.group_type] ?? subject.group_type}</td>
+              <td
+                >{ROLE_LABELS[subject.proposer_role] ??
+                  subject.proposer_role}</td
+              >
+              <td>{subject.domains?.map((d) => d.name).join(", ") || "-"}</td>
+              <td
+                >{GROUP_TYPE_LABELS[subject.group_type] ??
+                  subject.group_type}</td
+              >
               <td>
                 {#if other}
                   <Badge
@@ -84,7 +85,8 @@
                 <Button
                   variant="ghost"
                   Icon={Eye}
-                  onclick={() => goto(`/teacher/subjects-to-validate/${subject.id}`)}
+                  onclick={() =>
+                    goto(`/teacher/subjects-to-validate/${subject.id}`)}
                 >
                   Décider
                 </Button>

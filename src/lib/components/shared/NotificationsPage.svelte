@@ -60,7 +60,7 @@
                 n.id === id ? { ...n, read_at: new Date().toISOString() } : n,
             );
         } catch {
-            // silent
+
         }
     }
 
@@ -73,7 +73,7 @@
                 read_at: n.read_at ?? new Date().toISOString(),
             }));
         } catch {
-            // silent
+
         }
     }
 

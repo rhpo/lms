@@ -10,7 +10,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// mustExec exécute une requête SQL et abandonne en cas d'erreur.
 func mustExec(tx *sql.Tx, query string, args ...any) sql.Result {
 	res, err := tx.Exec(query, args...)
 	if err != nil {
@@ -19,7 +18,6 @@ func mustExec(tx *sql.Tx, query string, args ...any) sql.Result {
 	return res
 }
 
-// queryID retourne l'ID d'une ligne existante ou 0 si introuvable.
 func queryID(tx *sql.Tx, query string, args ...any) int64 {
 	var id int64
 	_ = tx.QueryRow(query, args...).Scan(&id)
@@ -35,7 +33,6 @@ func main() {
 	}
 	defer db.Close()
 
-
 	if err := runMigrations(db); err != nil {
 		log.Fatalf("Erreur migration: %v", err)
 	}
@@ -48,19 +45,13 @@ func main() {
 	}
 	defer tx.Rollback()
 
-
-
-
 	deptNames := []string{"Informatique", "Electronique", "Chimie", "Finance"}
 	deptIDs := map[string]int64{}
 	for _, name := range deptNames {
 		mustExec(tx, `INSERT OR IGNORE INTO departments (name) VALUES (?)`, name)
 		deptIDs[name] = queryID(tx, `SELECT id FROM departments WHERE name = ?`, name)
 	}
-	fmt.Println("  ✓ Départements (4)")
-
-
-
+	fmt.Println("[DONE] Départements (4)")
 
 	domainNames := []string{
 		"Intelligence Artificielle",
@@ -77,10 +68,7 @@ func main() {
 		mustExec(tx, `INSERT OR IGNORE INTO domains (name) VALUES (?)`, name)
 		domainIDs[name] = queryID(tx, `SELECT id FROM domains WHERE name = ?`, name)
 	}
-	fmt.Println("  ✓ Domaines (8)")
-
-
-
+	fmt.Println("[DONE] Domaines (8)")
 
 	type specDef struct{ name, code, yearType, dept string }
 	specs := []specDef{
@@ -100,10 +88,7 @@ func main() {
 			s.name, s.code, s.yearType, deptIDs[s.dept])
 		specIDs[s.code] = queryID(tx, `SELECT id FROM specialities WHERE code = ?`, s.code)
 	}
-	fmt.Println("  ✓ Spécialités (8)")
-
-
-
+	fmt.Println("[DONE] Spécialités (8)")
 
 	mustExec(tx, `INSERT OR IGNORE INTO academic_years (label, status) VALUES (?, ?)`, "2023-2024", "cloturee")
 	mustExec(tx, `INSERT OR IGNORE INTO academic_years (label, status, submission_open_at, submission_close_at, max_wishes) VALUES (?, ?, ?, ?, ?)`,
@@ -111,21 +96,13 @@ func main() {
 	yearID2024 := queryID(tx, `SELECT id FROM academic_years WHERE label = ?`, "2023-2024")
 	yearID2025 := queryID(tx, `SELECT id FROM academic_years WHERE label = ?`, "2024-2025")
 	_ = yearID2024
-	fmt.Println("  ✓ Années académiques (2)")
-
-
-
+	fmt.Println("[DONE] Années académiques (2)")
 
 	mustExec(tx, `INSERT OR IGNORE INTO promotions (label, academic_year_id) VALUES (?, ?)`, "ISIL M2 2024-2025", yearID2025)
 	mustExec(tx, `INSERT OR IGNORE INTO promotions (label, academic_year_id) VALUES (?, ?)`, "ELEC M2 2024-2025", yearID2025)
 	promoISIL := queryID(tx, `SELECT id FROM promotions WHERE label = ?`, "ISIL M2 2024-2025")
 	promoELEC := queryID(tx, `SELECT id FROM promotions WHERE label = ?`, "ELEC M2 2024-2025")
-	fmt.Println("  ✓ Promotions (2)")
-
-
-
-
-
+	fmt.Println("[DONE] Promotions (2)")
 
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('admin', 'DJOUAMAA Amir', 'djouamaa.amir@codiha.com', 1)`)
@@ -140,7 +117,6 @@ func main() {
 		mustExec(tx, `INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (?, ?)`, djouamaaTeacherID, domainIDs[d])
 	}
 
-
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('teacher', 'BOUYAKOUB Faycal', 'bouyakoub.faycal@codiha.com', 1)`)
 	bouyakProfileID := queryID(tx, `SELECT id FROM profiles WHERE email = ?`, "bouyakoub.faycal@codiha.com")
@@ -153,7 +129,6 @@ func main() {
 	for _, d := range []string{"Intelligence Artificielle", "Systèmes Embarqués", "Génie Logiciel"} {
 		mustExec(tx, `INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (?, ?)`, bouyakTeacherID, domainIDs[d])
 	}
-
 
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('teacher', 'OUADAHI Nazim', 'ouadahi.nazim@codiha.com', 1)`)
@@ -168,7 +143,6 @@ func main() {
 		mustExec(tx, `INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (?, ?)`, ouadahiTeacherID, domainIDs[d])
 	}
 
-
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('teacher', 'MAHMOUDI Mohamed', 'mahmoudi.mohamed@codiha.com', 1)`)
 	mahmoudiProfileID := queryID(tx, `SELECT id FROM profiles WHERE email = ?`, "mahmoudi.mohamed@codiha.com")
@@ -182,11 +156,8 @@ func main() {
 		mustExec(tx, `INSERT OR IGNORE INTO teacher_domains (teacher_id, domain_id) VALUES (?, ?)`, mahmoudiTeacherID, domainIDs[d])
 	}
 
-	fmt.Printf("  ✓ Enseignants (4) — IDs teacher: DJOUAMAA=%d, BOUYAKOUB=%d, OUADAHI=%d, MAHMOUDI=%d\n",
+	fmt.Printf("[DONE] Enseignants (4) - IDs teacher: DJOUAMAA=%d, BOUYAKOUB=%d, OUADAHI=%d, MAHMOUDI=%d\n",
 		djouamaaTeacherID, bouyakTeacherID, ouadahiTeacherID, mahmoudiTeacherID)
-
-
-
 
 	type studentDef struct {
 		fullName, email, number, specCode, level string
@@ -213,10 +184,7 @@ func main() {
 			pid, s.number, specIDs[s.specCode], s.level, s.promoID)
 		studentIDs[s.email] = queryID(tx, `SELECT id FROM students WHERE profile_id = ?`, pid)
 	}
-	fmt.Println("  ✓ Étudiants (6)")
-
-
-
+	fmt.Println("[DONE] Étudiants (6)")
 
 	mustExec(tx,
 		`INSERT OR IGNORE INTO profiles (role, full_name, email, is_active) VALUES ('company', 'Salah Zeghdani', 'salah.zeghdani@sonatrach.dz', 1)`)
@@ -234,10 +202,7 @@ func main() {
 		0,
 	)
 	sonatrachCompanyID := queryID(tx, `SELECT id FROM companies WHERE profile_id = ?`, zeghdaniProfileID)
-	fmt.Printf("  ✓ Entreprise Sonatrach (en attente) — company_id=%d\n", sonatrachCompanyID)
-
-
-
+	fmt.Printf("[DONE] Entreprise Sonatrach (en attente) - company_id=%d\n", sonatrachCompanyID)
 
 	type subjectDef struct {
 		title, description, groupType string
@@ -307,14 +272,7 @@ func main() {
 		)
 		subjectIDs[i] = queryID(tx, `SELECT id FROM pfe_subjects WHERE title = ?`, s.title)
 	}
-	fmt.Println("  ✓ Sujets PFE (4)")
-
-
-
-
-
-
-
+	fmt.Println("[DONE] Sujets PFE (4)")
 
 	type wishDef struct {
 		studentEmail string
@@ -336,11 +294,7 @@ func main() {
 			`INSERT OR IGNORE INTO wishes (student_id, subject_id, academic_year_id, status) VALUES (?, ?, ?, ?)`,
 			sid, subID, yearID2025, w.status)
 	}
-	fmt.Println("  ✓ Vœux (6)")
-
-
-
-
+	fmt.Println("[DONE] Vœux (6)")
 
 	mustExec(tx,
 		`INSERT OR IGNORE INTO pfe_assignments
@@ -354,7 +308,6 @@ func main() {
 		"soutenance_planifiee",
 	)
 	assign1ID := queryID(tx, `SELECT id FROM pfe_assignments WHERE pfe_code = ?`, "PFE-ISIL-2025-001")
-
 
 	mustExec(tx,
 		`INSERT OR IGNORE INTO pfe_assignments
@@ -370,10 +323,7 @@ func main() {
 	assign2ID := queryID(tx, `SELECT id FROM pfe_assignments WHERE pfe_code = ?`, "PFE-ISIL-2025-002")
 	_ = assign2ID
 
-	fmt.Println("  ✓ Affectations PFE (2)")
-
-
-
+	fmt.Println("[DONE] Affectations PFE (2)")
 
 	type meetingDef struct {
 		date, meetingType, topics, observation, status string
@@ -420,19 +370,13 @@ func main() {
 			assign1ID, m.date, m.duration, m.meetingType, m.topics, obs, m.status,
 		)
 	}
-	fmt.Println("  ✓ Journal de suivi — 5 réunions (assignment 1)")
-
-
-
+	fmt.Println("[DONE] Journal de suivi - 5 réunions (assignment 1)")
 
 	mustExec(tx,
 		`INSERT OR IGNORE INTO supervisor_evaluations (pfe_assignment_id, evaluator_id, criterion5) VALUES (?, ?, ?)`,
 		assign1ID, bouyakTeacherID, 3.5,
 	)
-	fmt.Println("  ✓ Évaluation encadrant — 3.5/4 (BOUYAKOUB → HADID/GOUMIRI)")
-
-
-
+	fmt.Println("[DONE] Évaluation encadrant - 3.5/4 (BOUYAKOUB -> HADID/GOUMIRI)")
 
 	mustExec(tx,
 		`INSERT OR IGNORE INTO defense_juries
@@ -448,10 +392,7 @@ func main() {
 		VALUES (?, ?, ?, ?, ?)`,
 		assign1ID, juryID, "2025-06-16 09:00:00", "Salle B205", "scheduled",
 	)
-	fmt.Println("  ✓ Jury + Soutenance planifiée — 16 juin 2025, Salle B205")
-
-
-
+	fmt.Println("[DONE] Jury + Soutenance planifiée - 16 juin 2025, Salle B205")
 
 	if err := tx.Commit(); err != nil {
 		log.Fatalf("Erreur commit: %v", err)
@@ -464,10 +405,9 @@ func main() {
 	fmt.Println("  Étudiants ISIL   : rami.hadid@codiha.com | samy.goumiri@codiha.com | anis.boudraa@codiha.com")
 	fmt.Println("                     saber.saadi@codiha.com | arab.abderahim@codiha.com")
 	fmt.Println("  Étudiant ELEC    : racim.bouafia@codiha.com")
-	fmt.Println("  Entreprise       : salah.zeghdani@sonatrach.dz  (Sonatrach — en attente de validation)")
+	fmt.Println("  Entreprise       : salah.zeghdani@sonatrach.dz  (Sonatrach - en attente de validation)")
 }
 
-// nullInt retourne nil si v == 0, sinon v (pour les FK optionnelles).
 func nullInt(v int64) any {
 	if v == 0 {
 		return nil
@@ -475,7 +415,6 @@ func nullInt(v int64) any {
 	return v
 }
 
-// nullStr retourne nil si s == "", sinon s (pour les champs TEXT optionnels).
 func nullStr(s string) any {
 	if s == "" {
 		return nil
@@ -483,10 +422,6 @@ func nullStr(s string) any {
 	return s
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Migrations — miroir exact du schéma de cmd/server/main.go
-// Toutes les tables sont créées avec IF NOT EXISTS (idempotent).
-// ─────────────────────────────────────────────────────────────────────────────
 func runMigrations(db *sql.DB) error {
 	stmts := []string{
 		`CREATE TABLE IF NOT EXISTS profiles (

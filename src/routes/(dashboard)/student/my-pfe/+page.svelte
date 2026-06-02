@@ -1,6 +1,13 @@
 <script lang="ts">
     import { invalidateAll } from "$app/navigation";
-    import { FileText, User, Building2, Upload, CheckCircle, Award } from "lucide-svelte";
+    import {
+        FileText,
+        User,
+        Building2,
+        Upload,
+        CheckCircle,
+        Award,
+    } from "lucide-svelte";
     import { student } from "$lib/api";
     import { upload } from "$lib/api";
 
@@ -13,8 +20,9 @@
 
     const { pfe, progressReports, defense, supervisorNote } = $derived(data);
 
-
-    const hasFinalGrade = $derived(!!(defense?.final_grade !== null && defense?.final_grade !== undefined));
+    const hasFinalGrade = $derived(
+        !!(defense?.final_grade !== null && defense?.final_grade !== undefined),
+    );
 
     let showMeetingForm = $state(false);
     let meetingError = $state("");
@@ -49,7 +57,6 @@
         termine: "Terminé",
     };
 
-
     let memoireFile = $state<File | null>(null);
     let memoireUploading = $state(false);
     let memoireError = $state("");
@@ -73,11 +80,9 @@
         memoireError = "";
         memoireUploading = true;
         try {
-
             const formData = new FormData();
             formData.append("file", memoireFile);
             const { url } = await upload.memoire(formData);
-
 
             await student.submitMemoire({ memoire_url: url });
 
@@ -85,7 +90,10 @@
             memoireFile = null;
             await invalidateAll();
         } catch (err: unknown) {
-            memoireError = err instanceof Error ? err.message : "Erreur lors du dépôt du mémoire.";
+            memoireError =
+                err instanceof Error
+                    ? err.message
+                    : "Erreur lors du dépôt du mémoire.";
         } finally {
             memoireUploading = false;
         }
@@ -99,7 +107,6 @@
             await student.updateMyMeeting(reportId, { status: newStatus });
             await invalidateAll();
         } catch {
-
         } finally {
             updatingStatusId = null;
         }
@@ -227,25 +234,36 @@
                 <h3>Mémoire</h3>
             </div>
 
-        <!-- Final grade banner -->
-        {#if hasFinalGrade && defense}
-            <div class="final-grade-banner">
-                <div class="fg-left">
-                    <Award size={20} />
-                    <div>
-                        <p class="fg-title">Note finale disponible</p>
-                        <p class="fg-sub">
-                            Votre soutenance a été évaluée. Note :
-                            <strong>{typeof defense.final_grade === 'number' ? defense.final_grade.toFixed(2) : defense.final_grade} / 20</strong>
-                            — {typeof defense.final_grade === 'number' && defense.final_grade >= 10 ? '✓ Admis' : '✗ Non admis'}
-                        </p>
+            <!-- Final grade banner -->
+            {#if hasFinalGrade && defense}
+                <div class="final-grade-banner">
+                    <div class="fg-left">
+                        <Award size={20} />
+                        <div>
+                            <p class="fg-title">Note finale disponible</p>
+                            <p class="fg-sub">
+                                Votre soutenance a été évaluée. Note :
+                                <strong
+                                    >{typeof defense.final_grade === "number"
+                                        ? defense.final_grade.toFixed(2)
+                                        : defense.final_grade} / 20</strong
+                                >
+                                - {typeof defense.final_grade === "number" &&
+                                defense.final_grade >= 10
+                                    ? "✓ Admis"
+                                    : "✗ Non admis"}
+                            </p>
+                        </div>
                     </div>
+                    <Button
+                        variant="primary"
+                        href="/student/soutenance"
+                        size="sm"
+                    >
+                        Voir le détail
+                    </Button>
                 </div>
-                <Button variant="primary" href="/student/soutenance" size="sm">
-                    Voir le détail
-                </Button>
-            </div>
-        {/if}
+            {/if}
 
             {#if hasMemoire}
                 <div class="memoire-done">
@@ -253,17 +271,24 @@
                     <div>
                         <p class="memoire-done-title">Mémoire déposé</p>
                         <p class="memoire-done-hint">
-                            Le mémoire a été soumis avec succès. Un seul dépôt par groupe est nécessaire.
+                            Le mémoire a été soumis avec succès. Un seul dépôt
+                            par groupe est nécessaire.
                         </p>
                     </div>
                 </div>
             {:else}
                 <p class="memoire-hint">
-                    Un seul membre du {pfe.subject?.group_type === "monome" ? "monôme" : pfe.subject?.group_type === "binome" ? "binôme" : "trinôme"} doit déposer le mémoire (PDF uniquement).
+                    Un seul membre du {pfe.subject?.group_type === "monome"
+                        ? "monôme"
+                        : pfe.subject?.group_type === "binome"
+                          ? "binôme"
+                          : "trinôme"} doit déposer le mémoire (PDF uniquement).
                 </p>
 
                 {#if memoireSuccess}
-                    <div class="success-banner">Mémoire déposé avec succès.</div>
+                    <div class="success-banner">
+                        Mémoire déposé avec succès.
+                    </div>
                 {/if}
 
                 {#if memoireError}
@@ -273,7 +298,9 @@
                 <div class="memoire-upload">
                     <label class="file-input-label" for="memoire-input">
                         <Upload size={16} />
-                        {memoireFile ? memoireFile.name : "Choisir un fichier PDF"}
+                        {memoireFile
+                            ? memoireFile.name
+                            : "Choisir un fichier PDF"}
                     </label>
                     <input
                         id="memoire-input"
@@ -292,7 +319,9 @@
                         onclick={submitMemoireAction}
                         disabled={!memoireFile || memoireUploading}
                     >
-                        {memoireUploading ? "Envoi en cours..." : "Déposer le mémoire"}
+                        {memoireUploading
+                            ? "Envoi en cours..."
+                            : "Déposer le mémoire"}
                     </Button>
                 </div>
             {/if}
@@ -444,7 +473,7 @@
                                         />
                                     </td>
                                     <td class="meeting-topics"
-                                        >{report.topics || "—"}</td
+                                        >{report.topics || "-"}</td
                                     >
                                     <td>
                                         <select
@@ -472,7 +501,7 @@
                                         </select>
                                     </td>
                                     <td class="meeting-observation"
-                                        >{report.observation ?? "—"}</td
+                                        >{report.observation ?? "-"}</td
                                     >
                                 </tr>
                             {/each}
@@ -736,8 +765,13 @@
 
     .success-banner {
         padding: 0.75rem 1rem;
-        background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
-        border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
+        background: color-mix(
+            in srgb,
+            var(--color-success) 10%,
+            var(--color-surface)
+        );
+        border: 1px solid
+            color-mix(in srgb, var(--color-success) 20%, transparent);
         border-radius: 8px;
         font-size: var(--text-sm);
         font-family: var(--font-sans);
@@ -791,8 +825,13 @@
         align-items: flex-start;
         gap: var(--spacing-sm);
         padding: var(--spacing-md);
-        background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
-        border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
+        background: color-mix(
+            in srgb,
+            var(--color-success) 8%,
+            var(--color-surface)
+        );
+        border: 1px solid
+            color-mix(in srgb, var(--color-success) 20%, transparent);
         border-radius: 8px;
         color: var(--color-success);
     }

@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { ArrowLeft, Calendar, MapPin, User, GraduationCap, CheckCircle } from "lucide-svelte";
+  import {
+    ArrowLeft,
+    Calendar,
+    MapPin,
+    User,
+    GraduationCap,
+    CheckCircle,
+  } from "lucide-svelte";
   import Badge from "$lib/components/ui/Badge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Page from "$lib/components/ui/Page.svelte";
@@ -7,19 +14,25 @@
   let { data } = $props();
   const defense = $derived(data.defense);
 
-  const statusVariant: Record<string, "success" | "warning" | "danger" | "info" | "neutral"> = {
+  const statusVariant: Record<
+    string,
+    "success" | "warning" | "danger" | "info" | "neutral"
+  > = {
     scheduled: "warning",
     done: "success",
     postponed: "danger",
   };
-  
+
   const statusLabel: Record<string, string> = {
     scheduled: "Planifiée",
     done: "Terminée",
     postponed: "Reportée",
   };
-  
-  const resultVariant: Record<string, "success" | "warning" | "danger" | "info" | "neutral"> = {
+
+  const resultVariant: Record<
+    string,
+    "success" | "warning" | "danger" | "info" | "neutral"
+  > = {
     admitted: "success",
     corrections_required: "warning",
     not_admitted: "danger",
@@ -32,19 +45,22 @@
   };
 
   function formatDate(d: string | Date | null | undefined) {
-    if (!d) return "—";
+    if (!d) return "-";
     return new Date(d).toLocaleString("fr-FR", {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   }
 </script>
 
 {#if defense}
-  <Page title="Détails de la Soutenance" subtitle={`PFE: ${defense.assignment?.subject?.title ?? "Sujet inconnu"}`}>
+  <Page
+    title="Détails de la Soutenance"
+    subtitle={`PFE: ${defense.assignment?.subject?.title ?? "Sujet inconnu"}`}
+  >
     {#snippet actions()}
       <a href="/admin/pfe">
         <Button variant="ghost" Icon={ArrowLeft}>Retour</Button>
@@ -67,7 +83,7 @@
             <MapPin class="icon" size={18} />
             <div>
               <span class="label">Salle</span>
-              <span class="value">{defense.room || "—"}</span>
+              <span class="value">{defense.room || "-"}</span>
             </div>
           </div>
           <div class="detail-item">
@@ -75,9 +91,9 @@
             <div>
               <span class="label">Statut</span>
               <span class="value">
-                <Badge 
-                    variant={statusVariant[defense.status] ?? "neutral"} 
-                    label={statusLabel[defense.status] ?? defense.status} 
+                <Badge
+                  variant={statusVariant[defense.status] ?? "neutral"}
+                  label={statusLabel[defense.status] ?? defense.status}
                 />
               </span>
             </div>
@@ -94,7 +110,7 @@
             <div>
               <span class="label">Étudiant</span>
               <span class="value">
-                {defense.assignment?.student?.profile?.full_name ?? "—"}
+                {defense.assignment?.student?.profile?.full_name ?? "-"}
                 {#if defense.assignment?.student2}
                   , {defense.assignment.student2.profile?.full_name}
                 {/if}
@@ -108,7 +124,10 @@
             <User class="icon" size={18} />
             <div>
               <span class="label">Encadrant</span>
-              <span class="value">{defense.assignment?.supervisor?.profile?.full_name ?? "—"}</span>
+              <span class="value"
+                >{defense.assignment?.supervisor?.profile?.full_name ??
+                  "-"}</span
+              >
             </div>
           </div>
           {#if defense.assignment?.co_supervisor_id}
@@ -116,7 +135,10 @@
               <User class="icon" size={18} />
               <div>
                 <span class="label">Co-encadrant</span>
-                <span class="value">{defense.assignment?.co_supervisor?.profile?.full_name ?? "—"}</span>
+                <span class="value"
+                  >{defense.assignment?.co_supervisor?.profile?.full_name ??
+                    "-"}</span
+                >
               </div>
             </div>
           {/if}
@@ -130,19 +152,25 @@
           <div class="grid-2">
             <div class="jury-member">
               <h3>Président du Jury</h3>
-              <p>{defense.jury.president?.profile?.full_name ?? "—"}</p>
-              <Badge 
-                variant={defense.jury.president_confirmed ? "success" : "warning"} 
-                label={defense.jury.president_confirmed ? "Confirmé" : "En attente"} 
+              <p>{defense.jury.president?.profile?.full_name ?? "-"}</p>
+              <Badge
+                variant={defense.jury.president_confirmed
+                  ? "success"
+                  : "warning"}
+                label={defense.jury.president_confirmed
+                  ? "Confirmé"
+                  : "En attente"}
               />
             </div>
-            
+
             <div class="jury-member">
               <h3>Examinateur</h3>
-              <p>{defense.jury.member?.profile?.full_name ?? "—"}</p>
-              <Badge 
-                variant={defense.jury.member_confirmed ? "success" : "warning"} 
-                label={defense.jury.member_confirmed ? "Confirmé" : "En attente"} 
+              <p>{defense.jury.member?.profile?.full_name ?? "-"}</p>
+              <Badge
+                variant={defense.jury.member_confirmed ? "success" : "warning"}
+                label={defense.jury.member_confirmed
+                  ? "Confirmé"
+                  : "En attente"}
               />
             </div>
           </div>
@@ -150,26 +178,28 @@
           <p class="text-muted">Aucun jury n'est assigné à cette soutenance.</p>
         {/if}
       </section>
-      
+
       <!-- Résultats -->
       {#if defense.status === "done" && defense.result}
         <section class="card full-width outcome">
-            <h2>Résultat de la Soutenance</h2>
-            <div class="result-display">
-                <div class="decision">
-                    <span class="label">Décision du jury :</span>
-                    <Badge 
-                        variant={resultVariant[defense.result] ?? "neutral"} 
-                        label={resultLabel[defense.result] ?? defense.result} 
-                    />
-                </div>
-                {#if defense.final_grade}
-                    <div class="grade">
-                        <span class="label">Note finale :</span>
-                        <span class="grade-value">{defense.final_grade.toFixed(2)} / 20</span>
-                    </div>
-                {/if}
+          <h2>Résultat de la Soutenance</h2>
+          <div class="result-display">
+            <div class="decision">
+              <span class="label">Décision du jury :</span>
+              <Badge
+                variant={resultVariant[defense.result] ?? "neutral"}
+                label={resultLabel[defense.result] ?? defense.result}
+              />
             </div>
+            {#if defense.final_grade}
+              <div class="grade">
+                <span class="label">Note finale :</span>
+                <span class="grade-value"
+                  >{defense.final_grade.toFixed(2)} / 20</span
+                >
+              </div>
+            {/if}
+          </div>
         </section>
       {/if}
     </div>
@@ -269,35 +299,40 @@
     font-weight: 500;
     margin: 0 0 var(--spacing-sm);
   }
-  
+
   .text-muted {
-      color: var(--color-text-muted);
-      font-style: italic;
+    color: var(--color-text-muted);
+    font-style: italic;
   }
-  
+
   .outcome {
-      background: color-mix(in srgb, var(--color-success) 5%, var(--color-surface));
-      border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-success) 5%,
+      var(--color-surface)
+    );
+    border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
   }
-  
+
   .result-display {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: var(--spacing-sm) 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
   }
-  
-  .decision, .grade {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--spacing-sm);
+
+  .decision,
+  .grade {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
-  
+
   .grade-value {
-      font-size: 2rem;
-      font-weight: 800;
-      color: var(--color-primary);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-primary);
   }
 
   @media screen and (max-width: 768px) {
@@ -308,8 +343,8 @@
       grid-template-columns: 1fr;
     }
     .result-display {
-        flex-direction: column;
-        gap: var(--spacing-lg);
+      flex-direction: column;
+      gap: var(--spacing-lg);
     }
   }
 </style>

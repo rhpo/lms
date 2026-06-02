@@ -6,7 +6,7 @@ const _unreadCount = writable(0);
 let _polling: ReturnType<typeof setInterval> | null = null;
 
 export const notificationStore = {
-  /** Svelte store — subscribe for reactive unread count. */
+  /** Svelte store - subscribe for reactive unread count. */
   subscribe: _unreadCount.subscribe,
 
   get unreadCount() {

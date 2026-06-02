@@ -1,23 +1,23 @@
-// Resend integration — calls a SvelteKit server route at /email which
-// proxies to Resend. The API key lives in the server-side .env (RESEND_KEY)
-// and is never shipped to the browser. This also sidesteps Resend's lack
-// of browser CORS.
+
+
+
+
 //
-// Note: the endpoint lives at /email (not /api/email) because the Vite dev
-// proxy forwards /api/* to the Go backend.
+
+
 //
-// Bulk sends use BCC — one API call, recipients are hidden from each other.
-// Per-recipient `$name` personalisation is therefore only available when
-// sending to a single user (sendMail / sendMailTo).
+
+
+
 //
-// Every public function shows a success/error toast on completion.
+
 
 import type { Profile } from './types';
 import { showToast } from './utils/toast';
 
 const EMAIL_ENDPOINT = '/email';
 
-// Anything that has an `email` field works (Profile, Teacher, Student, ...).
+
 export type MailRecipient = Pick<Profile, 'email'> & Partial<Pick<Profile, 'full_name'>>;
 
 export interface MailPayload {
@@ -35,7 +35,7 @@ interface ResendResponse {
   name?: string;
 }
 
-/** "ramy.hadid42@esst-sup.com" → "Ramy Hadid" (non-letters stripped). */
+/** "ramy.hadid42@esst-sup.com" -> "Ramy Hadid" (non-letters stripped). */
 const prettifyEmail = (email: string): string =>
   email
     .split('@')[0]
@@ -93,7 +93,7 @@ export function sendMail(payload: MailPayload): Promise<ResendResponse> {
 }
 
 /**
- * Bulk send via BCC — one Resend call, recipients are hidden from each other.
+ * Bulk send via BCC - one Resend call, recipients are hidden from each other.
  * `to` defaults to the `from` address (Resend requires `to` to be non-empty).
  */
 export function sendMailToMany(
@@ -116,7 +116,7 @@ export function sendMailToMany(
   );
 }
 
-/** Send to a single User/Profile. `$name` → full_name, else email. */
+/** Send to a single User/Profile. `$name` -> full_name, else email. */
 export function sendMailTo(
   user: MailRecipient,
   subject: string,
@@ -134,7 +134,7 @@ export function sendMailTo(
 }
 
 /**
- * Bulk send to many User/Profile objects via BCC — single API call.
+ * Bulk send to many User/Profile objects via BCC - single API call.
  * Per-recipient `$name` substitution is not possible with BCC; any `$name`
  * tokens are left as a literal placeholder.
  */

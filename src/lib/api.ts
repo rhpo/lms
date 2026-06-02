@@ -7,7 +7,7 @@ import type {
   TeacherGrade, ReviewDecision, GroupType, MeetingType,
 } from './types';
 
-// ─── Token management ────────────────────────────────────────────────────────
+
 
 const TOKEN_KEY = 'pfe_token';
 const API_URL = '';
@@ -25,7 +25,7 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-// ─── Core fetch wrapper ──────────────────────────────────────────────────────
+
 
 const API_BASE = '/api';
 
@@ -95,7 +95,7 @@ export async function downloadBlob(path: string): Promise<Blob> {
   return await res.blob();
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
+
 
 export const auth = {
   devLogin: (email: string) => post<AuthResult>('/auth/dev-login', { email }),
@@ -116,7 +116,7 @@ export const auth = {
   }) => post<AuthResult>('/auth/register-company', body),
 };
 
-// ─── Reference data (all authenticated roles) ───────────────────────────────
+
 
 export const ref = {
   domains: () => get<Domain[]>('/ref/domains'),
@@ -125,7 +125,7 @@ export const ref = {
   allUsers: () => get<Profile[]>('/accounts/users'),
 };
 
-// ─── Admin ───────────────────────────────────────────────────────────────────
+
 
 export const admin = {
 
@@ -254,7 +254,7 @@ export const admin = {
   exportStatistics: () => get<AdminDashboard>('/admin/exports/statistiques'),
 };
 
-// ─── Teacher ─────────────────────────────────────────────────────────────────
+
 
 export const teacher = {
   dashboard: () => get<Record<string, unknown>>('/teacher/dashboard'),
@@ -330,7 +330,7 @@ export const teacher = {
   }) => post<{ message: string }>(`/teacher/jury-duties/${defenseId}/final-grade`, body),
 };
 
-// ─── Student ─────────────────────────────────────────────────────────────────
+
 
 export const student = {
   settings: () => get<{ max_wishes: number; submission_open_at: string | null; submission_close_at: string | null }>('/student/settings'),
@@ -354,7 +354,7 @@ export const student = {
   listNotifications: () => get<Notification[]>('/student/notifications'),
 };
 
-// ─── Company ─────────────────────────────────────────────────────────────────
+
 
 export const company = {
   dashboard: () => get<Record<string, unknown>>('/company/dashboard'),
@@ -387,7 +387,7 @@ export const company = {
   listNotifications: () => get<Notification[]>('/company/notifications'),
 };
 
-// ─── Notifications (shared) ──────────────────────────────────────────────────
+
 
 export const notifications = {
   list: () => get<Notification[]>('/notifications'),
@@ -396,7 +396,7 @@ export const notifications = {
   markAllRead: () => post<{ message: string }>('/notifications/read-all'),
 };
 
-// ─── Upload ──────────────────────────────────────────────────────────────────
+
 
 export const upload = {
   avatar: (formData: FormData) =>
@@ -407,7 +407,7 @@ export const upload = {
     request<{ url: string }>('/upload/memoire', { method: 'POST', body: formData }),
 };
 
-// ─── Backward-compat alias ───────────────────────────────────────────────────
+
 
 export const shared = {
   domains: ref.domains,

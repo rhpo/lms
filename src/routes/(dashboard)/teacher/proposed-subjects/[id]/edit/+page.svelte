@@ -19,7 +19,6 @@
     { value: "ingenieur", label: "Ingénieur" },
   ] as const;
 
-
   let title = $state(subject?.title ?? "");
   let description = $state(subject?.description ?? "");
   let groupType = $state<"monome" | "binome" | "trinome">(
@@ -47,7 +46,6 @@
       ? specialities.filter((s) => s.year_type === selectedNiveau)
       : [],
   );
-
 
   const validator1Comment = $derived(subject?.validator1_comment ?? null);
   const validator2Comment = $derived(subject?.validator2_comment ?? null);
@@ -79,7 +77,8 @@
         title,
         description,
         group_type: groupType,
-        domain_ids: selectedDomainIds.length > 0 ? selectedDomainIds : undefined,
+        domain_ids:
+          selectedDomainIds.length > 0 ? selectedDomainIds : undefined,
       });
       goto("/teacher/proposed-subjects");
     } catch (err: unknown) {
@@ -91,8 +90,15 @@
 </script>
 
 {#if !subject}
-  <Page title="Sujet introuvable" subtitle="Ce sujet n'existe pas ou vous n'y avez pas accès.">
-    <Button variant="ghost" Icon={ArrowLeft} onclick={() => goto("/teacher/proposed-subjects")}>
+  <Page
+    title="Sujet introuvable"
+    subtitle="Ce sujet n'existe pas ou vous n'y avez pas accès."
+  >
+    <Button
+      variant="ghost"
+      Icon={ArrowLeft}
+      onclick={() => goto("/teacher/proposed-subjects")}
+    >
       Retour
     </Button>
   </Page>
@@ -184,10 +190,12 @@
             disabled={!selectedNiveau}
           >
             <option value="">
-              {selectedNiveau ? "Sélectionner une spécialité" : "Choisissez d'abord un niveau"}
+              {selectedNiveau
+                ? "Sélectionner une spécialité"
+                : "Choisissez d'abord un niveau"}
             </option>
             {#each filteredSpecialities as spec}
-              <option value={spec.id}>{spec.code} — {spec.name}</option>
+              <option value={spec.id}>{spec.code} - {spec.name}</option>
             {/each}
           </select>
         </div>
@@ -197,7 +205,10 @@
             Domaines de spécialité
             {#if selectedDomainIds.length > 0}
               <span class="domain-count">
-                ({selectedDomainIds.length} sélectionné{selectedDomainIds.length > 1 ? "s" : ""})
+                ({selectedDomainIds.length} sélectionné{selectedDomainIds.length >
+                1
+                  ? "s"
+                  : ""})
               </span>
             {/if}
           </span>
@@ -232,7 +243,10 @@
       </div>
 
       <div class="actions">
-        <Button variant="ghost" onclick={() => goto("/teacher/proposed-subjects")}>
+        <Button
+          variant="ghost"
+          onclick={() => goto("/teacher/proposed-subjects")}
+        >
           Annuler
         </Button>
         <Button variant="primary" type="submit" disabled={loading}>
@@ -245,7 +259,11 @@
 
 <style>
   .comments-card {
-    background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
+    background: color-mix(
+      in srgb,
+      var(--color-warning) 8%,
+      var(--color-surface)
+    );
     border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
     border-radius: 12px;
     padding: var(--spacing-md);
@@ -308,7 +326,9 @@
     margin-bottom: var(--spacing-lg);
 
     @media screen and (max-width: 600px) {
-      & { grid-template-columns: 1fr; }
+      & {
+        grid-template-columns: 1fr;
+      }
     }
   }
 
@@ -348,7 +368,11 @@
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    background: color-mix(in srgb, var(--color-surface) 50%, var(--color-background));
+    background: color-mix(
+      in srgb,
+      var(--color-surface) 50%,
+      var(--color-background)
+    );
     border: 1px solid var(--color-border);
     border-radius: 8px;
   }
@@ -381,7 +405,9 @@
     color: var(--color-text-muted);
   }
 
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     padding: 0.6rem 0.75rem;
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -396,7 +422,8 @@
     &:focus {
       outline: none;
       border-color: var(--color-accent);
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 20%, transparent);
+      box-shadow: 0 0 0 2px
+        color-mix(in srgb, var(--color-accent) 20%, transparent);
     }
   }
 

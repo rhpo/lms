@@ -53,11 +53,16 @@
         <tbody>
           {#each supervisedPfes as pfe}
             <tr>
-              <td class="title">{pfe.subject?.title ?? pfe.subject_title ?? "—"}</td>
+              <td class="title"
+                >{pfe.subject?.title ?? pfe.subject_title ?? "-"}</td
+              >
               <td>
-                {pfe.student?.profile?.full_name ?? "Étudiant #" + pfe.student_id}
-                {#if pfe.student2_id}, {pfe.student2?.profile?.full_name ?? "Étudiant #" + pfe.student2_id}{/if}
-                {#if pfe.student3_id}, {pfe.student3?.profile?.full_name ?? "Étudiant #" + pfe.student3_id}{/if}
+                {pfe.student?.profile?.full_name ??
+                  "Étudiant #" + pfe.student_id}
+                {#if pfe.student2_id}, {pfe.student2?.profile?.full_name ??
+                    "Étudiant #" + pfe.student2_id}{/if}
+                {#if pfe.student3_id}, {pfe.student3?.profile?.full_name ??
+                    "Étudiant #" + pfe.student3_id}{/if}
               </td>
               <td>
                 {#if pfe.supervisor?.profile_id === myProfileId}

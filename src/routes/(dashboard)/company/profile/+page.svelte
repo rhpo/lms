@@ -1,12 +1,17 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import { upload } from "$lib/api";
-  import { Building2, ImagePlus, X, CheckCircle, AlertCircle } from "lucide-svelte";
+  import {
+    Building2,
+    ImagePlus,
+    X,
+    CheckCircle,
+    AlertCircle,
+  } from "lucide-svelte";
 
   let { data } = $props();
   let profile = $derived(data.profile);
   let company = $derived(profile?.company);
-
 
   let logoFile = $state<File | null>(null);
   let logoPreview = $state<string>("");
@@ -22,7 +27,9 @@
     uploadSuccess = false;
     uploadError = "";
     const reader = new FileReader();
-    reader.onload = (ev) => { logoPreview = ev.target?.result as string; };
+    reader.onload = (ev) => {
+      logoPreview = ev.target?.result as string;
+    };
     reader.readAsDataURL(file);
   }
 
@@ -65,13 +72,13 @@
     <div class="card-header">
       <div class="company-avatar">
         {#if company?.logo_url}
-          <img src={company.logo_url} alt={company.company_name ?? ''} />
+          <img src={company.logo_url} alt={company.company_name ?? ""} />
         {:else}
           <Building2 size={32} />
         {/if}
       </div>
       <div class="company-meta">
-        <h2>{company?.company_name ?? "—"}</h2>
+        <h2>{company?.company_name ?? "-"}</h2>
         {#if company?.sector}
           <span class="sector">{company.sector}</span>
         {/if}
@@ -110,7 +117,8 @@
       Logo de l'entreprise
     </h3>
     <p class="section-desc">
-      Uploadez ou mettez à jour le logo de votre entreprise. Il sera visible par les étudiants lors de la sélection d'entreprise.
+      Uploadez ou mettez à jour le logo de votre entreprise. Il sera visible par
+      les étudiants lors de la sélection d'entreprise.
     </p>
 
     {#if uploadSuccess}
@@ -350,7 +358,11 @@
   .logo-upload-zone:hover {
     border-color: var(--color-accent);
     color: var(--color-accent);
-    background: color-mix(in srgb, var(--color-accent) 4%, var(--color-background-100));
+    background: color-mix(
+      in srgb,
+      var(--color-accent) 4%,
+      var(--color-background-100)
+    );
   }
 
   .logo-upload-zone span {

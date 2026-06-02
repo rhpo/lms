@@ -48,11 +48,9 @@
   let showImportCsv = $state(false);
   let searchQuery = $state("");
 
-
   let teacherFullName = $state("");
   let teacherEmail = $state("");
   let teacherGrade = $state("assistant");
-
 
   let studentFullName = $state("");
   let studentEmail = $state("");
@@ -95,7 +93,6 @@
       );
     });
   });
-
 
   let filteredCompanies = $derived(
     filterBySearch(companies, [
@@ -353,18 +350,18 @@
                     {s.full_name}
                   </div>
                 </td>
-                <td class="cell-mono">{s.student?.student_number ?? "—"}</td>
+                <td class="cell-mono">{s.student?.student_number ?? "-"}</td>
                 <td class="cell-email">{s.email}</td>
                 <td>
                   {#if s.student?.speciality}
                     <span class="spec-badge">{s.student.speciality.code}</span>
                     <span class="spec-name">{s.student.speciality.name}</span>
                   {:else}
-                    <span class="cell-muted">—</span>
+                    <span class="cell-muted">-</span>
                   {/if}
                 </td>
-                <td class="cell-level">{s.student?.level ?? "—"}</td>
-                <td class="cell-muted">{s.student?.promotion?.label ?? "—"}</td>
+                <td class="cell-level">{s.student?.level ?? "-"}</td>
+                <td class="cell-muted">{s.student?.promotion?.label ?? "-"}</td>
                 <td>
                   <Badge
                     variant={s.is_active ? "success" : "danger"}
@@ -372,7 +369,11 @@
                   />
                 </td>
                 <td class="cell-actions">
-                  <Button Icon={Pen} variant="primary" href="/admin/users/{s.id}">Modifier</Button>
+                  <Button
+                    Icon={Pen}
+                    variant="primary"
+                    href="/admin/users/{s.id}">Modifier</Button
+                  >
                   {#if s.is_active}
                     <Button
                       Icon={Ban}
@@ -399,7 +400,6 @@
     </div>
   {/if}
 
-
   {#if activeTab === "companies"}
     <div class="table-wrap">
       <table>
@@ -421,9 +421,9 @@
           {:else}
             {#each filteredCompanies as c}
               <tr>
-                <td class="cell-name">{c.company_name ?? "—"}</td>
-                <td>{c.sector ?? "—"}</td>
-                <td>{c.contact_phone ?? "—"}</td>
+                <td class="cell-name">{c.company_name ?? "-"}</td>
+                <td>{c.sector ?? "-"}</td>
+                <td>{c.contact_phone ?? "-"}</td>
                 <td>
                   {#if c.website}
                     <a
@@ -435,7 +435,7 @@
                       {c.website}
                     </a>
                   {:else}
-                    —
+                    -
                   {/if}
                 </td>
                 <td>

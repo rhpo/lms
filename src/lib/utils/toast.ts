@@ -12,7 +12,7 @@
 
 import { toast } from 'svelte-sonner';
 
-// Common defaults for the app
+
 const BASE_DURATION = 4000;
 
 export const showToast = {
@@ -44,13 +44,13 @@ export const showToast = {
 			duration: BASE_DURATION,
 		}),
 
-	/** Persistent loading toast — returns the toast id so you can dismiss it */
+	/** Persistent loading toast - returns the toast id so you can dismiss it */
 	loading: (message: string) =>
 		toast.loading(message, {
 			duration: Infinity,
 		}),
 
-	/** Promise-aware toast. Automatically switches from loading → success/error. */
+	/** Promise-aware toast. Automatically switches from loading -> success/error. */
 	promise: <T>(
 		promise: Promise<T>,
 		messages: { loading: string; success: string; error: string }

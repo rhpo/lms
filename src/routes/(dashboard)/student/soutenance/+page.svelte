@@ -1,11 +1,19 @@
 <script lang="ts">
-    import { Calendar, Clock, MapPin, Users, Award, Archive } from "lucide-svelte";
+    import {
+        Calendar,
+        Clock,
+        MapPin,
+        Users,
+        Award,
+        Archive,
+    } from "lucide-svelte";
     import type { ArchiveDecision } from "$lib/types";
 
     const ARCHIVE_LABELS: Record<ArchiveDecision, string> = {
-        archivable:        "Le mémoire peut être archivé",
+        archivable: "Le mémoire peut être archivé",
         minor_corrections: "Peut être archivé après des corrections mineures",
-        major_corrections: "Ne peut être archivé — corrections majeures requises",
+        major_corrections:
+            "Ne peut être archivé - corrections majeures requises",
     };
 
     import Badge from "$lib/components/ui/Badge.svelte";
@@ -75,7 +83,8 @@
                 {#if defense.result}
                     <Badge
                         variant={defenseResultVariant[defense.result] ?? "info"}
-                        label={defenseResultLabel[defense.result] ?? defense.result}
+                        label={defenseResultLabel[defense.result] ??
+                            defense.result}
                     />
                 {/if}
             </div>
@@ -123,13 +132,15 @@
                 <div class="jury-card">
                     <span class="jury-role">President</span>
                     <span class="jury-name">
-                        {defense.jury?.president?.profile?.full_name ?? "Non assigne"}
+                        {defense.jury?.president?.profile?.full_name ??
+                            "Non assigne"}
                     </span>
                 </div>
                 <div class="jury-card">
                     <span class="jury-role">Membre</span>
                     <span class="jury-name">
-                        {defense.jury?.member?.profile?.full_name ?? "Non assigne"}
+                        {defense.jury?.member?.profile?.full_name ??
+                            "Non assigne"}
                     </span>
                 </div>
             </div>
@@ -144,8 +155,15 @@
                         {#each grades as g}
                             {#if g.archive_decision}
                                 <div class="archive-row">
-                                    <span class="archive-member">{g.jury_member?.profile?.full_name ?? "Membre"}</span>
-                                    <span class="archive-label-val">{ARCHIVE_LABELS[g.archive_decision]}</span>
+                                    <span class="archive-member"
+                                        >{g.jury_member?.profile?.full_name ??
+                                            "Membre"}</span
+                                    >
+                                    <span class="archive-label-val"
+                                        >{ARCHIVE_LABELS[
+                                            g.archive_decision
+                                        ]}</span
+                                    >
                                 </div>
                             {/if}
                         {/each}
@@ -178,25 +196,35 @@
                     </div>
                     <div class="grade-breakdown">
                         <div class="criterion">
-                            <span class="criterion-label">Jury (critères C1–C4)</span>
+                            <span class="criterion-label"
+                                >Jury (critères C1–C4)</span
+                            >
                             <span class="criterion-value">
                                 {supervisorNote !== null
-                                    ? ((defense.final_grade ?? 0) - supervisorNote).toFixed(2)
-                                    : "—"} / 16
+                                    ? (
+                                          (defense.final_grade ?? 0) -
+                                          supervisorNote
+                                      ).toFixed(2)
+                                    : "-"} / 16
                             </span>
                         </div>
                         <div class="criterion supervisor-row">
-                            <span class="criterion-label">Note encadrant (C5)</span>
+                            <span class="criterion-label"
+                                >Note encadrant (C5)</span
+                            >
                             <span class="criterion-value">
                                 {#if supervisorNote !== null}
                                     {supervisorNote} / 4
                                 {:else}
-                                    <em class="not-submitted">Non disponible</em>
+                                    <em class="not-submitted">Non disponible</em
+                                    >
                                 {/if}
                             </span>
                         </div>
                         <div class="criterion total-row">
-                            <span class="criterion-label"><strong>Total</strong></span>
+                            <span class="criterion-label"
+                                ><strong>Total</strong></span
+                            >
                             <span class="criterion-value">
                                 <strong
                                     >{typeof defense.final_grade === "number"
@@ -209,7 +237,8 @@
                 </div>
             {:else if supervisorNote !== null}
                 <p class="pending-note">
-                    Note encadrant reçue ({supervisorNote}/4). En attente des notes du jury.
+                    Note encadrant reçue ({supervisorNote}/4). En attente des
+                    notes du jury.
                 </p>
             {:else}
                 <p class="pending-note">
@@ -366,7 +395,11 @@
     }
 
     .total-row {
-        background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+        background: color-mix(
+            in srgb,
+            var(--color-accent) 8%,
+            var(--color-surface)
+        );
     }
 
     .archive-decisions {
@@ -415,11 +448,17 @@
         padding: 0.6rem 1rem;
         border-bottom: 1px solid var(--color-border);
 
-        &:last-child { border-bottom: none; }
+        &:last-child {
+            border-bottom: none;
+        }
     }
 
     .criterion.supervisor-row {
-        background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+        background: color-mix(
+            in srgb,
+            var(--color-accent) 5%,
+            var(--color-surface)
+        );
     }
 
     .criterion-label {

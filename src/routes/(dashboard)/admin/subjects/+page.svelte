@@ -27,7 +27,6 @@
   const subjects: PfeSubject[] = $derived(data.subjects);
   const teachers: Profile[] = $derived(data.teachers);
 
-
   let statusFilter = $state("");
 
   const filteredSubjects = $derived(() => {
@@ -35,7 +34,6 @@
 
     return subjects.filter((s) => s.status === statusFilter);
   });
-
 
   let showAssignModal = $state(false);
   let assignSubjectId = $state(0);
@@ -178,7 +176,7 @@
           <td>{GROUP_TYPE_LABELS[subject.group_type] ?? subject.group_type}</td>
           <td class="proposer-cell">
             <span class="proposer-name">
-              {subject.proposer?.full_name ?? "—"}
+              {subject.proposer?.full_name ?? "-"}
             </span>
             {#if subject.proposer_role === "company" && subject.company?.company_name}
               <span class="proposer-company"
