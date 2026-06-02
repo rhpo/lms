@@ -1,6 +1,6 @@
 
 
-# PFE-LMS &nbsp;&horbar;&nbsp; Plateforme de Gestion des Projets de Fin d'Etudes
+# PFE-LMS - Plateforme de Gestion des Projets de Fin d'Etudes
 
 <br>
 
@@ -13,12 +13,12 @@
   <br><br>
 
   <p align="center">
-    A <strong>full-stack</strong> academic management platform for orchestrating the entire PFE <em>(Projet de Fin d'Etudes)</em> lifecycle &mdash; from subject proposal and validation, through team assignment and supervision, to defense scheduling, jury grading, and final transcript generation. Built with a <strong>Go + Fiber v3</strong> backend and a <strong>SvelteKit (Svelte 5)</strong> frontend.
+    A <strong>full-stack</strong> academic management platform for orchestrating the entire PFE <em>(Projet de Fin d'Etudes)</em> lifecycle, from subject proposal and validation, through team assignment and supervision, to defense scheduling, jury grading, and final transcript generation. Built with a <strong>Go + Fiber v3</strong> backend and a <strong>SvelteKit (Svelte 5)</strong> frontend.
   </p>
 
   <a href="https://github.com/rhpo/lms">
     <strong>
-      Explore the repository &raquo;
+      Explore the repository
     </strong>
   </a>
 
@@ -61,11 +61,11 @@
 
 <br>
 
-<h2 id="about-the-project">&bull; About The Project</h2>
+<h2 id="about-the-project">About The Project</h2>
 
 **PFE-LMS** is a comprehensive Learning Management System purpose-built for Algerian universities (and similar academic institutions) to manage the full lifecycle of final-year graduation projects.
 
-The platform digitizes and streamlines a process that traditionally relies on paper forms, email chains, and Excel spreadsheets &mdash; replacing it with a role-aware, real-time web application that keeps students, teachers, administrators, and partner companies in sync.
+The platform digitizes and streamlines a process that traditionally relies on paper forms, email chains, and Excel spreadsheets, replacing it with a role-aware, real-time web application that keeps students, teachers, administrators, and partner companies in sync.
 
 ### What it solves
 
@@ -77,36 +77,43 @@ The platform digitizes and streamlines a process that traditionally relies on pa
 
 <br>
 
-<h2 id="architecture">&bull; Architecture</h2>
+<h2 id="architecture">Architecture</h2>
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                         Client (Browser)                         │
-│                    SvelteKit 2 · Svelte 5 Runes                  │
-│                         SSR disabled (SPA)                       │
-└────────────────────────────┬─────────────────────────────────────┘
-                             │  JSON / REST
-                             ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     Go Backend (Fiber v3)                         │
-│                                                                   │
-│  ┌─────────┐   ┌───────────┐   ┌──────────────┐                 │
-│  │ Handler  │──▶│  Service   │──▶│  Repository   │                │
-│  │  (HTTP)  │   │ (Business) │   │   (SQL/DB)    │                │
-│  └─────────┘   └───────────┘   └──────┬───────┘                 │
-│       │                                │                          │
-│       │         ┌──────────────────────┘                          │
-│       │         ▼                                                 │
-│  ┌─────────────────────┐   ┌───────────────────┐                 │
-│  │   SQLite Database    │   │  Shared Packages   │                │
-│  │  (single-file, WAL) │   │  notify · auth ·   │                │
-│  └─────────────────────┘   │  apperror · ...    │                │
-│                             └───────────────────┘                 │
-│                                      │                            │
-│                          ┌───────────┴──────────┐                │
-│                          │   Resend Email API    │                │
-│                          └──────────────────────┘                │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Client ["Client (Browser)"]
+        FE["SvelteKit 2 / Svelte 5 Runes<br/>SSR disabled (SPA)"]
+    end
+
+    subgraph Backend ["Go Backend (Fiber v3)"]
+        H["Handler<br/>(HTTP)"]
+        S["Service<br/>(Business Logic)"]
+        R["Repository<br/>(SQL / Data Access)"]
+        SP["Shared Packages<br/>notify / auth / apperror / validator"]
+    end
+
+    subgraph Storage ["Storage"]
+        DB[(SQLite<br/>WAL mode)]
+        FS["Local Filesystem<br/>/uploads"]
+    end
+
+    subgraph External ["External Services"]
+        RE["Resend Email API"]
+    end
+
+    FE -- "JSON / REST" --> H
+    H --> S
+    S --> R
+    S --> SP
+    R --> DB
+    H --> FS
+    SP --> RE
+    SP --> DB
+
+    style Client fill:#ff3e00,color:#fff,stroke:#ff3e00
+    style Backend fill:#00ADD8,color:#fff,stroke:#00ADD8
+    style Storage fill:#003B57,color:#fff,stroke:#003B57
+    style External fill:#6c47ff,color:#fff,stroke:#6c47ff
 ```
 
 The system follows a **strict layered architecture**:
@@ -121,7 +128,7 @@ The system follows a **strict layered architecture**:
 
 <br>
 
-<h2 id="backend-deep-dive">&bull; Backend Deep-Dive</h2>
+<h2 id="backend-deep-dive">Backend Deep-Dive</h2>
 
 ### Tech Stack
 
@@ -138,10 +145,14 @@ The system follows a **strict layered architecture**:
 
 The backend features a **dual-channel notification system** (`shared/notify`):
 
-```
-notifier.Send(recipientProfileID, notifyType, message)
-    ├──▶ DB Channel   → INSERT into notifications table (in-app)
-    └──▶ Email Channel → Resend API (transactional email)
+```mermaid
+graph LR
+    A["notifier.Send(recipientID, type, message)"] --> B["DB Channel<br/>INSERT into notifications"]
+    A --> C["Email Channel<br/>Resend API"]
+
+    style A fill:#00ADD8,color:#fff,stroke:#00ADD8
+    style B fill:#003B57,color:#fff,stroke:#003B57
+    style C fill:#6c47ff,color:#fff,stroke:#6c47ff
 ```
 
 - `notifier.Send()` fans out to all registered channels
@@ -153,22 +164,31 @@ notifier.Send(recipientProfileID, notifyType, message)
 
 The grading system implements a **multi-step jury evaluation process**:
 
-1. **Member (Examinateur)** submits their individual evaluation (4 criteria, each /4) + archive decision
-2. **Supervisor** submits their evaluation (criterion 5, /4)
-3. **President** reviews both evaluations, then either adopts the member's grades or enters new ones
-4. Final grade = sum of 5 criteria = **/20**
-5. Student is automatically notified upon grade finalization
+```mermaid
+graph TD
+    A["Member (Examinateur)<br/>Submits individual evaluation<br/>4 criteria /4 each + archive decision"] --> D{President reviews}
+    B["Supervisor<br/>Submits evaluation<br/>criterion 5 /4"] --> D
+    D --> E["President chooses:<br/>adopt member grades OR enter new ones"]
+    E --> F["Final grade computed<br/>sum of 5 criteria = /20"]
+    F --> G["Student notified automatically"]
+
+    style A fill:#ff3e00,color:#fff,stroke:#ff3e00
+    style B fill:#00ADD8,color:#fff,stroke:#00ADD8
+    style D fill:#f59e0b,color:#000,stroke:#f59e0b
+    style F fill:#10b981,color:#fff,stroke:#10b981
+    style G fill:#6c47ff,color:#fff,stroke:#6c47ff
+```
 
 ### Key Design Decisions
 
-- **Profile ID vs Entity ID**: The system distinguishes between `profiles.id` (auth identity) and `teachers.id`/`students.id` (domain entity). All foreign keys in `defense_juries` reference teacher entity IDs, while auth middleware provides profile IDs — the service layer handles the mapping.
-- **NullString / NullFloat64 wrappers**: Custom JSON-serializable nullable types for SQLite compat.
+- **Profile ID vs Entity ID**: The system distinguishes between `profiles.id` (auth identity) and `teachers.id`/`students.id` (domain entity). All foreign keys in `defense_juries` reference teacher entity IDs, while auth middleware provides profile IDs. The service layer handles the mapping.
+- **NullString / NullFloat64 wrappers**: Custom JSON-serializable nullable types for SQLite compatibility.
 - **Auto-migration**: Schema migrations run on startup in `main.go` via `ALTER TABLE` statements.
 - **Zero-ORM**: All SQL is hand-written for full control and performance.
 
 <br>
 
-<h2 id="frontend-overview">&bull; Frontend Overview</h2>
+<h2 id="frontend-overview">Frontend Overview</h2>
 
 ### Tech Stack
 
@@ -186,39 +206,39 @@ The grading system implements a **multi-step jury evaluation process**:
 
 A custom, purpose-built component library (`src/lib/components/ui/`):
 
-`AppShell` · `Avatar` · `Badge` · `Button` · `Calendar` · `DateInput` · `FormField` · `Modal` · `Notification` · `Page` · `Pagination` · `SearchInput` · `Select` · `Switch` · `Table` · `Tabs` · `ThemeToggle` · `Tooltip`
+`AppShell` - `Avatar` - `Badge` - `Button` - `Calendar` - `DateInput` - `FormField` - `Modal` - `Notification` - `Page` - `Pagination` - `SearchInput` - `Select` - `Switch` - `Table` - `Tabs` - `ThemeToggle` - `Tooltip`
 
 ### API Layer
 
 A centralized API module (`src/lib/api.ts`) provides typed functions grouped by role:
 
 ```typescript
-admin.listSubjects()       // → GET  /api/admin/subjects
-teacher.listJuryDuties()   // → GET  /api/teacher/jury-duties
-student.getSoutenance()     // → GET  /api/student/soutenance
-company.submitSubject(...)  // → POST /api/company/subjects
+admin.listSubjects()       // GET  /api/admin/subjects
+teacher.listJuryDuties()   // GET  /api/teacher/jury-duties
+student.getSoutenance()    // GET  /api/student/soutenance
+company.submitSubject(...) // POST /api/company/subjects
 ```
 
 <br>
 
-<h2 id="user-roles">&bull; User Roles</h2>
+<h2 id="user-roles">User Roles</h2>
 
 | Role | Dashboard | Key Capabilities |
 |------|-----------|-----------------|
 | **Admin** | Full oversight | Manage users, validate subjects, assign PFEs, schedule defenses, resolve grades, audit logs, academic year settings |
 | **Teacher** | Teaching portal | Propose subjects, validate peer subjects, supervise PFEs, track meetings, evaluate students, serve on juries |
-| **Student** | Student portal | Browse catalogue, submit wishes, track PFE progress, log meetings, upload thesis, view defense & grades |
+| **Student** | Student portal | Browse catalogue, submit wishes, track PFE progress, log meetings, upload thesis, view defense and grades |
 | **Company** | Partner portal | Propose industry subjects, co-supervise PFEs, track assignment status |
 
 <br>
 
-<h2 id="features">&bull; Features</h2>
+<h2 id="features">Features</h2>
 
 ### Subject Management
 - Teachers and companies can propose PFE subjects
 - Dual-validator review workflow (each validator independently approves/rejects)
 - Subjects tagged with domains for smart jury recommendations
-- Status tracking: `en_attente` → `valide` / `accepte_sous_reserve` / `refuse`
+- Status tracking: `en_attente` > `valide` / `accepte_sous_reserve` / `refuse`
 
 ### Student Assignment
 - Students browse a catalogue and submit ranked wishes
@@ -226,12 +246,12 @@ company.submitSubject(...)  // → POST /api/company/subjects
 - Auto-generated PFE codes upon assignment
 - Catalogue shows real-time availability ("Deja pris" for assigned subjects)
 
-### Supervision & Progress
+### Supervision and Progress
 - Structured meeting logs (date, duration, type, topics, observations)
-- Progress report status tracking (`a_faire` → `en_cours` → `termine`)
+- Progress report status tracking (`a_faire` > `en_cours` > `termine`)
 - Thesis (memoire) PDF upload and tracking
 
-### Defense & Jury
+### Defense and Jury
 - Admin schedules defenses with room, date, and jury composition
 - Smart jury recommendations based on domain overlap
 - President/member role distinction enforced in UI and backend
@@ -257,12 +277,12 @@ company.submitSubject(...)  // → POST /api/company/subjects
 
 <br>
 
-<h2 id="getting-started">&bull; Getting Started</h2>
+<h2 id="getting-started">Getting Started</h2>
 
 ### Prerequisites
 
 - **Go** 1.23+
-- **Node.js** 20+ & **pnpm**
+- **Node.js** 20+ and **pnpm**
 - (Optional) **Resend** API key for email notifications
 
 ### Installation
@@ -272,13 +292,13 @@ company.submitSubject(...)  // → POST /api/company/subjects
 git clone https://github.com/rhpo/lms.git
 cd lms
 
-# ── Backend ──
+# Backend
 cd backend
 go mod download
 cp .env.example .env      # configure JWT_SECRET, RESEND_KEY, etc.
 go run cmd/server/main.go  # starts on :8080
 
-# ── Frontend ──
+# Frontend
 cd ..
 pnpm install
 pnpm dev                   # starts on :5173, proxies /api to :8080
@@ -295,7 +315,7 @@ pnpm dev                   # starts on :5173, proxies /api to :8080
 
 <br>
 
-<h2 id="project-structure">&bull; Project Structure</h2>
+<h2 id="project-structure">Project Structure</h2>
 
 ```
 lms/
@@ -303,7 +323,7 @@ lms/
 │   ├── cmd/server/main.go          # Entrypoint, routes, migrations
 │   ├── internal/
 │   │   ├── config/                  # App configuration
-│   │   ├── entity/                  # Domain models (Go structs ↔ DB rows)
+│   │   ├── entity/                  # Domain models (Go structs = DB rows)
 │   │   ├── handler/                 # HTTP handlers (admin, teacher, student, company)
 │   │   ├── repository/              # SQL queries (one repo per entity)
 │   │   ├── service/                 # Business logic layer
@@ -341,10 +361,10 @@ lms/
 
 <br>
 
-<h2 id="api-endpoints">&bull; API Endpoints</h2>
+<h2 id="api-endpoints">API Endpoints</h2>
 
 <details>
-<summary><strong>Admin</strong> &mdash; 30+ endpoints</summary>
+<summary><strong>Admin</strong> (30+ endpoints)</summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -354,7 +374,7 @@ lms/
 | `GET` | `/api/admin/pfes` | List all PFE assignments |
 | `POST` | `/api/admin/pfes/:id/co-supervisor` | Assign co-supervisor |
 | `POST` | `/api/admin/defenses` | Schedule a defense |
-| `GET` | `/api/admin/defenses/recommend-jury` | AI-assisted jury recommendations |
+| `GET` | `/api/admin/defenses/recommend-jury` | Domain-based jury recommendations |
 | `POST` | `/api/admin/defenses/:id/resolve-grade` | Resolve final grade |
 | `GET` | `/api/admin/settings/deadlines` | Academic year settings |
 | `GET` | `/api/admin/audit-log` | System audit trail |
@@ -362,7 +382,7 @@ lms/
 </details>
 
 <details>
-<summary><strong>Teacher</strong> &mdash; 15+ endpoints</summary>
+<summary><strong>Teacher</strong> (15+ endpoints)</summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -380,7 +400,7 @@ lms/
 </details>
 
 <details>
-<summary><strong>Student</strong> &mdash; 10+ endpoints</summary>
+<summary><strong>Student</strong> (10+ endpoints)</summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -389,7 +409,7 @@ lms/
 | `POST` | `/api/student/voeux` | Submit a wish |
 | `GET` | `/api/student/my-pfe` | My PFE assignment |
 | `POST` | `/api/student/my-pfe/memoire` | Upload thesis |
-| `GET` | `/api/student/soutenance` | My defense info & grades |
+| `GET` | `/api/student/soutenance` | My defense info and grades |
 
 </details>
 
@@ -406,15 +426,15 @@ lms/
 
 <br>
 
-<h2 id="license">&bull; License</h2>
+<h2 id="license">License</h2>
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
 
 <br>
 
-<h2 id="contact">&bull; Contact</h2>
+<h2 id="contact">Contact</h2>
 
-**Ramy Hadid** &mdash; [ramy.hadid@esst-sup.com](mailto:ramy.hadid@esst-sup.com)
+**Ramy Hadid** - [ramy.hadid@esst-sup.com](mailto:ramy.hadid@esst-sup.com)
 
 Project Link: [https://github.com/rhpo/lms](https://github.com/rhpo/lms)
 
